@@ -1,0 +1,42 @@
+<resources>
+    <string name="app_name">话心</string>
+    <string name="welcome_name">话&#160;&#160;&#160;&#160;心</string>
+    <string name="login_user">用户名</string>
+    <string name="register_user">用户名（不可更改）</string>
+    <string name="login_pw">密码</string>
+    <string name="register_pw">确认密码</string>
+    <string name="register_nickname">昵称</string>
+    <string name="trans_logo">Welcome To Login</string>
+    <string name="login_register_tip">还没有加入我们吗？赶快来注册吧！</string>
+    <string name="trans_register">Login To Register</string>
+    <string name="register_title">注&#160;&#160;册</string>
+    <string name="register_boy">男生&#160;&#160;</string>
+    <string name="register_girl">女生</string>
+    <string name="me_nickname">原子君</string>
+    <string name="me_active_num">128</string>
+    <string name="me_active">动态</string>
+    <string name="me_watch_num">256</string>
+    <string name="me_watch">关注</string>
+    <string name="me_fans_num">512</string>
+    <string name="me_fans">粉丝</string>
+    <string name="me_introduction">大音希声，大象无形。</string>
+    <string name="me_mark">我的收藏</string>
+    <string name="me_draft">我的草稿</string>
+    <string name="me_clear">清理缓存</string>
+    <string name="me_exit">退出登录</string>
+    <string name="home_active_text">第九届全球健康促进大会发布了《上海宣言》，强调健康和福祉在2030年可持续发展议程中的核心位置。</string>
+    <string name="home_active_text_2">受到爱琴海文明纯白和纯蓝颜色的启发，EMUI5.0青睐于更为简约的交互设计，那么经过一番升级改造之后的华为智能助手，有着哪些令人惊讶的新变化，又是如何做到“简约不简单”呢？</string>
+    <string name="home_active_text_3">新一期女足国家队又在广州展开了集训。这一期集训以选拔年轻队员为主，这些小玫瑰们都是从96~99年龄段中脱颖而出的女孩。期待小花们能在未来铿锵绽放！</string>
+    <string name="home_active_time">4分钟前</string>
+    <string name="welcome_little_name">说出你的真心话</string>
+    <string name="write_send">发送</string>
+    <string name="write_save">保存</string>
+    <string name="write_tip">说出你的真心话……</string>
+    <string name="write_word">还能输入144个字</string>
+    <string name="trans_add">Home To Write</string>
+    <string name="me_draft_time">2016/11/23</string>
+    <string name="me_draft_text">第九届全球健康促进大会发布了《上海宣言》，强调健康……</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>
