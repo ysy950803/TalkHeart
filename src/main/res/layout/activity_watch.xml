@@ -4,12 +4,12 @@
     android:id="@+id/activity_draft"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:transitionName="@string/trans_mark"
+    android:transitionName="@string/trans_watch"
     android:orientation="vertical"
     tools:context="com.ysy.talkheart.activities.DraftActivity">
 
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/me_mark_listView"
+        android:id="@+id/me_watch_listView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/activity_draft"
+    android:id="@+id/activity_active"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:transitionName="@string/trans_mark"
     android:orientation="vertical"
-    tools:context="com.ysy.talkheart.activities.DraftActivity">
+    android:transitionName="@string/trans_active"
+    tools:context="com.ysy.talkheart.activities.ActiveActivity">
 
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/me_mark_listView"
+        android:id="@+id/me_active_listView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

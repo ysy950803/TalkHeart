@@ -10,39 +10,55 @@ import android.view.View;
 
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.adapters.ListOnItemClickListener;
-import com.ysy.talkheart.adapters.MeDraftListViewAdapter;
+import com.ysy.talkheart.adapters.MeFansListViewAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DraftActivity extends AppCompatActivity {
+public class FansActivity extends AppCompatActivity {
 
-    private RecyclerView draftRecyclerView;
-    private MeDraftListViewAdapter listViewAdapter;
+    private RecyclerView fansRecyclerView;
+    private MeFansListViewAdapter listViewAdapter;
 
-    private List<String> timeList = new ArrayList<>();
-    private List<String> textList = new ArrayList<>();
+    private List<Integer> avatarList = new ArrayList<>();
+    private List<String> nicknameList = new ArrayList<>();
+    private List<String> infoList = new ArrayList<>();
+    private List<Boolean> eachOtherList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_draft);
+        setContentView(R.layout.activity_fans);
         setupActionBar();
+
         initData();
         initView();
         clickListener();
     }
 
     private void initData() {
-        timeList.add(getString(R.string.me_draft_time));
-        textList.add(getString(R.string.me_draft_text));
+        avatarList.add(R.drawable.me_avatar_boy);
+        avatarList.add(R.drawable.me_avatar_girl);
+        avatarList.add(R.drawable.me_avatar_boy);
+
+        nicknameList.add("原子君");
+        nicknameList.add("分子君");
+        nicknameList.add("质子君");
+
+        infoList.add(getString(R.string.me_introduction));
+        infoList.add(getString(R.string.me_introduction));
+        infoList.add(getString(R.string.me_introduction));
+
+        eachOtherList.add(true);
+        eachOtherList.add(false);
+        eachOtherList.add(true);
     }
 
     private void initView() {
-        draftRecyclerView = (RecyclerView) findViewById(R.id.me_draft_listView);
-        draftRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        listViewAdapter = new MeDraftListViewAdapter(timeList, textList);
-        draftRecyclerView.setAdapter(listViewAdapter);
+        fansRecyclerView = (RecyclerView) findViewById(R.id.me_fans_listView);
+        fansRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        listViewAdapter = new MeFansListViewAdapter(avatarList, nicknameList, infoList, eachOtherList);
+        fansRecyclerView.setAdapter(listViewAdapter);
     }
 
     private void clickListener() {

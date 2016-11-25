@@ -11,6 +11,7 @@
     app:contentPadding="16dp">
 
     <LinearLayout
+        android:id="@+id/me_draft_item_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
@@ -24,6 +25,7 @@
             android:text="@string/me_draft_time" />
 
         <TextView
+            android:id="@+id/me_draft_text"
             android:layout_marginTop="4dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

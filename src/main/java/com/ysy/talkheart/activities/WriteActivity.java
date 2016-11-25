@@ -79,10 +79,12 @@ public class WriteActivity extends AppCompatActivity {
                 return true;
             }
         });
+
         menu.findItem(R.id.action_save).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // save to draft
+                finish();
                 return true;
             }
         });

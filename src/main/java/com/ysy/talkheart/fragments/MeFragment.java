@@ -1,5 +1,8 @@
 package com.ysy.talkheart.fragments;
 
+import android.app.ActivityOptions;
+import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
@@ -7,9 +10,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.inthecheesefactory.thecheeselibrary.fragment.support.v4.app.StatedFragment;
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.activities.ActiveActivity;
+import com.ysy.talkheart.activities.DraftActivity;
+import com.ysy.talkheart.activities.FansActivity;
+import com.ysy.talkheart.activities.LoginActivity;
+import com.ysy.talkheart.activities.MarkActivity;
+import com.ysy.talkheart.activities.WatchActivity;
+import com.ysy.talkheart.utils.DataCleanManager;
 import com.ysy.talkheart.views.CircularImageView;
 
 /**
@@ -97,21 +108,36 @@ public class MeFragment extends StatedFragment {
         activeNumTv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), activeNumTv, getString(R.string.trans_active));
+                    startActivity(new Intent(getActivity(), ActiveActivity.class), tAO.toBundle());
+                } else {
+                    startActivity(new Intent(getActivity(), ActiveActivity.class));
+                }
             }
         });
 
         watchNumTv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), watchNumTv, getString(R.string.trans_watch));
+                    startActivity(new Intent(getActivity(), WatchActivity.class), tAO.toBundle());
+                } else {
+                    startActivity(new Intent(getActivity(), WatchActivity.class));
+                }
             }
         });
 
         fansNumTv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), fansNumTv, getString(R.string.trans_fans));
+                    startActivity(new Intent(getActivity(), FansActivity.class), tAO.toBundle());
+                } else {
+                    startActivity(new Intent(getActivity(), FansActivity.class));
+                }
             }
         });
 
@@ -125,30 +151,54 @@ public class MeFragment extends StatedFragment {
         markLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), markLayout, getString(R.string.trans_mark));
+                    startActivity(new Intent(getActivity(), MarkActivity.class), tAO.toBundle());
+                } else {
+                    startActivity(new Intent(getActivity(), MarkActivity.class));
+                }
             }
         });
 
         draftLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), draftLayout, getString(R.string.trans_draft));
+                    startActivity(new Intent(getActivity(), DraftActivity.class), tAO.toBundle());
+                } else {
+                    startActivity(new Intent(getActivity(), DraftActivity.class));
+                }
             }
         });
 
         clearLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                clearCache();
             }
         });
 
         exitLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                startActivity(new Intent(getActivity(), LoginActivity.class));
+                getActivity().finish();
             }
         });
+    }
+
+    private void clearCache() {
+        String cache_str = getString(R.string.me_draft_clear_cache);
+        try {
+            if (!cache_str.equals(DataCleanManager.getTotalCacheSize(getActivity()))) {
+                cache_str = "成功清理" + DataCleanManager.getTotalCacheSize(getActivity()) + "缓存";
+                DataCleanManager.clearAllCache(getContext());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Toast.makeText(getActivity(), cache_str, Toast.LENGTH_SHORT).show();
     }
 
     @Override

@@ -9,24 +9,28 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.adapters.MeActiveListViewAdapter;
 import com.ysy.talkheart.adapters.ListOnItemClickListener;
-import com.ysy.talkheart.adapters.MeDraftListViewAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DraftActivity extends AppCompatActivity {
+public class ActiveActivity extends AppCompatActivity {
 
-    private RecyclerView draftRecyclerView;
-    private MeDraftListViewAdapter listViewAdapter;
-
+    private List<Integer> avatarList = new ArrayList<>();
+    private List<String> nicknameList = new ArrayList<>();
     private List<String> timeList = new ArrayList<>();
     private List<String> textList = new ArrayList<>();
+    private List<Boolean> goodStatusList = new ArrayList<>();
+    private List<Integer> goodNumList = new ArrayList<>();
+
+    private RecyclerView activeRecyclerView;
+    private MeActiveListViewAdapter listViewAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_draft);
+        setContentView(R.layout.activity_active);
         setupActionBar();
         initData();
         initView();
@@ -34,15 +38,36 @@ public class DraftActivity extends AppCompatActivity {
     }
 
     private void initData() {
-        timeList.add(getString(R.string.me_draft_time));
-        textList.add(getString(R.string.me_draft_text));
+        avatarList.add(R.drawable.me_avatar_boy);
+        avatarList.add(R.drawable.me_avatar_girl);
+        avatarList.add(R.drawable.me_avatar_boy);
+
+        nicknameList.add("原子君");
+        nicknameList.add("分子君");
+        nicknameList.add("质子君");
+
+        timeList.add("2分钟前");
+        timeList.add("4分钟前");
+        timeList.add("8分钟前");
+
+        textList.add(getString(R.string.home_active_text));
+        textList.add(getString(R.string.home_active_text_2));
+        textList.add(getString(R.string.home_active_text_3));
+
+        goodStatusList.add(true);
+        goodStatusList.add(false);
+        goodStatusList.add(true);
+
+        goodNumList.add(8);
+        goodNumList.add(96);
+        goodNumList.add(192);
     }
 
     private void initView() {
-        draftRecyclerView = (RecyclerView) findViewById(R.id.me_draft_listView);
-        draftRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        listViewAdapter = new MeDraftListViewAdapter(timeList, textList);
-        draftRecyclerView.setAdapter(listViewAdapter);
+        activeRecyclerView = (RecyclerView) findViewById(R.id.me_active_listView);
+        activeRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        listViewAdapter = new MeActiveListViewAdapter(avatarList, nicknameList, timeList, textList, goodStatusList, goodNumList);
+        activeRecyclerView.setAdapter(listViewAdapter);
     }
 
     private void clickListener() {

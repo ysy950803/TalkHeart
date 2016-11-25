@@ -35,7 +35,18 @@
     <string name="write_word">还能输入144个字</string>
     <string name="trans_add">Home To Write</string>
     <string name="me_draft_time">2016/11/23</string>
-    <string name="me_draft_text">第九届全球健康促进大会发布了《上海宣言》，强调健康……</string>
+    <string name="me_draft_text">第九届全球健康促进大会发布了《上海宣言》，强调健康……</string>\
+    <string name="home_active_good_num">999+</string>
+    <string name="trans_mark">Me To Mark</string>
+    <string name="trans_draft">Me To Draft</string>
+    <string name="me_draft_clear_cache">非常干净，不用清理啦！</string>
+    <string name="draft_name">草稿</string>
+    <string name="mark_name">收藏</string>
+    <string name="write_name">说出</string>
+    <string name="trans_active">Me To Active</string>
+    <string name="trans_watch">Me To Watch</string>
+    <string name="trans_fans">Me To Fans</string>
+    <string name="msg_reply_good">原子君 与你连心</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

@@ -4,7 +4,6 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.ysy.talkheart.R;
@@ -13,15 +12,15 @@ import com.ysy.talkheart.views.CircularImageView;
 import java.util.List;
 
 /**
- * Created by Shengyu Yao on 2016/11/23.
+ * Created by Shengyu Yao on 2016/11/25.
  */
 
-public class MeMarkListViewAdapter extends RecyclerView.Adapter<MeMarkListViewAdapter.RecyclerViewHolder> {
+public class MessageListViewAdapter extends RecyclerView.Adapter<MessageListViewAdapter.RecyclerViewHolder> {
 
     private List<Integer> avatarList;
-    private List<String> nicknameList;
+    private List<String> nameActList;
     private List<String> timeList;
-    private List<String> textList;
+    private List<String> quoteList;
 
     private ListOnItemClickListener mOnItemClickListener;
 
@@ -29,41 +28,41 @@ public class MeMarkListViewAdapter extends RecyclerView.Adapter<MeMarkListViewAd
         this.mOnItemClickListener = mOnItemClickListener;
     }
 
-    public MeMarkListViewAdapter(List<Integer> avatarList, List<String> nicknameList, List<String> timeList, List<String> textList) {
+    public MessageListViewAdapter(List<Integer> avatarList, List<String> nameActList, List<String> timeList, List<String> quoteList) {
         this.avatarList = avatarList;
-        this.nicknameList = nicknameList;
+        this.nameActList = nameActList;
         this.timeList = timeList;
-        this.textList = textList;
+        this.quoteList = quoteList;
     }
 
     class RecyclerViewHolder extends RecyclerView.ViewHolder {
         CircularImageView avatarImg;
-        TextView nicknameTv;
+        TextView nameActTv;
         TextView timeTv;
-        TextView textTv;
+        TextView quoteTv;
 
         RecyclerViewHolder(View itemView) {
             super(itemView);
-            avatarImg = (CircularImageView) itemView.findViewById(R.id.me_mark_avatar_img);
-            nicknameTv = (TextView) itemView.findViewById(R.id.me_mark_nickname_tv);
-            timeTv = (TextView) itemView.findViewById(R.id.me_mark_time_tv);
-            textTv = (TextView) itemView.findViewById(R.id.me_mark_text_tv);
+            avatarImg = (CircularImageView) itemView.findViewById(R.id.msg_avatar_img);
+            nameActTv = (TextView) itemView.findViewById(R.id.msg_name_act_tv);
+            timeTv = (TextView) itemView.findViewById(R.id.msg_time_tv);
+            quoteTv = (TextView) itemView.findViewById(R.id.msg_quote_tv);
         }
     }
 
     @Override
-    public MeMarkListViewAdapter.RecyclerViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public MessageListViewAdapter.RecyclerViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         return new RecyclerViewHolder(LayoutInflater
                 .from(parent.getContext())
-                .inflate(R.layout.item_me_mark, parent, false));
+                .inflate(R.layout.item_message, parent, false));
     }
 
     @Override
-    public void onBindViewHolder(final MeMarkListViewAdapter.RecyclerViewHolder holder, int position) {
+    public void onBindViewHolder(final MessageListViewAdapter.RecyclerViewHolder holder, int position) {
         holder.avatarImg.setImageResource(avatarList.get(position));
-        holder.nicknameTv.setText(nicknameList.get(position));
+        holder.nameActTv.setText(nameActList.get(position));
         holder.timeTv.setText(timeList.get(position));
-        holder.textTv.setText(textList.get(position));
+        holder.quoteTv.setText(quoteList.get(position));
 
         // 如果设置了回调，则设置点击事件
         if (mOnItemClickListener != null) {
@@ -88,6 +87,6 @@ public class MeMarkListViewAdapter extends RecyclerView.Adapter<MeMarkListViewAd
 
     @Override
     public int getItemCount() {
-        return nicknameList.size();
+        return nameActList.size();
     }
 }

@@ -13,15 +13,15 @@ import com.ysy.talkheart.views.CircularImageView;
 import java.util.List;
 
 /**
- * Created by Shengyu Yao on 2016/11/23.
+ * Created by Shengyu Yao on 2016/11/25.
  */
 
-public class MeMarkListViewAdapter extends RecyclerView.Adapter<MeMarkListViewAdapter.RecyclerViewHolder> {
+public class MeFansListViewAdapter extends RecyclerView.Adapter<MeFansListViewAdapter.RecyclerViewHolder> {
 
     private List<Integer> avatarList;
     private List<String> nicknameList;
-    private List<String> timeList;
-    private List<String> textList;
+    private List<String> infoList;
+    private List<Boolean> eachOtherList;
 
     private ListOnItemClickListener mOnItemClickListener;
 
@@ -29,41 +29,56 @@ public class MeMarkListViewAdapter extends RecyclerView.Adapter<MeMarkListViewAd
         this.mOnItemClickListener = mOnItemClickListener;
     }
 
-    public MeMarkListViewAdapter(List<Integer> avatarList, List<String> nicknameList, List<String> timeList, List<String> textList) {
+    public MeFansListViewAdapter(List<Integer> avatarList, List<String> nicknameList, List<String> infoList, List<Boolean> eachOtherList) {
         this.avatarList = avatarList;
         this.nicknameList = nicknameList;
-        this.timeList = timeList;
-        this.textList = textList;
+        this.infoList = infoList;
+        this.eachOtherList = eachOtherList;
     }
 
     class RecyclerViewHolder extends RecyclerView.ViewHolder {
         CircularImageView avatarImg;
         TextView nicknameTv;
-        TextView timeTv;
-        TextView textTv;
+        TextView infoTv;
+        ImageView eachOtherImg;
 
         RecyclerViewHolder(View itemView) {
             super(itemView);
-            avatarImg = (CircularImageView) itemView.findViewById(R.id.me_mark_avatar_img);
-            nicknameTv = (TextView) itemView.findViewById(R.id.me_mark_nickname_tv);
-            timeTv = (TextView) itemView.findViewById(R.id.me_mark_time_tv);
-            textTv = (TextView) itemView.findViewById(R.id.me_mark_text_tv);
+            avatarImg = (CircularImageView) itemView.findViewById(R.id.me_fans_avatar_img);
+            nicknameTv = (TextView) itemView.findViewById(R.id.me_fans_nickname_tv);
+            infoTv = (TextView) itemView.findViewById(R.id.me_fans_info_tv);
+            eachOtherImg = (ImageView) itemView.findViewById(R.id.me_fans_each_other_img);
         }
     }
 
     @Override
-    public MeMarkListViewAdapter.RecyclerViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public MeFansListViewAdapter.RecyclerViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         return new RecyclerViewHolder(LayoutInflater
                 .from(parent.getContext())
-                .inflate(R.layout.item_me_mark, parent, false));
+                .inflate(R.layout.item_me_fans, parent, false));
     }
 
     @Override
-    public void onBindViewHolder(final MeMarkListViewAdapter.RecyclerViewHolder holder, int position) {
+    public void onBindViewHolder(final MeFansListViewAdapter.RecyclerViewHolder holder, int position) {
         holder.avatarImg.setImageResource(avatarList.get(position));
         holder.nicknameTv.setText(nicknameList.get(position));
-        holder.timeTv.setText(timeList.get(position));
-        holder.textTv.setText(textList.get(position));
+        holder.infoTv.setText(infoList.get(position));
+
+        final int pos = Integer.parseInt(position + "");
+        final ImageView eachOther = holder.eachOtherImg;
+        eachOther.setImageResource(eachOtherList.get(position) ? R.mipmap.ic_swap_horiz_pink_36dp : R.mipmap.ic_swap_horiz_blue_36dp);
+        eachOther.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!eachOtherList.get(pos)) {
+                    eachOther.setImageResource(R.mipmap.ic_swap_horiz_pink_36dp);
+                    eachOtherList.set(pos, true);
+                } else {
+                    eachOther.setImageResource(R.mipmap.ic_swap_horiz_blue_36dp);
+                    eachOtherList.set(pos, false);
+                }
+            }
+        });
 
         // 如果设置了回调，则设置点击事件
         if (mOnItemClickListener != null) {
@@ -90,4 +105,5 @@ public class MeMarkListViewAdapter extends RecyclerView.Adapter<MeMarkListViewAd
     public int getItemCount() {
         return nicknameList.size();
     }
+
 }

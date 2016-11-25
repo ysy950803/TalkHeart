@@ -16,7 +16,7 @@ import com.inthecheesefactory.thecheeselibrary.fragment.support.v4.app.StatedFra
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.WriteActivity;
 import com.ysy.talkheart.adapters.ListOnItemClickListener;
-import com.ysy.talkheart.adapters.HomeListViewAdapter;
+import com.ysy.talkheart.adapters.HomeActiveListViewAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +34,10 @@ public class HomeFragment extends StatedFragment {
     private List<String> nicknameList = new ArrayList<>();
     private List<String> timeList = new ArrayList<>();
     private List<String> textList = new ArrayList<>();
+    private List<Boolean> goodStatusList = new ArrayList<>();
+    private List<Integer> goodNumList = new ArrayList<>();
 
-    private HomeListViewAdapter listViewAdapter;
+    private HomeActiveListViewAdapter listViewAdapter;
 
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
@@ -91,13 +93,21 @@ public class HomeFragment extends StatedFragment {
         textList.add(getString(R.string.home_active_text));
         textList.add(getString(R.string.home_active_text_2));
         textList.add(getString(R.string.home_active_text_3));
+
+        goodStatusList.add(false);
+        goodStatusList.add(true);
+        goodStatusList.add(false);
+
+        goodNumList.add(8);
+        goodNumList.add(96);
+        goodNumList.add(192);
     }
 
     private void initView(View view) {
         addFab = (FloatingActionButton) view.findViewById(R.id.home_add_fab);
-        activeRecyclerView = (RecyclerView) view.findViewById(R.id.me_draft_listView);
+        activeRecyclerView = (RecyclerView) view.findViewById(R.id.home_active_listView);
         activeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        listViewAdapter = new HomeListViewAdapter(avatarList, nicknameList, timeList, textList);
+        listViewAdapter = new HomeActiveListViewAdapter(avatarList, nicknameList, timeList, textList, goodStatusList, goodNumList);
         activeRecyclerView.setAdapter(listViewAdapter);
     }
 

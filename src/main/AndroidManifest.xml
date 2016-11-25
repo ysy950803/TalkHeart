@@ -11,7 +11,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="com.ysy.talkheart.activities.WelcomeActivity"
+            android:name=".activities.WelcomeActivity"
             android:theme="@style/AppCompatFullScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -20,17 +20,31 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.ysy.talkheart.activities.LoginActivity"
+            android:name=".activities.LoginActivity"
             android:theme="@style/AppCompatFullScreen" />
         <activity
-            android:name="com.ysy.talkheart.activities.RegisterActivity"
+            android:name=".activities.RegisterActivity"
             android:theme="@style/AppCompatFullScreen" />
-        <activity android:name="com.ysy.talkheart.activities.HomeActivity" />
+        <activity android:name=".activities.HomeActivity" />
         <activity
-            android:name="com.ysy.talkheart.activities.WriteActivity"
+            android:name=".activities.WriteActivity"
+            android:label="@string/write_name"
             android:windowSoftInputMode="stateVisible|adjustResize" />
-        <activity android:name="com.ysy.talkheart.activities.DraftActivity" />
-        <activity android:name="com.ysy.talkheart.activities.MarkActivity"></activity>
+        <activity
+            android:name=".activities.DraftActivity"
+            android:label="@string/draft_name" />
+        <activity
+            android:name=".activities.MarkActivity"
+            android:label="@string/mark_name" />
+        <activity
+            android:name=".activities.ActiveActivity"
+            android:label="@string/me_active" />
+        <activity
+            android:name=".activities.WatchActivity"
+            android:label="@string/me_watch" />
+        <activity
+            android:name=".activities.FansActivity"
+            android:label="@string/me_fans" />
     </application>
 
 </manifest>

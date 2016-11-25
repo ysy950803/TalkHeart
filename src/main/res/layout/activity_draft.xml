@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:transitionName="@string/trans_draft"
     tools:context="com.ysy.talkheart.activities.DraftActivity">
 
     <android.support.v7.widget.RecyclerView
