@@ -47,6 +47,7 @@
     <string name="trans_watch">Me To Watch</string>
     <string name="trans_fans">Me To Fans</string>
     <string name="msg_reply_good">原子君 与你连心</string>
+    <string name="register_set_birth">点击设置生日</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

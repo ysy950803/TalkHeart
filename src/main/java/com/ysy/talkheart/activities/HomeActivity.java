@@ -12,6 +12,7 @@ import com.ysy.talkheart.R;
 import com.ysy.talkheart.fragments.HomeFragment;
 import com.ysy.talkheart.fragments.MeFragment;
 import com.ysy.talkheart.fragments.MessageFragment;
+import com.ysy.talkheart.utils.ActivitiesDestroyer;
 
 public class HomeActivity extends AppCompatActivity implements BottomNavigationBar.OnTabSelectedListener {
 
@@ -26,6 +27,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         actionBar = getSupportActionBar();
+        ActivitiesDestroyer.getInstance().killAll();
 
         BottomNavigationBar bottomNavigationBar = (BottomNavigationBar) findViewById(R.id.bottom_navigation_bar);
         bottomNavigationBar

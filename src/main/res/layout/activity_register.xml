@@ -7,19 +7,40 @@
     android:background="@color/colorBackground"
     tools:context="com.ysy.talkheart.activities.RegisterActivity">
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <ImageView
+        android:id="@+id/register_done_img"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="@drawable/ic_done_white_24dp" />
+
+    <ImageView
+        android:id="@+id/register_back_img"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="@drawable/ic_arrow_back_white_24dp" />
+
+    <LinearLayout
+        android:id="@+id/register_info_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:layout_centerVertical="true"
-        android:orientation="vertical">
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
 
         <TextView
-            android:layout_marginBottom="8dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:layout_marginBottom="8dp"
             android:text="@string/register_title"
             android:textColor="@android:color/white"
             android:textSize="32sp"
@@ -61,60 +82,48 @@
             android:hint="@string/register_nickname"
             android:inputType="text" />
 
-        <EditText
-            android:id="@+id/register_birthday_edt"
+        <TextView
+            android:layout_marginTop="12dp"
+            android:id="@+id/register_birthday_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:ems="10"
-            android:hint="生日"
-            android:inputType="text" />
+            android:gravity="center"
+            android:hint="@string/register_set_birth"
+            android:textSize="18sp" />
 
         <LinearLayout
-            android:layout_margin="8dp"
             android:id="@+id/register_sex_layout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:layout_marginTop="12dp"
             android:orientation="horizontal">
 
             <TextView
-                android:hint="@string/register_boy"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:hint="@string/register_boy" />
 
             <Switch
+                android:id="@+id/register_sex_switch"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/register_sex_switch" />
+                android:layout_height="wrap_content" />
 
             <TextView
-                android:hint="@string/register_girl"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:hint="@string/register_girl" />
 
         </LinearLayout>
 
     </LinearLayout>
 
-    <ImageView
-        android:id="@+id/register_done_img"
+    <CalendarView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentTop="true"
-        android:layout_margin="@dimen/fab_margin"
-        android:src="@drawable/ic_done_white_24dp" />
-
-    <ImageView
-        android:id="@+id/register_back_img"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_margin="@dimen/fab_margin"
-        android:src="@drawable/ic_arrow_back_white_24dp" />
+        android:id="@+id/register_calendarView"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true" />
 
 </RelativeLayout>
