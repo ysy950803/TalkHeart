@@ -1,6 +1,7 @@
 package com.ysy.talkheart.activities;
 
 import android.app.ActivityOptions;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
@@ -26,6 +27,7 @@ public class LoginActivity extends AppCompatActivity {
     private View focusView;
 
     private Handler loginHandler;
+    private ProgressDialog waitDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +56,7 @@ public class LoginActivity extends AppCompatActivity {
                 if (cd.isConnectingToInternet())
                     login(username, pw);
                 else
-                    Toast.makeText(LoginActivity.this, "请检查网络连接哦！", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
             }
         });
         registerLayout.setOnClickListener(new View.OnClickListener() {
@@ -96,16 +98,17 @@ public class LoginActivity extends AppCompatActivity {
         pwEdt.setError(null);
         focusView = null;
         if (username.equals("")) {
-            userEdt.setError("用户名不能为空");
+            userEdt.setError("要有用户名哦");
             focusView = userEdt;
             focusView.requestFocusFromTouch();
             return false;
         } else if (pw.equals("")) {
-            pwEdt.setError("密码不能为空");
+            pwEdt.setError("要有密码哦");
             focusView = pwEdt;
             focusView.requestFocusFromTouch();
             return false;
         }
+        waitDialog = ProgressDialog.show(LoginActivity.this, "请稍后", "正在开启新世界的大门……");
         connectToLogin(username, pw);
         return true;
     }
@@ -122,7 +125,7 @@ public class LoginActivity extends AppCompatActivity {
     private Runnable pwErrorRunnable = new Runnable() {
         @Override
         public void run() {
-            pwEdt.setError("密码错误");
+            pwEdt.setError("密码错啦");
             focusView = pwEdt;
             focusView.requestFocusFromTouch();
         }
@@ -131,7 +134,7 @@ public class LoginActivity extends AppCompatActivity {
     private Runnable serverErrorRunnable = new Runnable() {
         @Override
         public void run() {
-            Toast.makeText(LoginActivity.this, "服务器连接出错，请重试", Toast.LENGTH_SHORT).show();
+            Toast.makeText(LoginActivity.this, "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
         }
     };
 
@@ -155,6 +158,7 @@ public class LoginActivity extends AppCompatActivity {
                     loginHandler.post(pwErrorRunnable);
                 }
                 dbP.closeConn();
+                waitDialog.dismiss();
             }
         }).start();
     }

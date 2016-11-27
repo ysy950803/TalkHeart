@@ -1,10 +1,12 @@
 package com.ysy.talkheart.activities;
 
+import android.app.ProgressDialog;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.CalendarView;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -30,6 +32,9 @@ public class RegisterActivity extends AppCompatActivity {
     private CalendarView calendarView;
 
     private Handler registerHandler;
+    private ProgressDialog waitDialog;
+
+    private int sex = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,9 +78,17 @@ public class RegisterActivity extends AppCompatActivity {
                 String rePw = rePwEdt.getText().toString();
                 String nickname = nicknameEdt.getText().toString();
                 String birthday = setBirthTv.getText().toString();
-                int sex = 0;
-
                 register(user, pw, rePw, nickname, birthday, sex);
+            }
+        });
+
+        sexSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked)
+                    sex = 0;
+                else
+                    sex = 1;
             }
         });
 
@@ -102,21 +115,22 @@ public class RegisterActivity extends AppCompatActivity {
 
     private boolean register(final String username, final String pw, String rePw, final String nickname, final String birthday, final int sex) {
         if (username.equals("")) {
-            Toast.makeText(this, "用户名不能为空", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "要有用户名哦", Toast.LENGTH_SHORT).show();
             return false;
         } else if (pw.equals("") || rePw.equals("")) {
-            Toast.makeText(this, "密码不能为空", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "要有密码哦", Toast.LENGTH_SHORT).show();
             return false;
         } else if (!pw.equals(rePw)) {
-            Toast.makeText(this, "两次输入密码不一致", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "两次输入密码不一样呢", Toast.LENGTH_SHORT).show();
             return false;
         } else if (nickname.equals("")) {
-            Toast.makeText(this, "昵称不能为空", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "要有昵称哦", Toast.LENGTH_SHORT).show();
             return false;
         } else if (!birthday.contains("-")) {
-            Toast.makeText(this, "请设置生日", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "设置一下生日吧", Toast.LENGTH_SHORT).show();
             return false;
         }
+        waitDialog = ProgressDialog.show(RegisterActivity.this, "请稍后", "正在给服务器君端茶递水……");
         connectToRegister(username, pw, nickname, birthday, sex);
         return true;
     }
@@ -143,6 +157,7 @@ public class RegisterActivity extends AppCompatActivity {
                 } else
                     registerHandler.post(serverErrorRunnable);
                 dbP.closeConn();
+                waitDialog.dismiss();
             }
         }).start();
     }
@@ -150,21 +165,21 @@ public class RegisterActivity extends AppCompatActivity {
     private Runnable serverErrorRunnable = new Runnable() {
         @Override
         public void run() {
-            Toast.makeText(RegisterActivity.this, "服务器连接出错，请重试", Toast.LENGTH_SHORT).show();
+            Toast.makeText(RegisterActivity.this, "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
         }
     };
 
     private Runnable nameErrorRunnable = new Runnable() {
         @Override
         public void run() {
-            Toast.makeText(RegisterActivity.this, "用户名已存在，换一个吧！", Toast.LENGTH_SHORT).show();
+            Toast.makeText(RegisterActivity.this, "用户名已存在，换一个吧", Toast.LENGTH_SHORT).show();
         }
     };
 
     private Runnable successRunnable = new Runnable() {
         @Override
         public void run() {
-            Toast.makeText(RegisterActivity.this, "恭喜你加入我们！", Toast.LENGTH_SHORT).show();
+            Toast.makeText(RegisterActivity.this, "恭喜你加入我们", Toast.LENGTH_SHORT).show();
             onBackPressed();
         }
     };
