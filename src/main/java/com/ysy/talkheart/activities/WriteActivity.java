@@ -1,5 +1,7 @@
 package com.ysy.talkheart.activities;
 
+import android.app.ProgressDialog;
+import android.os.Handler;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -10,14 +12,23 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.utils.ConnectionDetector;
+import com.ysy.talkheart.utils.DBProcessor;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class WriteActivity extends AppCompatActivity {
 
     private EditText writeEdt;
     private TextView restWordTv;
     private static final int WORD_LIMIT = 144;
+    private Handler sendHandler;
+    private ProgressDialog waitDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,6 +36,7 @@ public class WriteActivity extends AppCompatActivity {
         setContentView(R.layout.activity_write);
         setupActionBar();
         initView();
+        sendHandler = new Handler();
     }
 
     private void initView() {
@@ -33,6 +45,59 @@ public class WriteActivity extends AppCompatActivity {
 
         writeEdt.addTextChangedListener(tw);
     }
+
+    private boolean send(final int uid, final String sendTime, final String content) {
+        if (content.equals("")) {
+            Toast.makeText(this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        ConnectionDetector cd = new ConnectionDetector(this);
+        if (!cd.isConnectingToInternet()) {
+            Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        waitDialog = ProgressDialog.show(WriteActivity.this, "请稍后", "正在请数据库君吃饭……");
+        connectToSend(uid, sendTime, content);
+        return true;
+    }
+
+    private void connectToSend(final int uid, final String sendTime, final String content) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                DBProcessor dbP = new DBProcessor();
+                dbP.getConn();
+                int actid;
+                if ((actid = dbP.rowSelect("select actid from active")) >= -1) {
+                    int res = dbP.insert(
+                            "insert into active(uid, actid, sendtime, goodnum, content) values(" +
+                                    uid + ", " + (actid + 1) + ", '" + sendTime + "', 0, '" + content + "')"
+                    );
+                    if (res == 1)
+                        sendHandler.post(successRunnable);
+                    else
+                        sendHandler.post(serverErrorRunnable);
+                }
+                dbP.closeConn();
+                waitDialog.dismiss();
+            }
+        }).start();
+    }
+
+    private Runnable successRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(WriteActivity.this, "发送成功", Toast.LENGTH_SHORT).show();
+            onBackPressed();
+        }
+    };
+
+    private Runnable serverErrorRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(WriteActivity.this, "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
+        }
+    };
 
     private TextWatcher tw = new TextWatcher() {
         @Override
@@ -75,7 +140,8 @@ public class WriteActivity extends AppCompatActivity {
         menuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                finish();
+                String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+                send(0, sendTime, writeEdt.getText().toString());
                 return true;
             }
         });
@@ -84,7 +150,7 @@ public class WriteActivity extends AppCompatActivity {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // save to draft
-                finish();
+
                 return true;
             }
         });

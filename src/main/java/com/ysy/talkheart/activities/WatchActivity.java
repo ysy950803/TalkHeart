@@ -9,7 +9,7 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.ysy.talkheart.R;
-import com.ysy.talkheart.adapters.ListOnItemClickListener;
+import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.adapters.MeWatchListViewAdapter;
 
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ public class WatchActivity extends AppCompatActivity {
     private List<Integer> avatarList = new ArrayList<>();
     private List<String> nicknameList = new ArrayList<>();
     private List<String> infoList = new ArrayList<>();
-    private List<Boolean> eachOtherList = new ArrayList<>();
+    private List<Integer> relationList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,15 +49,15 @@ public class WatchActivity extends AppCompatActivity {
         infoList.add(getString(R.string.me_introduction));
         infoList.add(getString(R.string.me_introduction));
 
-        eachOtherList.add(false);
-        eachOtherList.add(true);
-        eachOtherList.add(false);
+        relationList.add(1);
+        relationList.add(0);
+        relationList.add(1);
     }
 
     private void initView() {
         watchRecyclerView = (RecyclerView) findViewById(R.id.me_watch_listView);
         watchRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        listViewAdapter = new MeWatchListViewAdapter(avatarList, nicknameList, infoList, eachOtherList);
+        listViewAdapter = new MeWatchListViewAdapter(avatarList, nicknameList, infoList, relationList);
         watchRecyclerView.setAdapter(listViewAdapter);
     }
 

@@ -50,7 +50,7 @@
         </LinearLayout>
 
         <ImageView
-            android:src="@mipmap/ic_swap_horiz_blue_36dp"
+            android:src="@mipmap/ic_watch_blue_pink_36dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/me_watch_each_other_img"

@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
 import java.util.List;
@@ -66,15 +67,15 @@ public class MeFansListViewAdapter extends RecyclerView.Adapter<MeFansListViewAd
 
         final int pos = Integer.parseInt(position + "");
         final ImageView eachOther = holder.eachOtherImg;
-        eachOther.setImageResource(eachOtherList.get(position) ? R.mipmap.ic_swap_horiz_pink_36dp : R.mipmap.ic_swap_horiz_blue_36dp);
+        eachOther.setImageResource(eachOtherList.get(position) ? R.mipmap.ic_each_other_pink_36dp : R.mipmap.ic_fans_pink_blue_36dp);
         eachOther.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!eachOtherList.get(pos)) {
-                    eachOther.setImageResource(R.mipmap.ic_swap_horiz_pink_36dp);
+                    eachOther.setImageResource(R.mipmap.ic_each_other_pink_36dp);
                     eachOtherList.set(pos, true);
                 } else {
-                    eachOther.setImageResource(R.mipmap.ic_swap_horiz_blue_36dp);
+                    eachOther.setImageResource(R.mipmap.ic_fans_pink_blue_36dp);
                     eachOtherList.set(pos, false);
                 }
             }

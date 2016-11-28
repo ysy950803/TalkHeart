@@ -6,8 +6,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.activities.ActiveActivity;
+import com.ysy.talkheart.utils.ConnectionDetector;
+import com.ysy.talkheart.utils.ListOnItemClickListener;
+import com.ysy.talkheart.utils.NoDoubleClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
 import java.util.List;
@@ -22,24 +27,27 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
     private List<String> nicknameList;
     private List<String> timeList;
     private List<String> textList;
-    private List<Boolean> goodStatusList;
-    private List<Integer> gooNumList;
+    private List<Integer> goodStatusList;
+    private List<String> goodNumList;
 
     private ListOnItemClickListener mOnItemClickListener;
+
+    private ActiveActivity context;
 
     public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
         this.mOnItemClickListener = mOnItemClickListener;
     }
 
-    public MeActiveListViewAdapter(List<Integer> avatarList, List<String> nicknameList,
+    public MeActiveListViewAdapter(ActiveActivity context, List<Integer> avatarList, List<String> nicknameList,
                                    List<String> timeList, List<String> textList,
-                                   List<Boolean> goodStatusList, List<Integer> gooNumList) {
+                                   List<Integer> goodStatusList, List<String> gooNumList) {
+        this.context = context;
         this.avatarList = avatarList;
         this.nicknameList = nicknameList;
         this.timeList = timeList;
         this.textList = textList;
         this.goodStatusList = goodStatusList;
-        this.gooNumList = gooNumList;
+        this.goodNumList = gooNumList;
     }
 
     class RecyclerViewHolder extends RecyclerView.ViewHolder {
@@ -81,22 +89,32 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
         viewHolder.textTv.setText(textList.get(position));
 
         final TextView goodNumTv = viewHolder.goodNumTv;
-        goodNumTv.setText(String.valueOf(gooNumList.get(position)));
+        goodNumTv.setText(goodNumList.get(position));
 
         final int pos = Integer.parseInt(position + "");
         final ImageView goodImg = viewHolder.goodImg;
-        goodImg.setImageResource(goodStatusList.get(position) ? R.mipmap.ic_favorite_pink_36dp : R.mipmap.ic_favorite_blue_circle_36dp);
-        goodImg.setOnClickListener(new View.OnClickListener() {
+        goodImg.setImageResource(goodStatusList.get(position) == 1 ? R.mipmap.ic_favorite_pink_36dp : R.mipmap.ic_favorite_blue_circle_36dp);
+        goodImg.setOnClickListener(new NoDoubleClickListener() {
             @Override
-            public void onClick(View v) {
-                if (!goodStatusList.get(pos)) {
-                    goodImg.setImageResource(R.mipmap.ic_favorite_pink_36dp);
-                    goodNumTv.setText(Integer.parseInt(goodNumTv.getText().toString()) + 1 + "");
-                    goodStatusList.set(pos, true);
+            protected void onNoDoubleClick(View v) {
+                ConnectionDetector cd = new ConnectionDetector(context);
+                if (!cd.isConnectingToInternet()) {
+                    Toast.makeText(context, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
                 } else {
-                    goodImg.setImageResource(R.mipmap.ic_favorite_blue_circle_36dp);
-                    goodNumTv.setText(Integer.parseInt(goodNumTv.getText().toString()) + (-1) + "");
-                    goodStatusList.set(pos, false);
+                    int goodNum = Integer.parseInt(goodNumTv.getText().toString());
+                    if (goodStatusList.get(pos) == 0 || goodStatusList.get(pos) == -1) {
+                        String goodNumStr = (++goodNum) + "";
+                        goodImg.setImageResource(R.mipmap.ic_favorite_pink_36dp);
+                        goodNumTv.setText(goodNumStr);
+                        goodNumList.set(pos, goodNumStr);
+                        context.updateGood(pos);
+                    } else { // 1
+                        String goodNumStr = (--goodNum) + "";
+                        goodImg.setImageResource(R.mipmap.ic_favorite_blue_circle_36dp);
+                        goodNumTv.setText(goodNumStr);
+                        goodNumList.set(pos, goodNumStr);
+                        context.updateGood(pos);
+                    }
                 }
             }
         });

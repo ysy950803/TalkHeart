@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListView
     private List<Integer> avatarList;
     private List<String> nicknameList;
     private List<String> infoList;
-    private List<Boolean> eachOtherList;
+    private List<Integer> relationList; // 0:watch 1:each_other -1:fans -2:nothing
 
     private ListOnItemClickListener mOnItemClickListener;
 
@@ -29,11 +30,11 @@ public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListView
         this.mOnItemClickListener = mOnItemClickListener;
     }
 
-    public MeWatchListViewAdapter(List<Integer> avatarList, List<String> nicknameList, List<String> infoList, List<Boolean> eachOtherList) {
+    public MeWatchListViewAdapter(List<Integer> avatarList, List<String> nicknameList, List<String> infoList, List<Integer> relationList) {
         this.avatarList = avatarList;
         this.nicknameList = nicknameList;
         this.infoList = infoList;
-        this.eachOtherList = eachOtherList;
+        this.relationList = relationList;
     }
 
     class RecyclerViewHolder extends RecyclerView.ViewHolder {
@@ -66,16 +67,23 @@ public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListView
 
         final int pos = Integer.parseInt(position + "");
         final ImageView eachOther = holder.eachOtherImg;
-        eachOther.setImageResource(eachOtherList.get(position) ? R.mipmap.ic_swap_horiz_pink_36dp : R.mipmap.ic_swap_horiz_blue_36dp);
+
+        eachOther.setImageResource(relationList.get(position) == 1 ? R.mipmap.ic_each_other_pink_36dp : R.mipmap.ic_watch_blue_pink_36dp);
         eachOther.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!eachOtherList.get(pos)) {
-                    eachOther.setImageResource(R.mipmap.ic_swap_horiz_pink_36dp);
-                    eachOtherList.set(pos, true);
+                if (relationList.get(pos) == 0) {
+                    eachOther.setImageResource(R.mipmap.ic_nothing_blue_36dp);
+                    relationList.set(pos, -2);
+                } else if (relationList.get(pos) == 1) {
+                    eachOther.setImageResource(R.mipmap.ic_fans_pink_blue_36dp);
+                    relationList.set(pos, -1);
+                } else if (relationList.get(pos) == -1) {
+                    eachOther.setImageResource(R.mipmap.ic_each_other_pink_36dp);
+                    relationList.set(pos, 1);
                 } else {
-                    eachOther.setImageResource(R.mipmap.ic_swap_horiz_blue_36dp);
-                    eachOtherList.set(pos, false);
+                    eachOther.setImageResource(R.mipmap.ic_watch_blue_pink_36dp);
+                    relationList.set(pos, 0);
                 }
             }
         });

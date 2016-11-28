@@ -15,7 +15,7 @@ import android.view.ViewGroup;
 import com.inthecheesefactory.thecheeselibrary.fragment.support.v4.app.StatedFragment;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.WriteActivity;
-import com.ysy.talkheart.adapters.ListOnItemClickListener;
+import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.adapters.HomeActiveListViewAdapter;
 
 import java.util.ArrayList;

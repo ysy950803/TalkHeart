@@ -10,7 +10,7 @@ import android.view.ViewGroup;
 
 import com.inthecheesefactory.thecheeselibrary.fragment.support.v4.app.StatedFragment;
 import com.ysy.talkheart.R;
-import com.ysy.talkheart.adapters.ListOnItemClickListener;
+import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.adapters.MessageListViewAdapter;
 
 import java.util.ArrayList;

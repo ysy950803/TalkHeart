@@ -56,7 +56,7 @@
             android:layout_alignParentEnd="true"
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
-            android:src="@mipmap/ic_swap_horiz_blue_36dp" />
+            android:src="@mipmap/ic_fans_pink_blue_36dp" />
 
     </RelativeLayout>
 

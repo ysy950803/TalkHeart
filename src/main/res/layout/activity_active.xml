@@ -8,9 +8,16 @@
     android:transitionName="@string/trans_active"
     tools:context="com.ysy.talkheart.activities.ActiveActivity">
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/me_active_listView"
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/me_active_refresh_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/me_active_listView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </android.support.v4.widget.SwipeRefreshLayout>
 
 </LinearLayout>

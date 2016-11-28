@@ -9,7 +9,7 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.ysy.talkheart.R;
-import com.ysy.talkheart.adapters.ListOnItemClickListener;
+import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.adapters.MeDraftListViewAdapter;
 
 import java.util.ArrayList;

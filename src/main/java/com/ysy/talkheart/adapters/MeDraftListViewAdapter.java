@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.utils.ListOnItemClickListener;
 
 import java.util.List;
 
