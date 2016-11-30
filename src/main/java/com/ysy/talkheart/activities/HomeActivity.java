@@ -1,5 +1,12 @@
 package com.ysy.talkheart.activities;
 
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Handler;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
@@ -13,6 +20,7 @@ import com.ysy.talkheart.fragments.HomeFragment;
 import com.ysy.talkheart.fragments.MeFragment;
 import com.ysy.talkheart.fragments.MessageFragment;
 import com.ysy.talkheart.utils.ActivitiesDestroyer;
+import com.ysy.talkheart.utils.UpdateChecker;
 
 public class HomeActivity extends AppCompatActivity implements BottomNavigationBar.OnTabSelectedListener {
 
@@ -21,6 +29,10 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     private MeFragment meFragment;
     int lastSelectedPosition = 0;
     private ActionBar actionBar;
+
+    private Handler updateHandler;
+    private String UPDATE_URL = "http://www.jingxuehang.cn/";
+    private static final int WAIT_TIME = 2048;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +51,13 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 .initialise();
         bottomNavigationBar.setTabSelectedListener(this);
         setDefaultFragment();
+
+        updateHandler = new Handler();
+        new Handler().postDelayed(new Runnable() {
+            public void run() {
+                checkUpdate();
+            }
+        }, WAIT_TIME);
     }
 
     private void setDefaultFragment() {
@@ -96,5 +115,57 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     @Override
     public void onTabReselected(int position) {
 
+    }
+
+    private void checkUpdate() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                UpdateChecker dbP = new UpdateChecker();
+                dbP.getConn();
+                int code;
+                if ((code = dbP.codeSelect("select max(code) from app_version")) > getVersionCode(getApplicationContext())) {
+                    UPDATE_URL = dbP.downloadUrlSelect("select url from download_url where code = " + code);
+                    updateHandler.post(updateRunnable);
+                }
+                dbP.closeConn();
+            }
+        }).start();
+    }
+
+    private Runnable updateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateDialog(UPDATE_URL);
+        }
+    };
+
+    public static int getVersionCode(Context context) {
+        try {
+            PackageInfo pi = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+            return pi.versionCode;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    private void updateDialog(final String url) {
+        android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
+        builder.setTitle("兴高采烈的提示框").setMessage("检测到有新版本哦（新功能、修复已知错误等），快快下载吧！").setCancelable(false)
+                .setPositiveButton("义不容辞", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        intent.setData(Uri.parse(url));
+                        startActivity(intent);
+                    }
+                }).setNegativeButton("再想想", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.cancel();
+            }
+        });
+        final android.support.v7.app.AlertDialog alert = builder.create();
+        alert.show();
     }
 }

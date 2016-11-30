@@ -18,9 +18,9 @@ import java.util.Objects;
 public class DBProcessor {
 
     private static final String dbDriver = "com.mysql.jdbc.Driver";
-    private static final String dbUrl = "jdbc:mysql://000.000.000.000:3306/db_name";
-    private static final String dbUser = "username";
-    private static final String dbPass = "password";
+    private static final String dbUrl = "jdbc:mysql://000.000.000.000:3306/dbName";
+    private static final String dbUser = "root";
+    private static final String dbPass = "123456";
 
     private Connection conn = null;
     private ResultSet rs = null;
