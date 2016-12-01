@@ -74,17 +74,14 @@ public class WriteActivity extends AppCompatActivity {
             public void run() {
                 DBProcessor dbP = new DBProcessor();
                 dbP.getConn();
-                int actid;
-                if ((actid = dbP.rowSelect("select actid from active")) >= -1) {
-                    int res = dbP.insert(
-                            "insert into active(uid, actid, sendtime, goodnum, content) values(" +
-                                    uid + ", " + (actid + 1) + ", '" + sendTime + "', 0, '" + content + "')"
-                    );
-                    if (res == 1)
-                        sendHandler.post(successRunnable);
-                    else
-                        sendHandler.post(serverErrorRunnable);
-                }
+                int res = dbP.insert(
+                        "insert into active(uid, sendtime, goodnum, content) values(" +
+                                uid + ", '" + sendTime + "', 0, '" + content + "')"
+                );
+                if (res == 1)
+                    sendHandler.post(successRunnable);
+                else
+                    sendHandler.post(serverErrorRunnable);
                 dbP.closeConn();
                 waitDialog.dismiss();
             }

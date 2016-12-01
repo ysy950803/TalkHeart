@@ -12,8 +12,8 @@ public class ViewTurnAnimation {
 
     // SATo: StartAnimationTo
 
-    public ScaleAnimation sATo0 = new ScaleAnimation(1, 0, 1, 1, Animation.RELATIVE_TO_PARENT, 0.5f, Animation.RELATIVE_TO_PARENT, 0.5f);
-    public ScaleAnimation sATo1 = new ScaleAnimation(0, 1, 1, 1, Animation.RELATIVE_TO_PARENT, 0.5f, Animation.RELATIVE_TO_PARENT, 0.5f);
+    public ScaleAnimation sATo0 = new ScaleAnimation(1, 1, 1, 0, Animation.RELATIVE_TO_PARENT, 0.5f, Animation.RELATIVE_TO_PARENT, 0.5f);
+    public ScaleAnimation sATo1 = new ScaleAnimation(1, 1, 0, 1, Animation.RELATIVE_TO_PARENT, 0.5f, Animation.RELATIVE_TO_PARENT, 0.5f);
     private View layoutOne;
     private View layoutTwo;
 

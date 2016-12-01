@@ -144,20 +144,16 @@ public class RegisterActivity extends AppCompatActivity {
             public void run() {
                 DBProcessor dbP = new DBProcessor();
                 dbP.getConn();
-                int uid;
-                if ((uid = dbP.rowSelect("select uid from user")) >= -1) {
-                    int res = dbP.insert(
-                            "insert into user(uid, username, pw, nickname, birthday, SEX) values(" +
-                                    (uid + 1) + ", '" + username + "', '" + pw + "', '" + nickname +
-                                    "', '" + birthday + "', " + sex + ")"
-                    );
-                    if (res == 1)
-                        registerHandler.post(successRunnable);
-                    else if (res == 2)
-                        registerHandler.post(nameErrorRunnable);
-                    else
-                        registerHandler.post(serverErrorRunnable);
-                } else
+                int res = dbP.insert(
+                        "insert into user(username, pw, nickname, birthday, SEX) values('"
+                                + username + "', '" + pw + "', '" + nickname +
+                                "', '" + birthday + "', " + sex + ")"
+                );
+                if (res == 1)
+                    registerHandler.post(successRunnable);
+                else if (res == 2)
+                    registerHandler.post(nameErrorRunnable);
+                else
                     registerHandler.post(serverErrorRunnable);
                 dbP.closeConn();
                 waitDialog.dismiss();
