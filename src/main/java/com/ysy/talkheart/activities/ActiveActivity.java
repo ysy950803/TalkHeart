@@ -38,17 +38,29 @@ public class ActiveActivity extends AppCompatActivity {
 
     private Handler refreshHandler;
 
+    private String UID = "加载中…";
+    private String SEX = "加载中…";
+    private String NICKNAME = "加载中…";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_active);
         setupActionBar();
+
+        initData();
         initView();
         clickListener();
         refreshHandler = new Handler();
 
         refreshLayout.setRefreshing(true);
         refresh();
+    }
+
+    private void initData() {
+        UID = getIntent().getExtras().getString("uid");
+        SEX = getIntent().getExtras().getString("sex");
+        NICKNAME = getIntent().getExtras().getString("nickname");
     }
 
     private void initView() {
@@ -93,19 +105,16 @@ public class ActiveActivity extends AppCompatActivity {
     }
 
     private boolean refreshData() {
-        int uid = 0;
-        int sex = 1;
-        String nickname = "原子君";
         ConnectionDetector cd = new ConnectionDetector(this);
         if (!cd.isConnectingToInternet()) {
             Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
             return false;
         }
-        connectToGetActive(uid, sex, nickname);
+        connectToGetActive(UID, Integer.parseInt(SEX), NICKNAME);
         return true;
     }
 
-    private void connectToGetActive(final int uid, final int sex, final String nickname) {
+    private void connectToGetActive(final String uid, final int sex, final String nickname) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -166,11 +175,10 @@ public class ActiveActivity extends AppCompatActivity {
     }
 
     public void updateGood(int position) {
-        int uid = 0;
-        connectToUpdateGood(uid, position);
+        connectToUpdateGood(UID, position);
     }
 
-    private void connectToUpdateGood(final int uid, final int position) {
+    private void connectToUpdateGood(final String uid, final int position) {
         new Thread(new Runnable() {
             @Override
             public void run() {

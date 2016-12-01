@@ -18,7 +18,7 @@ import java.util.Objects;
 public class DBProcessor {
 
     private static final String dbDriver = "com.mysql.jdbc.Driver";
-    private static final String dbUrl = "jdbc:mysql://000.000.000.000:3306/dbName";
+    private static final String dbUrl = "jdbc:mysql://IP:3306/dbName";
     private static final String dbUser = "root";
     private static final String dbPass = "123456";
 
@@ -149,21 +149,22 @@ public class DBProcessor {
         }
     }
 
-    public String loginSelect(String sql) { // select pw from user where username = ''
-        String pw = "";
+    public String[] loginSelect(String sql) { // select pw from user where username = ''
+        String[] uid_pw = new String[2];
         if (conn != null) {
             try {
                 st = conn.createStatement();
                 rs = st.executeQuery(sql);
-                pw = "用户不存在";
                 while (rs.next()) {
-                    pw = rs.getString(1);
+                    uid_pw[0] = rs.getInt(1) + "";
+                    uid_pw[1] = rs.getString(2);
                 }
             } catch (SQLException e) {
+                uid_pw[1] = "用户不存在";
                 e.printStackTrace();
             }
         }
-        return pw;
+        return uid_pw;
     }
 
     public int rowSelect(String sql) {
@@ -224,5 +225,25 @@ public class DBProcessor {
             e.printStackTrace();
         }
         return resList;
+    }
+
+    public String[] meInfoSelect(String sql, String sql2) {
+        String[] meInfo = new String[4];
+        try {
+            st = conn.createStatement();
+            rs = st.executeQuery(sql);
+            while (rs.next()) {
+                meInfo[0] = rs.getInt(1) + ""; // sex
+                meInfo[1] = rs.getString(2); // nickname
+                meInfo[2] = rs.getString(3); // intro
+            }
+            rs = st.executeQuery(sql2);
+            while (rs.next())
+                meInfo[3] = rs.getInt(1) + ""; // active_num
+        } catch (SQLException e) {
+            meInfo[1] = "/(ㄒoㄒ)/~~";
+            e.printStackTrace();
+        }
+        return meInfo;
     }
 }

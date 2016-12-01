@@ -43,7 +43,7 @@ public class HomeFragment extends StatedFragment {
     private static final String ARG_PARAM2 = "param2";
 
     private String mParam1;
-    private String mParam2;
+    private String UID;
 
     public static HomeFragment newInstance(String param1, String param2) {
         HomeFragment fragment = new HomeFragment();
@@ -59,7 +59,7 @@ public class HomeFragment extends StatedFragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            UID = getArguments().getString(ARG_PARAM2);
         }
     }
 
@@ -117,9 +117,9 @@ public class HomeFragment extends StatedFragment {
             public void onClick(View v) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), addFab, getString(R.string.trans_add));
-                    startActivity(new Intent(getActivity(), WriteActivity.class), tAO.toBundle());
+                    startActivity(new Intent(getActivity(), WriteActivity.class).putExtra("uid", UID), tAO.toBundle());
                 } else
-                    startActivity(new Intent(getActivity(), WriteActivity.class));
+                    startActivity(new Intent(getActivity(), WriteActivity.class).putExtra("uid", UID));
             }
         });
         listViewAdapter.setListOnItemClickListener(new ListOnItemClickListener() {

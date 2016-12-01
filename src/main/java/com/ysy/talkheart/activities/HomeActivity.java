@@ -31,8 +31,10 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     private ActionBar actionBar;
 
     private Handler updateHandler;
-    private String UPDATE_URL = "http://www.jingxuehang.cn/";
+    private String UPDATE_URL = "";
     private static final int WAIT_TIME = 2048;
+
+    private String UID = "加载中…";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +42,8 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         setContentView(R.layout.activity_home);
         actionBar = getSupportActionBar();
         ActivitiesDestroyer.getInstance().killAll();
+
+        UID = getIntent().getExtras().getString("uid");
 
         BottomNavigationBar bottomNavigationBar = (BottomNavigationBar) findViewById(R.id.bottom_navigation_bar);
         bottomNavigationBar
@@ -65,7 +69,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
             actionBar.setTitle("首页");
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction transaction = fm.beginTransaction();
-        homeFragment = HomeFragment.newInstance("First", "Home");
+        homeFragment = HomeFragment.newInstance("First", UID);
         transaction.replace(R.id.content_table_layout, homeFragment);
         transaction.commit();
     }
@@ -80,7 +84,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 if (actionBar != null)
                     actionBar.setTitle("首页");
                 if (homeFragment == null) {
-                    homeFragment = HomeFragment.newInstance("First", "Home");
+                    homeFragment = HomeFragment.newInstance("First", UID);
                 }
                 transaction.replace(R.id.content_table_layout, homeFragment);
                 break;
@@ -96,7 +100,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 if (actionBar != null)
                     actionBar.setTitle("个人");
                 if (meFragment == null) {
-                    meFragment = MeFragment.newInstance("Third", "Me");
+                    meFragment = MeFragment.newInstance("Third", UID);
                 }
                 transaction.replace(R.id.content_table_layout, meFragment);
                 break;

@@ -4,6 +4,7 @@ import android.app.ActivityOptions;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +21,7 @@ import com.ysy.talkheart.activities.FansActivity;
 import com.ysy.talkheart.activities.LoginActivity;
 import com.ysy.talkheart.activities.MarkActivity;
 import com.ysy.talkheart.activities.WatchActivity;
+import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.DataCleanManager;
 import com.ysy.talkheart.views.CircularImageView;
 
@@ -40,11 +42,18 @@ public class MeFragment extends StatedFragment {
     private LinearLayout clearLayout;
     private LinearLayout exitLayout;
 
+    private String NICKNAME = "加载中…";
+    private String INTRODUCTION = "加载中…";
+    private String SEX = "加载中…";
+    private String ACTIVE_NUM = "0";
+
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
     private String mParam1;
-    private String mParam2;
+    private String UID;
+
+    private Handler meFragmentHandler;
 
     public static MeFragment newInstance(String param1, String param2) {
         MeFragment fragment = new MeFragment();
@@ -55,17 +64,58 @@ public class MeFragment extends StatedFragment {
         return fragment;
     }
 
+    private void connectToGetMeInfo(final String uid) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                DBProcessor dbP = new DBProcessor();
+                dbP.getConn();
+                String[] res = dbP.meInfoSelect(
+                        "select sex, nickname, intro from user where uid = " + uid,
+                        "select count(actid) from active where uid = " + uid);
+                if (res[1].equals("/(ㄒoㄒ)/~~")) {
+                    meFragmentHandler.post(errorRunnable);
+                } else {
+                    SEX = res[0];
+                    NICKNAME = res[1];
+                    INTRODUCTION = res[2];
+                    ACTIVE_NUM = res[3];
+                    meFragmentHandler.post(successRunnable);
+                }
+                dbP.closeConn();
+            }
+        }).start();
+    }
+
+    private Runnable successRunnable = new Runnable() {
+        @Override
+        public void run() {
+            avatarImg.setImageResource(Integer.parseInt(SEX) == 1 ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
+            nicknameTv.setText(NICKNAME);
+            introductionTv.setText(INTRODUCTION == null ? "点击设置签名" : INTRODUCTION);
+            activeNumTv.setClickable(true);
+            activeNumTv.setText(ACTIVE_NUM);
+        }
+    };
+
+    private Runnable errorRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(getActivity(), "服务器君生病了，重试一下吧", Toast.LENGTH_SHORT).show();
+        }
+    };
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            UID = getArguments().getString(ARG_PARAM2);
         }
     }
 
     public MeFragment() {
-
+        meFragmentHandler = new Handler();
     }
 
     @Nullable
@@ -74,6 +124,7 @@ public class MeFragment extends StatedFragment {
         View view = inflater.inflate(R.layout.fragment_me, container, false);
         initView(view);
         clickListener();
+        connectToGetMeInfo(UID);
         return view;
     }
 
@@ -110,12 +161,21 @@ public class MeFragment extends StatedFragment {
             public void onClick(View v) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), activeNumTv, getString(R.string.trans_active));
-                    startActivity(new Intent(getActivity(), ActiveActivity.class), tAO.toBundle());
+                    Intent intent = new Intent(getActivity(), ActiveActivity.class);
+                    intent.putExtra("uid", UID);
+                    intent.putExtra("sex", SEX);
+                    intent.putExtra("nickname", NICKNAME);
+                    startActivity(intent, tAO.toBundle());
                 } else {
-                    startActivity(new Intent(getActivity(), ActiveActivity.class));
+                    Intent intent = new Intent(getActivity(), ActiveActivity.class);
+                    intent.putExtra("uid", UID);
+                    intent.putExtra("sex", SEX);
+                    intent.putExtra("nickname", NICKNAME);
+                    startActivity(intent);
                 }
             }
         });
+        activeNumTv.setClickable(false);
 
         watchNumTv.setOnClickListener(new View.OnClickListener() {
             @Override

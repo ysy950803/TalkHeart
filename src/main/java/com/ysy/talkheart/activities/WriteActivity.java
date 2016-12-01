@@ -30,13 +30,20 @@ public class WriteActivity extends AppCompatActivity {
     private Handler sendHandler;
     private ProgressDialog waitDialog;
 
+    private String UID = "加载中…";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_write);
         setupActionBar();
+        initDate();
         initView();
         sendHandler = new Handler();
+    }
+
+    private void initDate() {
+        UID = getIntent().getExtras().getString("uid");
     }
 
     private void initView() {
@@ -141,7 +148,7 @@ public class WriteActivity extends AppCompatActivity {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
-                send(0, sendTime, writeEdt.getText().toString());
+                send(Integer.parseInt(UID), sendTime, writeEdt.getText().toString());
                 return true;
             }
         });
