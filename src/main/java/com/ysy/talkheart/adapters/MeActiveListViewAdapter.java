@@ -12,7 +12,6 @@ import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.ActiveActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
-import com.ysy.talkheart.utils.NoDoubleClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
 import java.util.List;
@@ -94,13 +93,15 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
         final int pos = Integer.parseInt(position + "");
         final ImageView goodImg = viewHolder.goodImg;
         goodImg.setImageResource(goodStatusList.get(position) == 1 ? R.mipmap.ic_favorite_pink_36dp : R.mipmap.ic_favorite_blue_circle_36dp);
-        goodImg.setOnClickListener(new NoDoubleClickListener() {
+        goodImg.setOnClickListener(new View.OnClickListener() {
             @Override
-            protected void onNoDoubleClick(View v) {
+            public void onClick(View v) {
                 ConnectionDetector cd = new ConnectionDetector(context);
                 if (!cd.isConnectingToInternet()) {
                     Toast.makeText(context, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
                 } else {
+                    context.goodImg = goodImg;
+                    context.goodImg.setClickable(false);
                     int goodNum = Integer.parseInt(goodNumTv.getText().toString());
                     if (goodStatusList.get(pos) == 0 || goodStatusList.get(pos) == -1) {
                         String goodNumStr = (++goodNum) + "";

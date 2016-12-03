@@ -9,6 +9,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.ysy.talkheart.R;
@@ -41,6 +42,8 @@ public class ActiveActivity extends AppCompatActivity {
     private String UID = "加载中…";
     private String SEX = "加载中…";
     private String NICKNAME = "加载中…";
+
+    public ImageView goodImg;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,34 +122,36 @@ public class ActiveActivity extends AppCompatActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                dbP.getConn();
-                List<List<String>> resList = dbP.meActiveSelect(
-                        "select actid, sendtime, goodnum, content from active where uid = " + uid +
-                                " order by actid desc"
-                );
-                List<List<String>> statusList = dbP.goodSelect(
-                        "select actid, isfav from favorite where uid = " + uid +
-                                " order by actid desc"
-                );
+                if (dbP.getConn() == null) {
+                    refreshHandler.post(timeOutRunnable);
+                } else {
+                    List<List<String>> resList = dbP.meActiveSelect(
+                            "select actid, sendtime, goodnum, content from active where uid = " + uid +
+                                    " order by actid desc"
+                    );
+                    List<List<String>> statusList = dbP.goodSelect(
+                            "select actid, isfav from favorite where uid = " + uid +
+                                    " order by actid desc"
+                    );
+                    clearAllLists();
+                    if (statusList == null || resList == null) {
+                        refreshHandler.post(serverErrorRunnable);
+                    } else if (resList.get(0).size() == 0) {
+                        refreshHandler.post(nothingRunnable);
+                    } else if (resList.get(0).size() > 0) {
+                        for (int i = 0; i < resList.get(0).size(); i++) {
+                            avatarList.add(sex == 1 ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
+                            nicknameList.add(nickname);
 
-                clearAllLists();
-                if (statusList == null || resList == null) {
-                    refreshHandler.post(serverErrorRunnable);
-                } else if (resList.get(0).size() == 0) {
-                    refreshHandler.post(nothingRunnable);
-                } else if (resList.get(0).size() > 0) {
-                    for (int i = 0; i < resList.get(0).size(); i++) {
-                        avatarList.add(sex == 1 ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
-                        nicknameList.add(nickname);
+                            actidList.add(resList.get(0).get(i));
+                            goodStatusList.add(getGoodStatus(i, actidList, statusList));
 
-                        actidList.add(resList.get(0).get(i));
-                        goodStatusList.add(getGoodStatus(i, actidList, statusList));
-
-                        timeList.add(resList.get(1).get(i).substring(0, 19));
-                        goodNumList.add(resList.get(2).get(i));
-                        textList.add(resList.get(3).get(i));
+                            timeList.add(resList.get(1).get(i).substring(0, 19));
+                            goodNumList.add(resList.get(2).get(i));
+                            textList.add(resList.get(3).get(i));
+                        }
+                        refreshHandler.post(successRunnable);
                     }
-                    refreshHandler.post(successRunnable);
                 }
                 dbP.closeConn();
             }
@@ -183,36 +188,42 @@ public class ActiveActivity extends AppCompatActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                dbP.getConn();
-                String actid = actidList.get(position);
-                if (goodStatusList.get(position) == 1) {
-                    int res = dbP.goodUpdate(
-                            "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
-                            "update favorite set isfav = 0 where uid = " + uid + " and actid = " + actid
-                    );
-                    if (res == 2)
-                        goodStatusList.set(position, 0);
-                    else
-                        refreshHandler.post(noGoodErrorRunnable);
-                } else if (goodStatusList.get(position) == -1) {
-                    int res = dbP.goodUpdate(
-                            "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
-                            "insert into favorite(uid, actid, isfav) values(" + uid + ", " + actid + ", 1)"
-                    );
-                    if (res == 2)
-                        goodStatusList.set(position, 1);
-
-                    else
-                        refreshHandler.post(goodErrorRunnable);
-                } else if (goodStatusList.get(position) == 0) {
-                    int res = dbP.goodUpdate(
-                            "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
-                            "update favorite set isfav = 1 where uid = " + uid + " and actid = " + actid
-                    );
-                    if (res == 2)
-                        goodStatusList.set(position, 1);
-                    else
-                        refreshHandler.post(goodErrorRunnable);
+                if (dbP.getConn() == null) {
+                    refreshHandler.post(timeOutRunnable);
+                } else {
+                    String actid = actidList.get(position);
+                    if (goodStatusList.get(position) == 1) {
+                        int res = dbP.goodUpdate(
+                                "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
+                                "update favorite set isfav = 0 where uid = " + uid + " and actid = " + actid
+                        );
+                        if (res == 2)
+                            goodStatusList.set(position, 0);
+                        else
+                            refreshHandler.post(noGoodErrorRunnable);
+                    } else if (goodStatusList.get(position) == -1) {
+                        int res = dbP.goodUpdate(
+                                "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
+                                "insert into favorite(uid, actid, isfav) values(" + uid + ", " + actid + ", 1)"
+                        );
+                        if (res == 2)
+                            goodStatusList.set(position, 1);
+                        else
+                            refreshHandler.post(goodErrorRunnable);
+                    } else if (goodStatusList.get(position) == 0) {
+                        int res = dbP.goodUpdate(
+                                "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
+                                "update favorite set isfav = 1 where uid = " + uid + " and actid = " + actid
+                        );
+                        if (res == 2)
+                            goodStatusList.set(position, 1);
+                        else
+                            refreshHandler.post(goodErrorRunnable);
+                    }
+                }
+                if (goodImg != null) {
+                    goodImg.setClickable(true);
+                    goodImg = null;
                 }
                 dbP.closeConn();
             }
@@ -242,6 +253,15 @@ public class ActiveActivity extends AppCompatActivity {
         @Override
         public void run() {
             Toast.makeText(ActiveActivity.this, "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
+            refreshLayout.setRefreshing(false);
+            isRefreshing = false;
+        }
+    };
+
+    private Runnable timeOutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(ActiveActivity.this, "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
         }

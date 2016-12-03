@@ -138,24 +138,34 @@ public class LoginActivity extends AppCompatActivity {
         }
     };
 
+    private Runnable timeOutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(LoginActivity.this, "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
+        }
+    };
+
     private void connectToLogin(final String username, final String pw) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                dbP.getConn();
-                String[] res = dbP.loginSelect("select uid, pw from user where username = '" + username + "'");
-                if (res[1].equals(pw)) {
-                    startActivity(new Intent(LoginActivity.this, HomeActivity.class).putExtra("uid", res[0]));
-//                            loginHandler = null;
-                } else if (res[1].equals("用户不存在")) {
-//                            loginHandler.sendEmptyMessage(0);
-                    loginHandler.post(userErrorRunnable);
-                } else if (res[1].equals("")) {
-                    loginHandler.post(serverErrorRunnable);
+                if (dbP.getConn() == null) {
+                    loginHandler.post(timeOutRunnable);
                 } else {
+                    String[] res = dbP.loginSelect("select uid, pw from user where username = '" + username + "'");
+                    if (res[1].equals(pw)) {
+                        startActivity(new Intent(LoginActivity.this, HomeActivity.class).putExtra("uid", res[0]));
+//                            loginHandler = null;
+                    } else if (res[1].equals("用户不存在")) {
+//                            loginHandler.sendEmptyMessage(0);
+                        loginHandler.post(userErrorRunnable);
+                    } else if (res[1].equals("")) {
+                        loginHandler.post(serverErrorRunnable);
+                    } else {
 //                            loginHandler.sendEmptyMessage(1);
-                    loginHandler.post(pwErrorRunnable);
+                        loginHandler.post(pwErrorRunnable);
+                    }
                 }
                 dbP.closeConn();
                 waitDialog.dismiss();

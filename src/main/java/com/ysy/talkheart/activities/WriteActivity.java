@@ -73,15 +73,18 @@ public class WriteActivity extends AppCompatActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                dbP.getConn();
-                int res = dbP.insert(
-                        "insert into active(uid, sendtime, goodnum, content) values(" +
-                                uid + ", '" + sendTime + "', 0, '" + content + "')"
-                );
-                if (res == 1)
-                    sendHandler.post(successRunnable);
-                else
-                    sendHandler.post(serverErrorRunnable);
+                if (dbP.getConn() == null) {
+                    sendHandler.post(timeOutRunnable);
+                } else {
+                    int res = dbP.insert(
+                            "insert into active(uid, sendtime, goodnum, content) values(" +
+                                    uid + ", '" + sendTime + "', 0, '" + content + "')"
+                    );
+                    if (res == 1)
+                        sendHandler.post(successRunnable);
+                    else
+                        sendHandler.post(serverErrorRunnable);
+                }
                 dbP.closeConn();
                 waitDialog.dismiss();
             }
@@ -100,6 +103,13 @@ public class WriteActivity extends AppCompatActivity {
         @Override
         public void run() {
             Toast.makeText(WriteActivity.this, "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    private Runnable timeOutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(WriteActivity.this, "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
         }
     };
 

@@ -143,18 +143,21 @@ public class RegisterActivity extends AppCompatActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                dbP.getConn();
-                int res = dbP.insert(
-                        "insert into user(username, pw, nickname, birthday, SEX) values('"
-                                + username + "', '" + pw + "', '" + nickname +
-                                "', '" + birthday + "', " + sex + ")"
-                );
-                if (res == 1)
-                    registerHandler.post(successRunnable);
-                else if (res == 2)
-                    registerHandler.post(nameErrorRunnable);
-                else
-                    registerHandler.post(serverErrorRunnable);
+                if(dbP.getConn() == null) {
+                    registerHandler.post(timeOutRunnable);
+                } else {
+                    int res = dbP.insert(
+                            "insert into user(username, pw, nickname, birthday, SEX) values('"
+                                    + username + "', '" + pw + "', '" + nickname +
+                                    "', '" + birthday + "', " + sex + ")"
+                    );
+                    if (res == 1)
+                        registerHandler.post(successRunnable);
+                    else if (res == 2)
+                        registerHandler.post(nameErrorRunnable);
+                    else
+                        registerHandler.post(serverErrorRunnable);
+                }
                 dbP.closeConn();
                 waitDialog.dismiss();
             }
@@ -165,6 +168,13 @@ public class RegisterActivity extends AppCompatActivity {
         @Override
         public void run() {
             Toast.makeText(RegisterActivity.this, "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    private Runnable timeOutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(RegisterActivity.this, "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
         }
     };
 

@@ -12,7 +12,6 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -79,18 +78,21 @@ public class MeFragment extends StatedFragment {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                dbP.getConn();
-                String[] res = dbP.meInfoSelect(
-                        "select sex, nickname, intro from user where uid = " + uid,
-                        "select count(actid) from active where uid = " + uid);
-                if (res[1].equals("/(ㄒoㄒ)/~~")) {
-                    meFragmentHandler.post(errorRunnable);
+                if(dbP.getConn() == null) {
+                    meFragmentHandler.post(timeOutRunnable);
                 } else {
-                    SEX = res[0];
-                    NICKNAME = res[1];
-                    INTRODUCTION = res[2];
-                    ACTIVE_NUM = res[3];
-                    meFragmentHandler.post(successRunnable);
+                    String[] res = dbP.meInfoSelect(
+                            "select sex, nickname, intro from user where uid = " + uid,
+                            "select count(actid) from active where uid = " + uid);
+                    if (res[1].equals("/(ㄒoㄒ)/~~")) {
+                        meFragmentHandler.post(serverErrorRunnable);
+                    } else {
+                        SEX = res[0];
+                        NICKNAME = res[1];
+                        INTRODUCTION = res[2];
+                        ACTIVE_NUM = res[3];
+                        meFragmentHandler.post(successRunnable);
+                    }
                 }
                 dbP.closeConn();
             }
@@ -115,10 +117,17 @@ public class MeFragment extends StatedFragment {
         }
     };
 
-    private Runnable errorRunnable = new Runnable() {
+    private Runnable serverErrorRunnable = new Runnable() {
         @Override
         public void run() {
             Toast.makeText(getActivity(), "服务器君生病了，重试一下吧", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    private Runnable timeOutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(getActivity(), "连接超时啦，重试一下吧", Toast.LENGTH_SHORT).show();
         }
     };
 
@@ -293,14 +302,17 @@ public class MeFragment extends StatedFragment {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                dbP.getConn();
-                int res = dbP.update(
-                        "update user set intro = '" + intro + "' where uid = " + UID
-                );
-                if (res == 1) {
-                    meFragmentHandler.post(updateIntroRunnable);
+                if (dbP.getConn() == null) {
+                    meFragmentHandler.post(timeOutRunnable);
                 } else {
-                    meFragmentHandler.post(errorRunnable);
+                    int res = dbP.update(
+                            "update user set intro = '" + intro + "' where uid = " + UID
+                    );
+                    if (res == 1) {
+                        meFragmentHandler.post(updateIntroRunnable);
+                    } else {
+                        meFragmentHandler.post(serverErrorRunnable);
+                    }
                 }
                 dbP.closeConn();
             }

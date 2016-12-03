@@ -126,11 +126,12 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
             @Override
             public void run() {
                 UpdateChecker dbP = new UpdateChecker();
-                dbP.getConn();
-                int code;
-                if ((code = dbP.codeSelect("select max(code) from app_version")) > getVersionCode(getApplicationContext())) {
-                    UPDATE_URL = dbP.downloadUrlSelect("select url from download_url where code = " + code);
-                    updateHandler.post(updateRunnable);
+                if (dbP.getConn() != null) {
+                    int code;
+                    if ((code = dbP.codeSelect("select max(code) from app_version")) > getVersionCode(getApplicationContext())) {
+                        UPDATE_URL = dbP.downloadUrlSelect("select url from download_url where code = " + code);
+                        updateHandler.post(updateRunnable);
+                    }
                 }
                 dbP.closeConn();
             }
