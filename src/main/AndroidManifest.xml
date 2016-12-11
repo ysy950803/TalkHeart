@@ -46,6 +46,10 @@
         <activity
             android:name=".activities.FansActivity"
             android:label="@string/me_fans" />
+        <activity android:name=".activities.PersonActivity" />
+        <activity
+            android:name=".activities.SearchActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
 </manifest>

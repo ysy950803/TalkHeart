@@ -12,6 +12,8 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.ashokvarma.bottomnavigation.BottomNavigationItem;
@@ -29,6 +31,8 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     private MeFragment meFragment;
     int lastSelectedPosition = 0;
     private ActionBar actionBar;
+    private MenuItem feedbackMenuItem;
+    private MenuItem searchMenuItem;
 
     private Handler updateHandler;
     private String UPDATE_URL = "";
@@ -87,6 +91,8 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                     homeFragment = HomeFragment.newInstance("First", UID);
                 }
                 transaction.replace(R.id.content_table_layout, homeFragment);
+                feedbackMenuItem.setVisible(false);
+                searchMenuItem.setVisible(true);
                 break;
             case 1:
                 if (actionBar != null)
@@ -95,6 +101,8 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                     messageFragment = MessageFragment.newInstance("Second", "Message");
                 }
                 transaction.replace(R.id.content_table_layout, messageFragment);
+                feedbackMenuItem.setVisible(false);
+                searchMenuItem.setVisible(false);
                 break;
             case 2:
                 if (actionBar != null)
@@ -103,6 +111,8 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                     meFragment = MeFragment.newInstance("Third", UID);
                 }
                 transaction.replace(R.id.content_table_layout, meFragment);
+                feedbackMenuItem.setVisible(true);
+                searchMenuItem.setVisible(false);
                 break;
             default:
                 break;
@@ -119,6 +129,32 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     @Override
     public void onTabReselected(int position) {
 
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_home, menu);
+        feedbackMenuItem = menu.findItem(R.id.action_feedback);
+        feedbackMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                // startActivity
+                return true;
+            }
+        });
+        feedbackMenuItem.setVisible(false);
+
+        searchMenuItem = menu.findItem(R.id.action_search);
+        searchMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                startActivity(new Intent(HomeActivity.this, SearchActivity.class));
+                return true;
+            }
+        });
+        searchMenuItem.setVisible(true);
+
+        return true;
     }
 
     private void checkUpdate() {

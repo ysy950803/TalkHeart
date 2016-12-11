@@ -164,7 +164,6 @@ public class WriteActivity extends AppCompatActivity {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // save to draft
-
                 return true;
             }
         });

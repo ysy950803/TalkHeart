@@ -32,7 +32,6 @@ public class ActiveActivity extends AppCompatActivity {
 
     private List<String> actidList = new ArrayList<>();
 
-    private RecyclerView activeRecyclerView;
     private MeActiveListViewAdapter listViewAdapter;
     private SwipeRefreshLayout refreshLayout;
     private boolean isRefreshing = false;
@@ -68,7 +67,7 @@ public class ActiveActivity extends AppCompatActivity {
 
     private void initView() {
         refreshLayout = (SwipeRefreshLayout) findViewById(R.id.me_active_refresh_layout);
-        activeRecyclerView = (RecyclerView) findViewById(R.id.me_active_listView);
+        RecyclerView activeRecyclerView = (RecyclerView) findViewById(R.id.me_active_listView);
 
         activeRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         listViewAdapter = new MeActiveListViewAdapter(this, avatarList, nicknameList, timeList, textList, goodStatusList, goodNumList);

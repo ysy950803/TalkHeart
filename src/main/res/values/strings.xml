@@ -50,6 +50,8 @@
     <string name="register_set_birth">点击设置生日</string>
     <string name="me_intro_edt">只能输入24个字符哦…</string>
     <string name="me_nickname_edt">只能输入16个字符哦…</string>
+    <string name="me_feedback">意见反馈</string>
+    <string name="home_search">寻觅</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

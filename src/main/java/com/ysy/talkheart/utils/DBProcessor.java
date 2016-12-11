@@ -1,4 +1,4 @@
-package com.ysy.talkheart.utils;
+﻿package com.ysy.talkheart.utils;
 
 /**
  * Created by Shengyu Yao on 2016/11/19.
@@ -18,9 +18,9 @@ import java.util.Objects;
 public class DBProcessor {
 
     private static final String dbDriver = "com.mysql.jdbc.Driver";
-    private static final String dbUrl = "jdbc:mysql://IP:3306/dbName";
+    private static final String dbUrl = "jdbc:mysql://000.000.000.000:3306/dbName";
     private static final String dbUser = "root";
-    private static final String dbPass = "123456";
+    private static final String dbPass = "******";
 
     private Connection conn = null;
     private ResultSet rs = null;
@@ -245,5 +245,28 @@ public class DBProcessor {
             e.printStackTrace();
         }
         return meInfo;
+    }
+
+    public List<List<String>> searchUserSelect(String sql) {
+        List<List<String>> resList = new ArrayList<>();
+        List<String> nickname_col = new ArrayList<>();
+        List<String> sex_col = new ArrayList<>();
+        List<String> info_col = new ArrayList<>();
+        try {
+            st = conn.createStatement();
+            rs = st.executeQuery(sql);
+            while (rs.next()) {
+                nickname_col.add(rs.getString(1));
+                sex_col.add(rs.getInt(2) + "");
+                info_col.add(rs.getString(3));
+            }
+            resList.add(nickname_col);
+            resList.add(sex_col);
+            resList.add(info_col);
+        } catch (SQLException e) {
+            resList = null;
+            e.printStackTrace();
+        }
+        return resList;
     }
 }
