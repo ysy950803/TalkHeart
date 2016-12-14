@@ -1,5 +1,6 @@
 package com.ysy.talkheart.activities;
 
+import android.content.Intent;
 import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
@@ -32,8 +33,9 @@ public class SearchActivity extends AppCompatActivity {
     private SearchUserListViewAdapter listViewAdapter;
     private List<Integer> avatarList = new ArrayList<>();
     private List<String> nicknameList = new ArrayList<>();
-    private List<String> infoList = new ArrayList<>();
-
+    private List<String> introList = new ArrayList<>();
+    private List<String> uidList = new ArrayList<>();
+    private String UID;
     private Handler searchHandler;
 
     @Override
@@ -42,6 +44,9 @@ public class SearchActivity extends AppCompatActivity {
         setContentView(R.layout.activity_search);
         setSupportActionBar((Toolbar) findViewById(R.id.search_toolbar));
         setupActionBar();
+
+        UID = getIntent().getExtras().getString("uid");
+
         initView();
         setSearchContent();
         clickListener();
@@ -67,7 +72,12 @@ public class SearchActivity extends AppCompatActivity {
         listViewAdapter.setListOnItemClickListener(new ListOnItemClickListener() {
             @Override
             public void onItemClick(View view, int position) {
-
+                Intent intent = new Intent(SearchActivity.this, PersonActivity.class);
+                intent.putExtra("uid", uidList.get(position));
+                intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
+                intent.putExtra("nickname", nicknameList.get(position));
+                intent.putExtra("e_uid", UID);
+                startActivity(intent);
             }
 
             @Override
@@ -80,7 +90,7 @@ public class SearchActivity extends AppCompatActivity {
     private void setSearchContent() {
         RecyclerView searchRecyclerView = (RecyclerView) findViewById(R.id.search_recyclerView);
         searchRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        listViewAdapter = new SearchUserListViewAdapter(avatarList, nicknameList, infoList);
+        listViewAdapter = new SearchUserListViewAdapter(avatarList, nicknameList, introList);
         searchRecyclerView.setAdapter(listViewAdapter);
     }
 
@@ -107,7 +117,7 @@ public class SearchActivity extends AppCompatActivity {
                     searchHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.searchUserSelect(
-                            "select nickname, sex, intro from user where nickname like '%" + nicknameLike + "%'"
+                            "select nickname, sex, intro, uid from user where nickname like '%" + nicknameLike + "%'"
                     );
                     clearAllLists();
                     if (resList == null) {
@@ -118,7 +128,8 @@ public class SearchActivity extends AppCompatActivity {
                         for (int i = 0; i < resList.get(0).size(); i++) {
                             nicknameList.add(resList.get(0).get(i));
                             avatarList.add(resList.get(1).get(i).equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
-                            infoList.add(resList.get(2).get(i));
+                            introList.add(resList.get(2).get(i) == null ? "未设置签名" : resList.get(2).get(i));
+                            uidList.add(resList.get(3).get(i));
                         }
                         searchHandler.post(successRunnable);
                     }
@@ -164,7 +175,8 @@ public class SearchActivity extends AppCompatActivity {
     private void clearAllLists() {
         avatarList.clear();
         nicknameList.clear();
-        infoList.clear();
+        introList.clear();
+        uidList.clear();
     }
 
     private void setupActionBar() {

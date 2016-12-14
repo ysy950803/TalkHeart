@@ -1,0 +1,10 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.ysy.classpower_student.activities.base.StudentPersonalCenterActivity">
+    <item
+        android:id="@+id/action_modify"
+        android:icon="@drawable/ic_create_white_24dp"
+        android:title="@string/person_modify"
+        app:showAsAction="ifRoom" />
+</menu>

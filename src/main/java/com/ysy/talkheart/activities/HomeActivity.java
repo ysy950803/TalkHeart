@@ -38,7 +38,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     private String UPDATE_URL = "";
     private static final int WAIT_TIME = 2048;
 
-    private String UID = "加载中…";
+    private String UID = "0";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,7 +88,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 if (actionBar != null)
                     actionBar.setTitle("首页");
                 if (homeFragment == null) {
-                    homeFragment = HomeFragment.newInstance("First", UID);
+                    homeFragment = HomeFragment.newInstance("Home", UID);
                 }
                 transaction.replace(R.id.content_table_layout, homeFragment);
                 feedbackMenuItem.setVisible(false);
@@ -98,7 +98,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 if (actionBar != null)
                     actionBar.setTitle("消息");
                 if (messageFragment == null) {
-                    messageFragment = MessageFragment.newInstance("Second", "Message");
+                    messageFragment = MessageFragment.newInstance("Msg", "");
                 }
                 transaction.replace(R.id.content_table_layout, messageFragment);
                 feedbackMenuItem.setVisible(false);
@@ -108,7 +108,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 if (actionBar != null)
                     actionBar.setTitle("个人");
                 if (meFragment == null) {
-                    meFragment = MeFragment.newInstance("Third", UID);
+                    meFragment = MeFragment.newInstance("Me", UID);
                 }
                 transaction.replace(R.id.content_table_layout, meFragment);
                 feedbackMenuItem.setVisible(true);
@@ -148,7 +148,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         searchMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                startActivity(new Intent(HomeActivity.this, SearchActivity.class));
+                startActivity(new Intent(HomeActivity.this, SearchActivity.class).putExtra("uid", UID));
                 return true;
             }
         });

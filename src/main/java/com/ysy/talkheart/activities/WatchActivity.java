@@ -45,9 +45,9 @@ public class WatchActivity extends AppCompatActivity {
         nicknameList.add("分子君");
         nicknameList.add("质子君");
 
-        infoList.add(getString(R.string.me_introduction));
-        infoList.add(getString(R.string.me_introduction));
-        infoList.add(getString(R.string.me_introduction));
+        infoList.add(getString(R.string.content_loading));
+        infoList.add(getString(R.string.content_loading));
+        infoList.add(getString(R.string.content_loading));
 
         relationList.add(1);
         relationList.add(0);

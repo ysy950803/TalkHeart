@@ -12,14 +12,13 @@
     <string name="register_title">注&#160;&#160;册</string>
     <string name="register_boy">男生&#160;&#160;</string>
     <string name="register_girl">女生</string>
-    <string name="me_nickname">加载中…</string>
+    <string name="content_loading">加载中…</string>
     <string name="me_active_num">0</string>
     <string name="me_active">动态</string>
     <string name="me_watch_num">0</string>
     <string name="me_watch">关注</string>
     <string name="me_fans_num">0</string>
     <string name="me_fans">粉丝</string>
-    <string name="me_introduction">加载中…</string>
     <string name="me_mark">我的收藏</string>
     <string name="me_draft">我的草稿</string>
     <string name="me_clear">清理缓存</string>
@@ -52,6 +51,10 @@
     <string name="me_nickname_edt">只能输入16个字符哦…</string>
     <string name="me_feedback">意见反馈</string>
     <string name="home_search">寻觅</string>
+    <string name="trans_me_avatar">Me To Person</string>
+    <string name="person_school">院校</string>
+    <string name="person_birthday">生日</string>
+    <string name="person_modify">修改</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

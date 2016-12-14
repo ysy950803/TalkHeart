@@ -30,7 +30,7 @@ public class WriteActivity extends AppCompatActivity {
     private Handler sendHandler;
     private ProgressDialog waitDialog;
 
-    private String UID = "加载中…";
+    private String UID = "0";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

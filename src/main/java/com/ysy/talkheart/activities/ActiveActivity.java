@@ -38,8 +38,8 @@ public class ActiveActivity extends AppCompatActivity {
 
     private Handler refreshHandler;
 
-    private String UID = "加载中…";
-    private String SEX = "加载中…";
+    private String UID = "0";
+    private String SEX = "1";
     private String NICKNAME = "加载中…";
 
     public ImageView goodImg;

@@ -227,7 +227,7 @@ public class DBProcessor {
         return resList;
     }
 
-    public String[] meInfoSelect(String sql, String sql2) {
+    public String[] meInfoSelect(String sql) {
         String[] meInfo = new String[4];
         try {
             st = conn.createStatement();
@@ -236,10 +236,8 @@ public class DBProcessor {
                 meInfo[0] = rs.getInt(1) + ""; // sex
                 meInfo[1] = rs.getString(2); // nickname
                 meInfo[2] = rs.getString(3); // intro
+                meInfo[3] = rs.getInt(4) + ""; // active_num
             }
-            rs = st.executeQuery(sql2);
-            while (rs.next())
-                meInfo[3] = rs.getInt(1) + ""; // active_num
         } catch (SQLException e) {
             meInfo[1] = "/(ㄒoㄒ)/~~";
             e.printStackTrace();
@@ -251,22 +249,59 @@ public class DBProcessor {
         List<List<String>> resList = new ArrayList<>();
         List<String> nickname_col = new ArrayList<>();
         List<String> sex_col = new ArrayList<>();
-        List<String> info_col = new ArrayList<>();
+        List<String> intro_col = new ArrayList<>();
+        List<String> uid_col = new ArrayList<>();
+
         try {
             st = conn.createStatement();
             rs = st.executeQuery(sql);
             while (rs.next()) {
                 nickname_col.add(rs.getString(1));
                 sex_col.add(rs.getInt(2) + "");
-                info_col.add(rs.getString(3));
+                intro_col.add(rs.getString(3));
+                uid_col.add(rs.getInt(4) + "");
             }
             resList.add(nickname_col);
             resList.add(sex_col);
-            resList.add(info_col);
+            resList.add(intro_col);
+            resList.add(uid_col);
         } catch (SQLException e) {
             resList = null;
             e.printStackTrace();
         }
         return resList;
+    }
+
+    public String[] personInfoSelect(String sql, boolean isFromMe) {
+        if (isFromMe) {
+            String[] personInfo = new String[2];
+            try {
+                st = conn.createStatement();
+                rs = st.executeQuery(sql);
+                while (rs.next()) {
+                    personInfo[0] = rs.getString(1); // school
+                    personInfo[1] = rs.getString(2); // birthday
+                }
+            } catch (SQLException e) {
+                personInfo[1] = "/(ㄒoㄒ)/~~";
+                e.printStackTrace();
+            }
+            return personInfo;
+        } else {
+            String[] personInfo = new String[3];
+            try {
+                st = conn.createStatement();
+                rs = st.executeQuery(sql);
+                while (rs.next()) {
+                    personInfo[0] = rs.getString(1); // school
+                    personInfo[1] = rs.getString(2); // birthday
+                    personInfo[2] = rs.getString(3); // intro
+                }
+            } catch (SQLException e) {
+                personInfo[1] = "/(ㄒoㄒ)/~~";
+                e.printStackTrace();
+            }
+            return personInfo;
+        }
     }
 }

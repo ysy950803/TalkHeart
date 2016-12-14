@@ -33,7 +33,7 @@
                     android:id="@+id/search_user_nickname_tv"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/me_nickname"
+                    android:text="@string/content_loading"
                     android:textColor="@color/black"
                     android:textSize="16sp" />
 
@@ -42,7 +42,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="@string/me_introduction"
+                    android:text="@string/content_loading"
                     android:textSize="12sp" />
 
             </LinearLayout>

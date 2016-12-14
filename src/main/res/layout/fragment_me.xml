@@ -26,6 +26,7 @@
                 android:layout_marginLeft="18dp"
                 android:layout_marginRight="18dp"
                 android:src="@drawable/me_avatar_boy"
+                android:transitionName="@string/trans_me_avatar"
                 app:civ_border="true"
                 app:civ_borderColor="@android:color/transparent"
                 app:civ_borderWidth="2dp" />
@@ -38,7 +39,7 @@
                 android:layout_marginBottom="8dp"
                 android:layout_toEndOf="@+id/me_avatar_img"
                 android:layout_toRightOf="@+id/me_avatar_img"
-                android:text="@string/me_nickname"
+                android:text="@string/content_loading"
                 android:textSize="26sp" />
 
             <View
@@ -147,7 +148,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:gravity="center"
-            android:text="@string/me_introduction" />
+            android:text="@string/content_loading" />
 
         <LinearLayout
             android:id="@+id/me_intro_input_layout"

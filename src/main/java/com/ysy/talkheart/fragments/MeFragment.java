@@ -22,6 +22,7 @@ import com.ysy.talkheart.activities.DraftActivity;
 import com.ysy.talkheart.activities.FansActivity;
 import com.ysy.talkheart.activities.LoginActivity;
 import com.ysy.talkheart.activities.MarkActivity;
+import com.ysy.talkheart.activities.PersonActivity;
 import com.ysy.talkheart.activities.WatchActivity;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.DataCleanManager;
@@ -53,8 +54,10 @@ public class MeFragment extends StatedFragment {
 
     private String NICKNAME = "加载中…";
     private String INTRODUCTION = "加载中…";
-    private String SEX = "加载中…";
+    private String SEX = "1";
     private String ACTIVE_NUM = "0";
+    private String WATCH_NUM = "0";
+    private String FANS_NUM = "0";
 
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
@@ -78,18 +81,17 @@ public class MeFragment extends StatedFragment {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if(dbP.getConn() == null) {
+                if (dbP.getConn() == null) {
                     meFragmentHandler.post(timeOutRunnable);
                 } else {
                     String[] res = dbP.meInfoSelect(
-                            "select sex, nickname, intro from user where uid = " + uid,
-                            "select count(actid) from active where uid = " + uid);
+                            "select sex, nickname, intro, count(actid) from user u, active a where u.uid = " + uid + " and u.uid = a.uid");
                     if (res[1].equals("/(ㄒoㄒ)/~~")) {
                         meFragmentHandler.post(serverErrorRunnable);
                     } else {
                         SEX = res[0];
                         NICKNAME = res[1];
-                        INTRODUCTION = res[2];
+                        INTRODUCTION = res[2] == null ? "点击设置签名" : res[2];
                         ACTIVE_NUM = res[3];
                         meFragmentHandler.post(successRunnable);
                     }
@@ -104,9 +106,9 @@ public class MeFragment extends StatedFragment {
         public void run() {
             avatarImg.setImageResource(Integer.parseInt(SEX) == 1 ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
             nicknameTv.setText(NICKNAME);
-            introductionTv.setText(INTRODUCTION == null ? "点击设置签名" : INTRODUCTION);
+            introductionTv.setText(INTRODUCTION);
             activeNumTv.setText(ACTIVE_NUM);
-            controlClick(true);
+            setClickable(true);
         }
     };
 
@@ -114,6 +116,7 @@ public class MeFragment extends StatedFragment {
         @Override
         public void run() {
             introductionTv.setText(introEdt.getText().toString());
+            INTRODUCTION = introEdt.getText().toString();
         }
     };
 
@@ -180,32 +183,49 @@ public class MeFragment extends StatedFragment {
         avatarImg.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                Intent intent = new Intent(getActivity(), PersonActivity.class);
+                intent.putExtra("uid", UID);
+                intent.putExtra("sex", SEX);
+                intent.putExtra("nickname", NICKNAME);
+                intent.putExtra("intro", INTRODUCTION);
+                intent.putExtra("active_num", ACTIVE_NUM);
+                intent.putExtra("watch_num", WATCH_NUM);
+                intent.putExtra("fans_num", FANS_NUM);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), avatarImg, getString(R.string.trans_me_avatar));
+                    startActivity(intent, tAO.toBundle());
+                } else {
+                    startActivity(intent);
+                }
             }
         });
 
         nicknameTv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                Intent intent = new Intent(getActivity(), PersonActivity.class);
+                intent.putExtra("uid", UID);
+                intent.putExtra("sex", SEX);
+                intent.putExtra("nickname", NICKNAME);
+                intent.putExtra("intro", INTRODUCTION);
+                intent.putExtra("active_num", ACTIVE_NUM);
+                intent.putExtra("watch_num", WATCH_NUM);
+                intent.putExtra("fans_num", FANS_NUM);
+                startActivity(intent);
             }
         });
 
         activeNumLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Intent intent = new Intent(getActivity(), ActiveActivity.class);
+                intent.putExtra("uid", UID);
+                intent.putExtra("sex", SEX);
+                intent.putExtra("nickname", NICKNAME);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), activeNumTv, getString(R.string.trans_active));
-                    Intent intent = new Intent(getActivity(), ActiveActivity.class);
-                    intent.putExtra("uid", UID);
-                    intent.putExtra("sex", SEX);
-                    intent.putExtra("nickname", NICKNAME);
                     startActivity(intent, tAO.toBundle());
                 } else {
-                    Intent intent = new Intent(getActivity(), ActiveActivity.class);
-                    intent.putExtra("uid", UID);
-                    intent.putExtra("sex", SEX);
-                    intent.putExtra("nickname", NICKNAME);
                     startActivity(intent);
                 }
             }
@@ -294,7 +314,7 @@ public class MeFragment extends StatedFragment {
             }
         });
 
-        controlClick(false);
+        setClickable(false);
     }
 
     private void connectToUpdateIntro(final String intro) {
@@ -319,7 +339,7 @@ public class MeFragment extends StatedFragment {
         }).start();
     }
 
-    private void controlClick(boolean isAble) {
+    private void setClickable(boolean isAble) {
         nicknameTv.setClickable(isAble);
         activeNumLayout.setClickable(isAble);
         watchNumLayout.setClickable(isAble);
@@ -327,6 +347,7 @@ public class MeFragment extends StatedFragment {
         introductionTv.setClickable(isAble);
         markLayout.setClickable(isAble);
         draftLayout.setClickable(isAble);
+        avatarImg.setClickable(isAble);
     }
 
     private void clearCache() {
