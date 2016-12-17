@@ -69,21 +69,7 @@ public class MessageFragment extends StatedFragment {
     }
 
     private void initData() {
-        avatarList.add(R.drawable.me_avatar_boy);
-        avatarList.add(R.drawable.me_avatar_girl);
-        avatarList.add(R.drawable.me_avatar_boy);
 
-        nameActList.add("原子君 与你连心");
-        nameActList.add("分子君 与你连心");
-        nameActList.add("质子君 与你连心");
-
-        timeList.add("2分钟前");
-        timeList.add("4分钟前");
-        timeList.add("8分钟前");
-
-        quoteList.add(getString(R.string.home_active_text));
-        quoteList.add(getString(R.string.home_active_text_2));
-        quoteList.add(getString(R.string.home_active_text_3));
     }
 
     private void initView(View view) {

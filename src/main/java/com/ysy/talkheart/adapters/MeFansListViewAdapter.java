@@ -6,8 +6,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.activities.FansActivity;
+import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
@@ -22,19 +25,25 @@ public class MeFansListViewAdapter extends RecyclerView.Adapter<MeFansListViewAd
     private List<Integer> avatarList;
     private List<String> nicknameList;
     private List<String> infoList;
-    private List<Boolean> eachOtherList;
+    private List<Integer> relationList;
+
+    private FansActivity context;
 
     private ListOnItemClickListener mOnItemClickListener;
+    private boolean isObserver;
 
     public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
         this.mOnItemClickListener = mOnItemClickListener;
     }
 
-    public MeFansListViewAdapter(List<Integer> avatarList, List<String> nicknameList, List<String> infoList, List<Boolean> eachOtherList) {
+    public MeFansListViewAdapter(FansActivity context, List<Integer> avatarList, List<String> nicknameList,
+                                 List<String> infoList, List<Integer> relationList, boolean isObserver) {
+        this.context = context;
         this.avatarList = avatarList;
         this.nicknameList = nicknameList;
         this.infoList = infoList;
-        this.eachOtherList = eachOtherList;
+        this.relationList = relationList;
+        this.isObserver = isObserver;
     }
 
     class RecyclerViewHolder extends RecyclerView.ViewHolder {
@@ -67,19 +76,35 @@ public class MeFansListViewAdapter extends RecyclerView.Adapter<MeFansListViewAd
 
         final int pos = Integer.parseInt(position + "");
         final ImageView eachOther = holder.eachOtherImg;
-        eachOther.setImageResource(eachOtherList.get(position) ? R.mipmap.ic_each_other_pink_36dp : R.mipmap.ic_fans_pink_blue_36dp);
-        eachOther.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!eachOtherList.get(pos)) {
-                    eachOther.setImageResource(R.mipmap.ic_each_other_pink_36dp);
-                    eachOtherList.set(pos, true);
-                } else {
-                    eachOther.setImageResource(R.mipmap.ic_fans_pink_blue_36dp);
-                    eachOtherList.set(pos, false);
+        if (isObserver)
+            eachOther.setVisibility(View.GONE);
+        else {
+            eachOther.setImageResource(relationList.get(position) == 2 ? R.mipmap.ic_each_other_pink_36dp : R.mipmap.ic_fans_pink_blue_36dp);
+            eachOther.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ConnectionDetector cd = new ConnectionDetector(context);
+                    if (!cd.isConnectingToInternet()) {
+                        Toast.makeText(context, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+                    } else {
+                        context.eachOtherImg = eachOther;
+                        context.eachOtherImg.setClickable(false);
+                        switch (relationList.get(pos)) {
+                            case 2:
+                                eachOther.setImageResource(R.mipmap.ic_fans_pink_blue_36dp);
+                                relationList.set(pos, -1);
+                                context.updateRelation(pos, -1);
+                                break;
+                            case -1:
+                                eachOther.setImageResource(R.mipmap.ic_each_other_pink_36dp);
+                                relationList.set(pos, 2);
+                                context.updateRelation(pos, 2);
+                                break;
+                        }
+                    }
                 }
-            }
-        });
+            });
+        }
 
         // 如果设置了回调，则设置点击事件
         if (mOnItemClickListener != null) {

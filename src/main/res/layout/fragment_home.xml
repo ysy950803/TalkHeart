@@ -4,13 +4,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/home_active_listView"
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/home_active_refresh_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/home_active_listView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </android.support.v4.widget.SwipeRefreshLayout>
 
     <android.support.design.widget.FloatingActionButton
-        android:transitionName="@string/trans_add"
         android:id="@+id/home_add_fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -20,6 +26,7 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
         android:src="@drawable/ic_add_white_24dp"
+        android:transitionName="@string/trans_add"
         app:backgroundTint="@color/colorAccent" />
 
 </RelativeLayout>

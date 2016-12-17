@@ -72,12 +72,17 @@ public class SearchActivity extends AppCompatActivity {
         listViewAdapter.setListOnItemClickListener(new ListOnItemClickListener() {
             @Override
             public void onItemClick(View view, int position) {
-                Intent intent = new Intent(SearchActivity.this, PersonActivity.class);
-                intent.putExtra("uid", uidList.get(position));
-                intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
-                intent.putExtra("nickname", nicknameList.get(position));
-                intent.putExtra("e_uid", UID);
-                startActivity(intent);
+                ConnectionDetector cd = new ConnectionDetector(SearchActivity.this);
+                if (!cd.isConnectingToInternet())
+                    Toast.makeText(SearchActivity.this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+                else {
+                    Intent intent = new Intent(SearchActivity.this, PersonActivity.class);
+                    intent.putExtra("uid", uidList.get(position));
+                    intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
+                    intent.putExtra("nickname", nicknameList.get(position));
+                    intent.putExtra("e_uid", UID);
+                    startActivity(intent);
+                }
             }
 
             @Override

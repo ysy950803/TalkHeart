@@ -110,7 +110,8 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
                         goodNumList.set(pos, goodNumStr);
                         context.updateGood(pos);
                     } else { // 1
-                        String goodNumStr = (--goodNum) + "";
+                        --goodNum;
+                        String goodNumStr = (goodNum < 0 ? 0 : goodNum) + "";
                         goodImg.setImageResource(R.mipmap.ic_favorite_blue_circle_36dp);
                         goodNumTv.setText(goodNumStr);
                         goodNumList.set(pos, goodNumStr);

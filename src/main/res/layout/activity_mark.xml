@@ -4,13 +4,20 @@
     android:id="@+id/activity_draft"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:transitionName="@string/trans_mark"
     android:orientation="vertical"
+    android:transitionName="@string/trans_mark"
     tools:context="com.ysy.talkheart.activities.DraftActivity">
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/me_mark_listView"
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/me_mark_refresh_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/me_mark_listView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </android.support.v4.widget.SwipeRefreshLayout>
 
 </LinearLayout>

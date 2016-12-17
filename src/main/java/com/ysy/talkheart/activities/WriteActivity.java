@@ -27,23 +27,27 @@ public class WriteActivity extends AppCompatActivity {
     private EditText writeEdt;
     private TextView restWordTv;
     private static final int WORD_LIMIT = 144;
-    private Handler sendHandler;
+    private Handler writeHandler;
     private ProgressDialog waitDialog;
 
     private String UID = "0";
+    private String DFT_ID = "0";
+    private String DFT_CONTENT = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_write);
         setupActionBar();
-        initDate();
+        initData();
         initView();
-        sendHandler = new Handler();
+        writeHandler = new Handler();
     }
 
-    private void initDate() {
+    private void initData() {
         UID = getIntent().getExtras().getString("uid");
+        DFT_ID = getIntent().getExtras().getString("dft_id", null);
+        DFT_CONTENT = getIntent().getExtras().getString("dft_content", "");
     }
 
     private void initView() {
@@ -51,6 +55,7 @@ public class WriteActivity extends AppCompatActivity {
         restWordTv = (TextView) findViewById(R.id.write_word_tv);
 
         writeEdt.addTextChangedListener(tw);
+        writeEdt.setText(DFT_CONTENT);
     }
 
     private boolean send(final int uid, final String sendTime, final String content) {
@@ -74,16 +79,21 @@ public class WriteActivity extends AppCompatActivity {
             public void run() {
                 DBProcessor dbP = new DBProcessor();
                 if (dbP.getConn() == null) {
-                    sendHandler.post(timeOutRunnable);
+                    writeHandler.post(timeOutRunnable);
                 } else {
                     int res = dbP.insert(
                             "insert into active(uid, sendtime, goodnum, content) values(" +
                                     uid + ", '" + sendTime + "', 0, '" + content + "')"
                     );
-                    if (res == 1)
-                        sendHandler.post(successRunnable);
-                    else
-                        sendHandler.post(serverErrorRunnable);
+                    if (res == 1) {
+                        if (dbP.update("update user_info_count set act_num = (act_num + 1) where uid = " + uid) != 1) {
+                            dbP.insert("insert into user_info_count values(" + uid + ", 1, 0, 0)");
+                        }
+                        if (DFT_ID != null)
+                            dbP.delete("delete from draft where dftid = " + DFT_ID);
+                        writeHandler.post(sendRunnable);
+                    } else
+                        writeHandler.post(serverErrorRunnable);
                 }
                 dbP.closeConn();
                 waitDialog.dismiss();
@@ -91,10 +101,57 @@ public class WriteActivity extends AppCompatActivity {
         }).start();
     }
 
-    private Runnable successRunnable = new Runnable() {
+    private boolean save(final int uid, final String saveTime, final String content) {
+        if (content.equals("")) {
+            Toast.makeText(this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        ConnectionDetector cd = new ConnectionDetector(this);
+        if (!cd.isConnectingToInternet()) {
+            Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        waitDialog = ProgressDialog.show(WriteActivity.this, "请稍后", "正在请数据库君吃饭……");
+        connectToSave(uid, saveTime, content);
+        return true;
+    }
+
+    private void connectToSave(final int uid, final String saveTime, final String content) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                DBProcessor dbP = new DBProcessor();
+                if (dbP.getConn() == null) {
+                    writeHandler.post(timeOutRunnable);
+                } else {
+                    int res = dbP.insert(
+                            "insert into draft(uid, savetime, content) values(" +
+                                    uid + ", '" + saveTime + "', '" + content + "')"
+                    );
+                    if (res == 1)
+                        writeHandler.post(saveRunnable);
+                    else
+                        writeHandler.post(serverErrorRunnable);
+                }
+                dbP.closeConn();
+                waitDialog.dismiss();
+            }
+        }).start();
+    }
+
+
+    private Runnable sendRunnable = new Runnable() {
         @Override
         public void run() {
             Toast.makeText(WriteActivity.this, "发送成功", Toast.LENGTH_SHORT).show();
+            onBackPressed();
+        }
+    };
+
+    private Runnable saveRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(WriteActivity.this, "成功保存到草稿箱啦", Toast.LENGTH_SHORT).show();
             onBackPressed();
         }
     };
@@ -164,6 +221,8 @@ public class WriteActivity extends AppCompatActivity {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // save to draft
+                String saveTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+                save(Integer.parseInt(UID), saveTime, writeEdt.getText().toString());
                 return true;
             }
         });

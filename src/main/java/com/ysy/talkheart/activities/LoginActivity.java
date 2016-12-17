@@ -150,21 +150,21 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn() == null)
                     loginHandler.post(timeOutRunnable);
-                } else {
+                else {
                     String[] res = dbP.loginSelect("select uid, pw from user where username = '" + username + "'");
-                    if (res[1].equals(pw)) {
-                        startActivity(new Intent(LoginActivity.this, HomeActivity.class).putExtra("uid", res[0]));
-//                            loginHandler = null;
-                    } else if (res[1].equals("用户不存在")) {
-//                            loginHandler.sendEmptyMessage(0);
-                        loginHandler.post(userErrorRunnable);
-                    } else if (res[1].equals("")) {
+                    if (res == null)
                         loginHandler.post(serverErrorRunnable);
-                    } else {
-//                            loginHandler.sendEmptyMessage(1);
-                        loginHandler.post(pwErrorRunnable);
+                    else {
+                        if (res[0] == null)
+                            loginHandler.post(userErrorRunnable);
+                        else {
+                            if (res[1].equals(pw))
+                                startActivity(new Intent(LoginActivity.this, HomeActivity.class).putExtra("uid", res[0]));
+                            else
+                                loginHandler.post(pwErrorRunnable);
+                        }
                     }
                 }
                 dbP.closeConn();

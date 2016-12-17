@@ -143,7 +143,7 @@ public class RegisterActivity extends AppCompatActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if(dbP.getConn() == null) {
+                if (dbP.getConn() == null) {
                     registerHandler.post(timeOutRunnable);
                 } else {
                     int res = dbP.insert(
@@ -151,9 +151,11 @@ public class RegisterActivity extends AppCompatActivity {
                                     + username + "', '" + pw + "', '" + nickname +
                                     "', '" + birthday + "', " + sex + ")"
                     );
-                    if (res == 1)
+                    if (res == 1) {
+                        String uid = dbP.uidSelect("select uid from user where username = '" + username + "'");
+                        dbP.insert("insert into user_info_count values(" + uid + ", 0, 0, 0)");
                         registerHandler.post(successRunnable);
-                    else if (res == 2)
+                    } else if (res == -1)
                         registerHandler.post(nameErrorRunnable);
                     else
                         registerHandler.post(serverErrorRunnable);

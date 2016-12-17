@@ -18,7 +18,7 @@ import java.util.Objects;
 public class DBProcessor {
 
     private static final String dbDriver = "com.mysql.jdbc.Driver";
-    private static final String dbUrl = "jdbc:mysql://000.000.000.000:3306/dbName";
+    private static final String dbUrl = "jdbc:mysql://[IP]:3306/dbName";
     private static final String dbUser = "root";
     private static final String dbPass = "******";
 
@@ -42,26 +42,36 @@ public class DBProcessor {
         return conn;
     }
 
-//    public List<String> select(String sql) {
-//        List<String> rsList = new ArrayList<>();
-//        try {
-//            st = conn.createStatement();
-//            rs = st.executeQuery(sql);
-//
-//            while (rs.next()) {
-//                // 根据数据库中列的值类型确定，参数为列数
-//                String c1 = rs.getString(1);
-//                String c2 = rs.getString(2);
-//                String c3 = rs.getString(3);
-//                rsList.add("" + c1 + "    " + c2 + "    " + c3 + "\n");
-//            }
-//            // 可以将查找到的值写入类，然后返回相应的对象
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//
-//        return rsList;
-//    }
+    public String uidSelect(String sql) {
+        String uid = null;
+        try {
+            st = conn.createStatement();
+            rs = st.executeQuery(sql);
+            while (rs.next()) {
+                uid = rs.getInt(1) + "";
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return uid;
+    }
+
+    public String[] relationSelect(String sql) {
+        String[] relation = new String[3];
+        try {
+            st = conn.createStatement();
+            rs = st.executeQuery(sql);
+            while (rs.next()) {
+                relation[0] = rs.getInt(1) + "";
+                relation[1] = rs.getInt(2) + "";
+                relation[2] = rs.getInt(3) + "";
+            }
+        } catch (SQLException e) {
+            relation[0] = "-2";
+            e.printStackTrace();
+        }
+        return relation;
+    }
 
     public int insert(String sql) {
         int i = 0;
@@ -71,7 +81,7 @@ public class DBProcessor {
         } catch (SQLException e) {
             e.printStackTrace();
             if (e.getMessage().contains("Duplicate"))
-                i = 2;
+                i = -1;
         }
         return i; // 返回影响的行数，1为执行成功
     }
@@ -104,7 +114,7 @@ public class DBProcessor {
             pst = conn.prepareStatement(sql);
             i = pst.executeUpdate();
             pst = conn.prepareStatement(sql2);
-            i = pst.executeUpdate() + 1;
+            i = pst.executeUpdate() + i;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -151,18 +161,16 @@ public class DBProcessor {
 
     public String[] loginSelect(String sql) { // select pw from user where username = ''
         String[] uid_pw = new String[2];
-        if (conn != null) {
-            try {
-                st = conn.createStatement();
-                rs = st.executeQuery(sql);
-                while (rs.next()) {
-                    uid_pw[0] = rs.getInt(1) + "";
-                    uid_pw[1] = rs.getString(2);
-                }
-            } catch (SQLException e) {
-                uid_pw[1] = "用户不存在";
-                e.printStackTrace();
+        try {
+            st = conn.createStatement();
+            rs = st.executeQuery(sql);
+            while (rs.next()) {
+                uid_pw[0] = rs.getInt(1) + "";
+                uid_pw[1] = rs.getString(2) + "";
             }
+        } catch (SQLException e) {
+            uid_pw = null;
+            e.printStackTrace();
         }
         return uid_pw;
     }
@@ -181,7 +189,7 @@ public class DBProcessor {
         return row; // -1~n-1
     }
 
-    public List<List<String>> meActiveSelect(String sql) {
+    public List<List<String>> activeSelect(String sql) {
         List<List<String>> resList = new ArrayList<>();
         List<String> actid_col = new ArrayList<>();
         List<String> sendtime_col = new ArrayList<>();
@@ -200,6 +208,38 @@ public class DBProcessor {
             resList.add(sendtime_col);
             resList.add(goodnum_col);
             resList.add(content_col);
+        } catch (SQLException e) {
+            resList = null;
+            e.printStackTrace();
+        }
+        return resList;
+    }
+
+    public List<List<String>> homeActiveSelect(String sql) {
+        List<List<String>> resList = new ArrayList<>();
+        List<String> actid_col = new ArrayList<>();
+        List<String> sex_col = new ArrayList<>();
+        List<String> nickname_col = new ArrayList<>();
+        List<String> sendtime_col = new ArrayList<>();
+        List<String> content_col = new ArrayList<>();
+        List<String> goodnum_col = new ArrayList<>();
+        try {
+            st = conn.createStatement();
+            rs = st.executeQuery(sql);
+            while (rs.next()) {
+                actid_col.add(rs.getInt(1) + ""); // actid
+                sex_col.add(rs.getInt(2) + ""); // sex
+                nickname_col.add(rs.getString(3)); // nickname
+                sendtime_col.add(rs.getString(4)); // sendtime
+                content_col.add(rs.getString(5)); // content
+                goodnum_col.add(rs.getInt(6) + ""); // goodnum
+            }
+            resList.add(actid_col);
+            resList.add(sex_col);
+            resList.add(nickname_col);
+            resList.add(sendtime_col);
+            resList.add(content_col);
+            resList.add(goodnum_col);
         } catch (SQLException e) {
             resList = null;
             e.printStackTrace();
@@ -228,7 +268,7 @@ public class DBProcessor {
     }
 
     public String[] meInfoSelect(String sql) {
-        String[] meInfo = new String[4];
+        String[] meInfo = new String[6];
         try {
             st = conn.createStatement();
             rs = st.executeQuery(sql);
@@ -237,6 +277,8 @@ public class DBProcessor {
                 meInfo[1] = rs.getString(2); // nickname
                 meInfo[2] = rs.getString(3); // intro
                 meInfo[3] = rs.getInt(4) + ""; // active_num
+                meInfo[4] = rs.getInt(5) + ""; // watch_num
+                meInfo[5] = rs.getInt(6) + ""; // fans_num
             }
         } catch (SQLException e) {
             meInfo[1] = "/(ㄒoㄒ)/~~";
@@ -272,6 +314,55 @@ public class DBProcessor {
         return resList;
     }
 
+    public List<List<String>> draftSelect(String sql) {
+        List<List<String>> resList = new ArrayList<>();
+        List<String> dftid_col = new ArrayList<>();
+        List<String> savetime_col = new ArrayList<>();
+        List<String> content_col = new ArrayList<>();
+        try {
+            st = conn.createStatement();
+            rs = st.executeQuery(sql);
+            while (rs.next()) {
+                dftid_col.add(rs.getInt(1) + "");
+                savetime_col.add(rs.getString(2));
+                content_col.add(rs.getString(3));
+            }
+            resList.add(dftid_col);
+            resList.add(savetime_col);
+            resList.add(content_col);
+        } catch (SQLException e) {
+            resList = null;
+            e.printStackTrace();
+        }
+        return resList;
+    }
+
+    public List<List<String>> markSelect(String sql) {
+        List<List<String>> resList = new ArrayList<>();
+        List<String> sex_col = new ArrayList<>();
+        List<String> time_col = new ArrayList<>();
+        List<String> nickname_col = new ArrayList<>();
+        List<String> content_col = new ArrayList<>();
+        try {
+            st = conn.createStatement();
+            rs = st.executeQuery(sql);
+            while (rs.next()) {
+                sex_col.add(rs.getInt(1) + "");
+                time_col.add(rs.getString(2));
+                nickname_col.add(rs.getString(3));
+                content_col.add(rs.getString(4));
+            }
+            resList.add(sex_col);
+            resList.add(time_col);
+            resList.add(nickname_col);
+            resList.add(content_col);
+        } catch (SQLException e) {
+            resList = null;
+            e.printStackTrace();
+        }
+        return resList;
+    }
+
     public String[] personInfoSelect(String sql, boolean isFromMe) {
         if (isFromMe) {
             String[] personInfo = new String[2];
@@ -288,7 +379,7 @@ public class DBProcessor {
             }
             return personInfo;
         } else {
-            String[] personInfo = new String[3];
+            String[] personInfo = new String[6];
             try {
                 st = conn.createStatement();
                 rs = st.executeQuery(sql);
@@ -296,6 +387,9 @@ public class DBProcessor {
                     personInfo[0] = rs.getString(1); // school
                     personInfo[1] = rs.getString(2); // birthday
                     personInfo[2] = rs.getString(3); // intro
+                    personInfo[3] = rs.getInt(4) + ""; // act_num
+                    personInfo[4] = rs.getInt(5) + ""; // watch_num
+                    personInfo[5] = rs.getInt(6) + ""; // fans_num
                 }
             } catch (SQLException e) {
                 personInfo[1] = "/(ㄒoㄒ)/~~";
@@ -303,5 +397,93 @@ public class DBProcessor {
             }
             return personInfo;
         }
+    }
+
+    public List<List<String>> watchSelect(String sql, String sql2) {
+        List<List<String>> resList = new ArrayList<>();
+        List<String> uid_col = new ArrayList<>();
+        List<String> sex_col = new ArrayList<>();
+        List<String> nickname_col = new ArrayList<>();
+        List<String> intro_col = new ArrayList<>();
+        List<String> relation_col = new ArrayList<>();
+        try {
+            st = conn.createStatement();
+            rs = st.executeQuery(sql);
+            while (rs.next()) {
+                if (rs.getInt(5) != -1 && rs.getInt(5) != 0) {
+                    uid_col.add(rs.getInt(1) + "");
+                    sex_col.add(rs.getInt(2) + "");
+                    nickname_col.add(rs.getString(3));
+                    intro_col.add(rs.getString(4));
+                    relation_col.add(rs.getInt(5) + "");
+                }
+            }
+
+            st = conn.createStatement();
+            rs = st.executeQuery(sql2);
+            while (rs.next()) {
+                if (rs.getInt(5) != 1 && rs.getInt(5) != 0) {
+                    uid_col.add(rs.getInt(1) + "");
+                    sex_col.add(rs.getInt(2) + "");
+                    nickname_col.add(rs.getString(3));
+                    intro_col.add(rs.getString(4));
+                    relation_col.add(rs.getInt(5) == 2 ? "2" : "1");
+                }
+            }
+
+            resList.add(uid_col);
+            resList.add(sex_col);
+            resList.add(nickname_col);
+            resList.add(intro_col);
+            resList.add(relation_col);
+        } catch (SQLException e) {
+            resList = null;
+            e.printStackTrace();
+        }
+        return resList;
+    }
+
+    public List<List<String>> fansSelect(String sql, String sql2) {
+        List<List<String>> resList = new ArrayList<>();
+        List<String> uid_col = new ArrayList<>();
+        List<String> sex_col = new ArrayList<>();
+        List<String> nickname_col = new ArrayList<>();
+        List<String> intro_col = new ArrayList<>();
+        List<String> relation_col = new ArrayList<>();
+        try {
+            st = conn.createStatement();
+            rs = st.executeQuery(sql);
+            while (rs.next()) {
+                if (rs.getInt(5) != 1 && rs.getInt(5) != 0) {
+                    uid_col.add(rs.getInt(1) + "");
+                    sex_col.add(rs.getInt(2) + "");
+                    nickname_col.add(rs.getString(3));
+                    intro_col.add(rs.getString(4));
+                    relation_col.add(rs.getInt(5) + "");
+                }
+            }
+
+            st = conn.createStatement();
+            rs = st.executeQuery(sql2);
+            while (rs.next()) {
+                if (rs.getInt(5) != -1 && rs.getInt(5) != 0) {
+                    uid_col.add(rs.getInt(1) + "");
+                    sex_col.add(rs.getInt(2) + "");
+                    nickname_col.add(rs.getString(3));
+                    intro_col.add(rs.getString(4));
+                    relation_col.add(rs.getInt(5) == 2 ? "2" : "-1");
+                }
+            }
+
+            resList.add(uid_col);
+            resList.add(sex_col);
+            resList.add(nickname_col);
+            resList.add(intro_col);
+            resList.add(relation_col);
+        } catch (SQLException e) {
+            resList = null;
+            e.printStackTrace();
+        }
+        return resList;
     }
 }

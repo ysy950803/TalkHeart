@@ -1,7 +1,9 @@
 package com.ysy.talkheart.activities;
 
+import android.app.ActivityOptions;
+import android.content.Intent;
+import android.os.Build;
 import android.os.Handler;
-import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -16,6 +18,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 
 public class PersonActivity extends AppCompatActivity {
@@ -36,7 +39,7 @@ public class PersonActivity extends AppCompatActivity {
 
     private Handler personHandler;
 
-    private boolean isFromMe;
+    private boolean isSelf;
     private String E_UID = "0";
     private String UID = "0";
     private String SEX = "1";
@@ -49,7 +52,10 @@ public class PersonActivity extends AppCompatActivity {
     private String SCHOOL = "加载中…";
     private String BIRTHDAY = "加载中…";
 
-    private CoordinatorLayout coordinatorLayout;
+    private boolean isEmptyRelation = true;
+    private String RELATION = "-2";
+    private String UID_A = "0";
+    private String UID_B = "0";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,32 +68,19 @@ public class PersonActivity extends AppCompatActivity {
         initData();
         initView();
         clickListener();
-        connectToGetPersonInfo(isFromMe);
+        connectToGetPersonInfo();
     }
 
     private void initData() {
-        E_UID = getIntent().getExtras().getString("e_uid", null);
-        isFromMe = E_UID == null;
-        // offline data
+        E_UID = getIntent().getExtras().getString("e_uid");
         UID = getIntent().getExtras().getString("uid");
         SEX = getIntent().getExtras().getString("sex");
         NICKNAME = getIntent().getExtras().getString("nickname");
 
-        if (isFromMe) {
-            String introStr = getIntent().getExtras().getString("intro");
-            if (introStr == null || introStr.equals("点击设置签名"))
-                INTRODUCTION = "未设置签名";
-            else
-                INTRODUCTION = introStr;
-
-            ACTIVE_NUM = getIntent().getExtras().getString("active_num");
-            WATCH_NUM = getIntent().getExtras().getString("watch_num");
-            FANS_NUM = getIntent().getExtras().getString("fans_num");
-        }
+        isSelf = E_UID.equals(UID);
     }
 
     private void initView() {
-        coordinatorLayout = (CoordinatorLayout) findViewById(R.id.person_coordinatorLayout);
         avatarImg = (ImageView) findViewById(R.id.person_avatar_img);
         watchFab = (FloatingActionButton) findViewById(R.id.person_watch_fab);
         activeNumLayout = (LinearLayout) findViewById(R.id.person_active_layout);
@@ -101,7 +94,7 @@ public class PersonActivity extends AppCompatActivity {
         birthdayTv = (TextView) findViewById(R.id.person_birthday_tv);
 
         actionBar.setTitle(NICKNAME);
-        watchFab.setVisibility((isFromMe || E_UID.equals(UID)) ? View.GONE : View.VISIBLE);
+        watchFab.setVisibility(isSelf ? View.GONE : View.VISIBLE);
         avatarImg.setImageResource(SEX.equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
     }
 
@@ -109,113 +102,354 @@ public class PersonActivity extends AppCompatActivity {
         watchFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                watchHimOrHer();
             }
         });
 
         activeNumLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                Intent intent = new Intent(PersonActivity.this, ActiveActivity.class);
+                intent.putExtra("uid", UID);
+                intent.putExtra("e_uid", E_UID);
+                intent.putExtra("sex", SEX);
+                intent.putExtra("nickname", NICKNAME);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(PersonActivity.this, activeNumTv, getString(R.string.trans_active));
+                    startActivity(intent, tAO.toBundle());
+                } else
+                    startActivity(intent);
             }
         });
 
         watchNumLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                Intent intent = new Intent(PersonActivity.this, WatchActivity.class);
+                intent.putExtra("uid", UID);
+                intent.putExtra("e_uid", E_UID);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(PersonActivity.this, watchNumTv, getString(R.string.trans_watch));
+                    startActivity(intent, tAO.toBundle());
+                } else {
+                    startActivity(intent);
+                }
             }
         });
 
         fansNumLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                Intent intent = new Intent(PersonActivity.this, FansActivity.class);
+                intent.putExtra("uid", UID);
+                intent.putExtra("e_uid", E_UID);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(PersonActivity.this, fansNumTv, getString(R.string.trans_fans));
+                    startActivity(intent, tAO.toBundle());
+                } else {
+                    startActivity(intent);
+                }
             }
         });
 
         setClickable(false);
     }
 
-    private void connectToGetPersonInfo(boolean isFromMe) {
-        if (isFromMe) {
+    private boolean watchHimOrHer() {
+        ConnectionDetector cd = new ConnectionDetector(this);
+        if (!cd.isConnectingToInternet()) {
+            Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        connectToWatch(UID_A, UID_B);
+        return true;
+    }
+
+    private void connectToWatch(final String uid_a, final String uid_b) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                DBProcessor dbP = new DBProcessor();
+                if (dbP.getConn() == null) {
+                    personHandler.post(timeOutRunnable);
+                } else {
+                    if (isEmptyRelation) {
+                        int res = dbP.insert("insert into user_relation values(" + uid_a + ", " + uid_b + ", 1)");
+                        if (res == 1) {
+                            isEmptyRelation = false;
+                            RELATION = "1";
+                            dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_a);
+                            dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_b);
+                            personHandler.post(watchRunnable);
+                        } else
+                            personHandler.post(serverErrorRunnable);
+                    } else {
+                        switch (RELATION) {
+                            case "1":
+                                if (uid_a.equals(E_UID)) {
+                                    RELATION = "0";
+                                    int res = dbP.update("update user_relation set relation = " + RELATION +
+                                            " where uid_a = " + uid_a + " and uid_b = " + uid_b);
+                                    if (res == 1) {
+                                        dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid_a);
+                                        dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + uid_b);
+                                        personHandler.post(nothingRunnable);
+                                    } else
+                                        personHandler.post(serverErrorRunnable);
+                                } else {
+                                    RELATION = "2";
+                                    int res = dbP.update("update user_relation set relation = " + RELATION +
+                                            " where uid_a = " + uid_a + " and uid_b = " + uid_b);
+                                    if (res == 1) {
+                                        dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_b);
+                                        dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_a);
+                                        personHandler.post(eachRunnable);
+                                    } else
+                                        personHandler.post(serverErrorRunnable);
+                                }
+                                break;
+                            case "-1":
+                                if (uid_a.equals(E_UID)) {
+                                    RELATION = "2";
+                                    int res1 = dbP.update("update user_relation set relation = " + RELATION +
+                                            " where uid_a = " + uid_a + " and uid_b = " + uid_b);
+                                    if (res1 == 1) {
+                                        dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_a);
+                                        dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_b);
+                                        personHandler.post(eachRunnable);
+                                    } else
+                                        personHandler.post(serverErrorRunnable);
+                                } else {
+                                    RELATION = "0";
+                                    int res1 = dbP.update("update user_relation set relation = " + RELATION +
+                                            " where uid_a = " + uid_a + " and uid_b = " + uid_b);
+                                    if (res1 == 1) {
+                                        dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid_b);
+                                        dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + uid_a);
+                                        personHandler.post(nothingRunnable);
+                                    } else
+                                        personHandler.post(serverErrorRunnable);
+                                }
+                                break;
+                            case "2":
+                                if (uid_a.equals(E_UID)) {
+                                    RELATION = "-1";
+                                    int res2 = dbP.update("update user_relation set relation = " + RELATION +
+                                            " where uid_a = " + uid_a + " and uid_b = " + uid_b);
+                                    if (res2 == 1) {
+                                        dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid_a);
+                                        dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + uid_b);
+                                        personHandler.post(unWatchRunnable);
+                                    } else
+                                        personHandler.post(serverErrorRunnable);
+                                } else {
+                                    RELATION = "1";
+                                    int res2 = dbP.update("update user_relation set relation = " + RELATION +
+                                            " where uid_a = " + uid_a + " and uid_b = " + uid_b);
+                                    if (res2 == 1) {
+                                        dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid_b);
+                                        dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + uid_a);
+                                        personHandler.post(unWatchRunnable);
+                                    } else
+                                        personHandler.post(serverErrorRunnable);
+                                }
+                                break;
+                            case "0":
+                                if (uid_a.equals(E_UID)) {
+                                    RELATION = "1";
+                                    int res3 = dbP.update("update user_relation set relation = " + RELATION +
+                                            " where uid_a = " + uid_a + " and uid_b = " + uid_b);
+                                    if (res3 == 1) {
+                                        dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_a);
+                                        dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_b);
+                                        personHandler.post(watchRunnable);
+                                    } else
+                                        personHandler.post(serverErrorRunnable);
+                                } else {
+                                    RELATION = "-1";
+                                    int res3 = dbP.update("update user_relation set relation = " + RELATION +
+                                            " where uid_a = " + uid_a + " and uid_b = " + uid_b);
+                                    if (res3 == 1) {
+                                        dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_b);
+                                        dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_a);
+                                        personHandler.post(watchRunnable);
+                                    } else
+                                        personHandler.post(serverErrorRunnable);
+                                }
+                                break;
+                        }
+                    }
+                }
+                dbP.closeConn();
+            }
+        }).start();
+    }
+
+    private void connectToGetPersonInfo() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                DBProcessor dbP = new DBProcessor();
+                if (dbP.getConn() == null) {
+                    personHandler.post(timeOutRunnable);
+                } else {
+                    String[] res = dbP.personInfoSelect(
+                            "select school, birthday, intro, act_num, watch_num, fans_num " +
+                                    "from user u, user_info_count uic where u.uid = " + UID + " and u.uid = uic.uid", false
+                    );
+                    String[] relation = dbP.relationSelect(
+                            "select uid_a, uid_b, relation from user_relation where (uid_a = " + E_UID + " and uid_b = " + UID + ") or " +
+                                    "(uid_b = " + E_UID + " and uid_a = " + UID + ")"
+                    );
+                    if (res[1].equals("/(ㄒoㄒ)/~~")) {
+                        personHandler.post(serverErrorRunnable);
+                    } else {
+                        SCHOOL = res[0] == null ? "未设置院校" : res[0];
+                        BIRTHDAY = res[1] == null ? "未设置生日" : res[1];
+                        INTRODUCTION = res[2] == null ? "未设置签名" : res[2];
+                        ACTIVE_NUM = res[3];
+                        WATCH_NUM = res[4];
+                        FANS_NUM = res[5];
+
+                        if (relation[0] == null) {
+                            isEmptyRelation = true;
+                            UID_A = E_UID;
+                            UID_B = UID;
+                            personHandler.post(nothingShowRunnable);
+                        } else if (relation[0].equals("-2"))
+                            personHandler.post(serverErrorRunnable);
+                        else {
+                            isEmptyRelation = false;
+                            RELATION = relation[2];
+                            if (relation[0].equals(E_UID)) {
+                                UID_A = E_UID;
+                                UID_B = UID;
+                            } else {
+                                UID_A = UID;
+                                UID_B = E_UID;
+                            }
+                            switch (RELATION) {
+                                case "1":
+                                    personHandler.post(UID_A.equals(E_UID) ? watchShowRunnable : unWatchShowRunnable);
+                                    break;
+                                case "-1":
+                                    personHandler.post(UID_A.equals(E_UID) ? unWatchShowRunnable : watchShowRunnable);
+                                    break;
+                                case "2":
+                                    personHandler.post(eachShowRunnable);
+                                    break;
+                                case "0":
+                                    personHandler.post(nothingShowRunnable);
+                                    break;
+                            }
+                        }
+                    }
+                }
+                dbP.closeConn();
+            }
+        }).start();
+
+    }
+
+    private Runnable watchRunnable = new Runnable() {
+        @Override
+        public void run() {
+            watchFab.setImageResource(R.mipmap.ic_watch_blue_pink_36dp);
+            Toast.makeText(PersonActivity.this, "成功关注Ta", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    private Runnable unWatchRunnable = new Runnable() {
+        @Override
+        public void run() {
+            watchFab.setImageResource(R.mipmap.ic_fans_pink_blue_36dp);
+            Toast.makeText(PersonActivity.this, "成功取消关注", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    private Runnable nothingRunnable = new Runnable() {
+        @Override
+        public void run() {
+            watchFab.setImageResource(R.mipmap.ic_nothing_blue_36dp);
+            Toast.makeText(PersonActivity.this, "你们俩不再有关系啦", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    private Runnable eachRunnable = new Runnable() {
+        @Override
+        public void run() {
+            watchFab.setImageResource(R.mipmap.ic_each_other_pink_36dp);
+            Toast.makeText(PersonActivity.this, "你们俩互相关注啦", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    private Runnable watchShowRunnable = new Runnable() {
+        @Override
+        public void run() {
+            watchFab.setImageResource(R.mipmap.ic_watch_blue_pink_36dp);
+            schoolTv.setText(SCHOOL);
+            birthdayTv.setText(BIRTHDAY);
             introTv.setText(INTRODUCTION);
             activeNumTv.setText(ACTIVE_NUM);
             watchNumTv.setText(WATCH_NUM);
             fansNumTv.setText(FANS_NUM);
-
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    DBProcessor dbP = new DBProcessor();
-                    if (dbP.getConn() == null) {
-                        personHandler.post(timeOutRunnable);
-                    } else {
-                        String[] res = dbP.personInfoSelect(
-                                "select school, birthday from user where uid = " + UID, true
-                        );
-                        if (res[1].equals("/(ㄒoㄒ)/~~")) {
-                            personHandler.post(serverErrorRunnable);
-                        } else {
-                            SCHOOL = res[0] == null ? "未设置院校" : res[0];
-                            BIRTHDAY = res[1] == null ? "未设置生日" : res[1];
-                            personHandler.post(successRunnable);
-                        }
-                    }
-                    dbP.closeConn();
-                }
-            }).start();
-        } else {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    DBProcessor dbP = new DBProcessor();
-                    if (dbP.getConn() == null) {
-                        personHandler.post(timeOutRunnable);
-                    } else {
-                        String[] res = dbP.personInfoSelect(
-                                "select school, birthday, intro from user where uid = " + UID, false
-                        );
-                        if (res[1].equals("/(ㄒoㄒ)/~~")) {
-                            personHandler.post(serverErrorRunnable);
-                        } else {
-                            SCHOOL = res[0] == null ? "未设置院校" : res[0];
-                            BIRTHDAY = res[1] == null ? "未设置生日" : res[1];
-                            INTRODUCTION = res[2] == null ? "未设置签名" : res[2];
-                            personHandler.post(successRunnable);
-                        }
-                    }
-                    dbP.closeConn();
-                }
-            }).start();
+            setClickable(true);
         }
-    }
+    };
 
-    private Runnable successRunnable = new Runnable() {
+    private Runnable unWatchShowRunnable = new Runnable() {
         @Override
         public void run() {
+            watchFab.setImageResource(R.mipmap.ic_fans_pink_blue_36dp);
             schoolTv.setText(SCHOOL);
             birthdayTv.setText(BIRTHDAY);
-            if (!isFromMe) {
-                introTv.setText(INTRODUCTION);
-                activeNumTv.setText(ACTIVE_NUM);
-                watchNumTv.setText(WATCH_NUM);
-                fansNumTv.setText(FANS_NUM);
-            }
+            introTv.setText(INTRODUCTION);
+            activeNumTv.setText(ACTIVE_NUM);
+            watchNumTv.setText(WATCH_NUM);
+            fansNumTv.setText(FANS_NUM);
+            setClickable(true);
+        }
+    };
+
+    private Runnable nothingShowRunnable = new Runnable() {
+        @Override
+        public void run() {
+            watchFab.setImageResource(R.mipmap.ic_nothing_blue_36dp);
+            schoolTv.setText(SCHOOL);
+            birthdayTv.setText(BIRTHDAY);
+            introTv.setText(INTRODUCTION);
+            activeNumTv.setText(ACTIVE_NUM);
+            watchNumTv.setText(WATCH_NUM);
+            fansNumTv.setText(FANS_NUM);
+            setClickable(true);
+        }
+    };
+
+    private Runnable eachShowRunnable = new Runnable() {
+        @Override
+        public void run() {
+            watchFab.setImageResource(R.mipmap.ic_each_other_pink_36dp);
+            schoolTv.setText(SCHOOL);
+            birthdayTv.setText(BIRTHDAY);
+            introTv.setText(INTRODUCTION);
+            activeNumTv.setText(ACTIVE_NUM);
+            watchNumTv.setText(WATCH_NUM);
+            fansNumTv.setText(FANS_NUM);
+            setClickable(true);
         }
     };
 
     private Runnable serverErrorRunnable = new Runnable() {
         @Override
         public void run() {
-            Toast.makeText(PersonActivity.this, "服务器君生病了，重试一下吧", Toast.LENGTH_SHORT).show();
+            Toast.makeText(PersonActivity.this, "服务器君生病了，返回重试吧", Toast.LENGTH_SHORT).show();
         }
     };
 
     private Runnable timeOutRunnable = new Runnable() {
         @Override
         public void run() {
-            Toast.makeText(PersonActivity.this, "连接超时啦，重试一下吧", Toast.LENGTH_SHORT).show();
+            Toast.makeText(PersonActivity.this, "连接超时啦，返回重试吧", Toast.LENGTH_SHORT).show();
         }
     };
 
@@ -254,7 +488,7 @@ public class PersonActivity extends AppCompatActivity {
                 return true;
             }
         });
-        modifyMenuItem.setVisible(isFromMe || (E_UID.equals(UID)));
+        modifyMenuItem.setVisible(isSelf);
         return true;
     }
 

@@ -15,7 +15,7 @@ import java.sql.Statement;
 public class UpdateChecker {
 
     private static final String dbDriver = "com.mysql.jdbc.Driver";
-    private static final String dbUrl = "jdbc:mysql://000.000.000.000:3306/dbName";
+    private static final String dbUrl = "jdbc:mysql://[IP]:3306/dbName";
     private static final String dbUser = "root";
     private static final String dbPass = "******";
 

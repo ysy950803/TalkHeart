@@ -46,6 +46,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         setContentView(R.layout.activity_home);
         actionBar = getSupportActionBar();
         ActivitiesDestroyer.getInstance().killAll();
+//        ActivitiesDestroyer.getInstance().addActivity(this);
 
         UID = getIntent().getExtras().getString("uid");
 

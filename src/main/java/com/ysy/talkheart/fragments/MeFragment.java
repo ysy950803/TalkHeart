@@ -24,6 +24,7 @@ import com.ysy.talkheart.activities.LoginActivity;
 import com.ysy.talkheart.activities.MarkActivity;
 import com.ysy.talkheart.activities.PersonActivity;
 import com.ysy.talkheart.activities.WatchActivity;
+import com.ysy.talkheart.utils.ActivitiesDestroyer;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.DataCleanManager;
 import com.ysy.talkheart.utils.ViewTurnAnimation;
@@ -85,7 +86,8 @@ public class MeFragment extends StatedFragment {
                     meFragmentHandler.post(timeOutRunnable);
                 } else {
                     String[] res = dbP.meInfoSelect(
-                            "select sex, nickname, intro, count(actid) from user u, active a where u.uid = " + uid + " and u.uid = a.uid");
+                            "select sex, nickname, intro, act_num, watch_num, fans_num from user u, user_info_count uic" +
+                                    " where u.uid = " + uid + " and u.uid = uic.uid");
                     if (res[1].equals("/(ㄒoㄒ)/~~")) {
                         meFragmentHandler.post(serverErrorRunnable);
                     } else {
@@ -93,6 +95,8 @@ public class MeFragment extends StatedFragment {
                         NICKNAME = res[1];
                         INTRODUCTION = res[2] == null ? "点击设置签名" : res[2];
                         ACTIVE_NUM = res[3];
+                        WATCH_NUM = res[4];
+                        FANS_NUM = res[5];
                         meFragmentHandler.post(successRunnable);
                     }
                 }
@@ -108,6 +112,8 @@ public class MeFragment extends StatedFragment {
             nicknameTv.setText(NICKNAME);
             introductionTv.setText(INTRODUCTION);
             activeNumTv.setText(ACTIVE_NUM);
+            watchNumTv.setText(WATCH_NUM);
+            fansNumTv.setText(FANS_NUM);
             setClickable(true);
         }
     };
@@ -185,12 +191,9 @@ public class MeFragment extends StatedFragment {
             public void onClick(View v) {
                 Intent intent = new Intent(getActivity(), PersonActivity.class);
                 intent.putExtra("uid", UID);
+                intent.putExtra("e_uid", UID);
                 intent.putExtra("sex", SEX);
                 intent.putExtra("nickname", NICKNAME);
-                intent.putExtra("intro", INTRODUCTION);
-                intent.putExtra("active_num", ACTIVE_NUM);
-                intent.putExtra("watch_num", WATCH_NUM);
-                intent.putExtra("fans_num", FANS_NUM);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), avatarImg, getString(R.string.trans_me_avatar));
                     startActivity(intent, tAO.toBundle());
@@ -205,12 +208,9 @@ public class MeFragment extends StatedFragment {
             public void onClick(View v) {
                 Intent intent = new Intent(getActivity(), PersonActivity.class);
                 intent.putExtra("uid", UID);
+                intent.putExtra("e_uid", UID);
                 intent.putExtra("sex", SEX);
                 intent.putExtra("nickname", NICKNAME);
-                intent.putExtra("intro", INTRODUCTION);
-                intent.putExtra("active_num", ACTIVE_NUM);
-                intent.putExtra("watch_num", WATCH_NUM);
-                intent.putExtra("fans_num", FANS_NUM);
                 startActivity(intent);
             }
         });
@@ -220,6 +220,7 @@ public class MeFragment extends StatedFragment {
             public void onClick(View v) {
                 Intent intent = new Intent(getActivity(), ActiveActivity.class);
                 intent.putExtra("uid", UID);
+                intent.putExtra("e_uid", UID);
                 intent.putExtra("sex", SEX);
                 intent.putExtra("nickname", NICKNAME);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -234,11 +235,14 @@ public class MeFragment extends StatedFragment {
         watchNumLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Intent intent = new Intent(getActivity(), WatchActivity.class);
+                intent.putExtra("uid", UID);
+                intent.putExtra("e_uid", UID);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), watchNumTv, getString(R.string.trans_watch));
-                    startActivity(new Intent(getActivity(), WatchActivity.class), tAO.toBundle());
+                    startActivity(intent, tAO.toBundle());
                 } else {
-                    startActivity(new Intent(getActivity(), WatchActivity.class));
+                    startActivity(intent);
                 }
             }
         });
@@ -246,11 +250,14 @@ public class MeFragment extends StatedFragment {
         fansNumLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Intent intent = new Intent(getActivity(), FansActivity.class);
+                intent.putExtra("uid", UID);
+                intent.putExtra("e_uid", UID);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), fansNumTv, getString(R.string.trans_fans));
-                    startActivity(new Intent(getActivity(), FansActivity.class), tAO.toBundle());
+                    startActivity(intent, tAO.toBundle());
                 } else {
-                    startActivity(new Intent(getActivity(), FansActivity.class));
+                    startActivity(intent);
                 }
             }
         });
@@ -278,11 +285,13 @@ public class MeFragment extends StatedFragment {
         markLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Intent intent = new Intent(getActivity(), MarkActivity.class);
+                intent.putExtra("uid", UID);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), markLayout, getString(R.string.trans_mark));
-                    startActivity(new Intent(getActivity(), MarkActivity.class), tAO.toBundle());
+                    startActivity(intent, tAO.toBundle());
                 } else {
-                    startActivity(new Intent(getActivity(), MarkActivity.class));
+                    startActivity(intent);
                 }
             }
         });
@@ -290,11 +299,13 @@ public class MeFragment extends StatedFragment {
         draftLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Intent intent = new Intent(getActivity(), DraftActivity.class);
+                intent.putExtra("uid", UID);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), draftLayout, getString(R.string.trans_draft));
-                    startActivity(new Intent(getActivity(), DraftActivity.class), tAO.toBundle());
+                    startActivity(intent, tAO.toBundle());
                 } else {
-                    startActivity(new Intent(getActivity(), DraftActivity.class));
+                    startActivity(intent);
                 }
             }
         });
@@ -311,6 +322,7 @@ public class MeFragment extends StatedFragment {
             public void onClick(View v) {
                 startActivity(new Intent(getActivity(), LoginActivity.class));
                 getActivity().finish();
+//                ActivitiesDestroyer.getInstance().killAll();
             }
         });
 

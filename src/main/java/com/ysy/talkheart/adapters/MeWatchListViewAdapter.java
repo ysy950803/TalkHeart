@@ -6,8 +6,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.activities.WatchActivity;
+import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
@@ -21,20 +24,26 @@ public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListView
 
     private List<Integer> avatarList;
     private List<String> nicknameList;
-    private List<String> infoList;
+    private List<String> introList;
     private List<Integer> relationList; // 0:watch 1:each_other -1:fans -2:nothing
 
     private ListOnItemClickListener mOnItemClickListener;
+
+    private WatchActivity context;
+    private boolean isObserver;
 
     public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
         this.mOnItemClickListener = mOnItemClickListener;
     }
 
-    public MeWatchListViewAdapter(List<Integer> avatarList, List<String> nicknameList, List<String> infoList, List<Integer> relationList) {
+    public MeWatchListViewAdapter(WatchActivity context, List<Integer> avatarList, List<String> nicknameList,
+                                  List<String> introList, List<Integer> relationList, boolean isObserver) {
+        this.context = context;
         this.avatarList = avatarList;
         this.nicknameList = nicknameList;
-        this.infoList = infoList;
+        this.introList = introList;
         this.relationList = relationList;
+        this.isObserver = isObserver;
     }
 
     class RecyclerViewHolder extends RecyclerView.ViewHolder {
@@ -63,30 +72,49 @@ public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListView
     public void onBindViewHolder(final MeWatchListViewAdapter.RecyclerViewHolder holder, int position) {
         holder.avatarImg.setImageResource(avatarList.get(position));
         holder.nicknameTv.setText(nicknameList.get(position));
-        holder.infoTv.setText(infoList.get(position));
+        holder.infoTv.setText(introList.get(position));
 
         final int pos = Integer.parseInt(position + "");
         final ImageView eachOther = holder.eachOtherImg;
-
-        eachOther.setImageResource(relationList.get(position) == 1 ? R.mipmap.ic_each_other_pink_36dp : R.mipmap.ic_watch_blue_pink_36dp);
-        eachOther.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (relationList.get(pos) == 0) {
-                    eachOther.setImageResource(R.mipmap.ic_nothing_blue_36dp);
-                    relationList.set(pos, -2);
-                } else if (relationList.get(pos) == 1) {
-                    eachOther.setImageResource(R.mipmap.ic_fans_pink_blue_36dp);
-                    relationList.set(pos, -1);
-                } else if (relationList.get(pos) == -1) {
-                    eachOther.setImageResource(R.mipmap.ic_each_other_pink_36dp);
-                    relationList.set(pos, 1);
-                } else {
-                    eachOther.setImageResource(R.mipmap.ic_watch_blue_pink_36dp);
-                    relationList.set(pos, 0);
+        if (isObserver)
+            eachOther.setVisibility(View.GONE);
+        else {
+            eachOther.setImageResource(relationList.get(position) == 2 ? R.mipmap.ic_each_other_pink_36dp : R.mipmap.ic_watch_blue_pink_36dp);
+            eachOther.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ConnectionDetector cd = new ConnectionDetector(context);
+                    if (!cd.isConnectingToInternet()) {
+                        Toast.makeText(context, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+                    } else {
+                        context.eachOtherImg = eachOther;
+                        context.eachOtherImg.setClickable(false);
+                        switch (relationList.get(pos)) {
+                            case 2:
+                                eachOther.setImageResource(R.mipmap.ic_fans_pink_blue_36dp);
+                                relationList.set(pos, -1);
+                                context.updateRelation(pos, -1);
+                                break;
+                            case 1:
+                                eachOther.setImageResource(R.mipmap.ic_nothing_blue_36dp);
+                                relationList.set(pos, 0);
+                                context.updateRelation(pos, 0);
+                                break;
+                            case -1:
+                                eachOther.setImageResource(R.mipmap.ic_each_other_pink_36dp);
+                                relationList.set(pos, 2);
+                                context.updateRelation(pos, 2);
+                                break;
+                            case 0:
+                                eachOther.setImageResource(R.mipmap.ic_watch_blue_pink_36dp);
+                                relationList.set(pos, 1);
+                                context.updateRelation(pos, 1);
+                                break;
+                        }
+                    }
                 }
-            }
-        });
+            });
+        }
 
         // 如果设置了回调，则设置点击事件
         if (mOnItemClickListener != null) {
