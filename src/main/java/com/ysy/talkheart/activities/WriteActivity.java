@@ -68,7 +68,7 @@ public class WriteActivity extends AppCompatActivity {
             Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
             return false;
         }
-        waitDialog = ProgressDialog.show(WriteActivity.this, "请稍后", "正在请数据库君吃饭……");
+        waitDialog = ProgressDialog.show(WriteActivity.this, "请稍后", "正在和数据库君吃饭……");
         connectToSend(uid, sendTime, content);
         return true;
     }

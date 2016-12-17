@@ -55,6 +55,7 @@
     <string name="person_school">院校</string>
     <string name="person_birthday">生日</string>
     <string name="person_modify">修改</string>
+    <string name="action_update">在线升级</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

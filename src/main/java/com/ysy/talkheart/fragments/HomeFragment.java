@@ -1,6 +1,7 @@
 package com.ysy.talkheart.fragments;
 
 import android.app.ActivityOptions;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -8,6 +9,7 @@ import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -88,6 +90,7 @@ public class HomeFragment extends StatedFragment {
         initData();
         initView(view);
         clickListener();
+        refreshLayout.setRefreshing(true);
         refresh();
         return view;
     }
@@ -134,9 +137,44 @@ public class HomeFragment extends StatedFragment {
 
             @Override
             public void onItemLongClick(View view, int position) {
-
+                showItemDialog(UID, actidList.get(position));
             }
         });
+    }
+
+    private void showItemDialog(final String uid, final String actid) {
+        final String items[] = {"收藏"};
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                connectToMark(uid, actid);
+                dialog.dismiss();
+            }
+        });
+        builder.create().show();
+    }
+
+    private void connectToMark(final String uid, final String actid) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                DBProcessor dbP = new DBProcessor();
+                if (dbP.getConn() == null) {
+                    homeActiveHandler.post(timeOutRunnable);
+                } else {
+                    int res = dbP.insert(
+                            "insert into mark(uid, actid) values(" + uid + ", " + actid + ")"
+                    );
+                    if (res == 1)
+                        homeActiveHandler.post(markRunnable);
+                    else if (res == -1)
+                        homeActiveHandler.post(markErrorRunnable);
+                    else
+                        homeActiveHandler.post(serverErrorRunnable);
+                }
+            }
+        }).start();
     }
 
     private void refresh() {
@@ -170,7 +208,8 @@ public class HomeFragment extends StatedFragment {
                     List<List<String>> resList = dbP.homeActiveSelect(
                             "select actid, sex, nickname, sendtime, content, goodnum from active a, user u where a.uid = u.uid and u.uid in (" +
                                     "select uid_a from user_relation where uid_b = " + uid + " and relation in (-1, 2) " +
-                                    "union select uid_b from user_relation where uid_a = " + uid + " and relation in (1, 2))" +
+                                    "union select uid_b from user_relation where uid_a = " + uid + " and relation in (1, 2) " +
+                                    "union select uid from user where uid = " + uid + ")" +
                                     " order by actid desc"
                     );
                     List<List<String>> statusList = dbP.goodSelect(
@@ -284,6 +323,20 @@ public class HomeFragment extends StatedFragment {
             }
         }).start();
     }
+
+    private Runnable markRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(getActivity(), "收藏成功啦", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    private Runnable markErrorRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(getActivity(), "已经收藏过了", Toast.LENGTH_SHORT).show();
+        }
+    };
 
     private Runnable successRunnable = new Runnable() {
         @Override

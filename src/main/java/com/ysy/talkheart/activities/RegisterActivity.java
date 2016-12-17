@@ -133,7 +133,7 @@ public class RegisterActivity extends AppCompatActivity {
             Toast.makeText(this, "设置一下生日吧", Toast.LENGTH_SHORT).show();
             return false;
         }
-        waitDialog = ProgressDialog.show(RegisterActivity.this, "请稍后", "正在给服务器君端茶递水……");
+        waitDialog = ProgressDialog.show(RegisterActivity.this, "请稍后", "服务器君正在开空调……");
         connectToRegister(username, pw, nickname, birthday, sex);
         return true;
     }

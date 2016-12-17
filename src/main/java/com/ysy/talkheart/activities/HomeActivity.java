@@ -12,8 +12,10 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.ashokvarma.bottomnavigation.BottomNavigationItem;
@@ -32,6 +34,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     int lastSelectedPosition = 0;
     private ActionBar actionBar;
     private MenuItem feedbackMenuItem;
+    private MenuItem updateMenuItem;
     private MenuItem searchMenuItem;
 
     private Handler updateHandler;
@@ -64,7 +67,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         updateHandler = new Handler();
         new Handler().postDelayed(new Runnable() {
             public void run() {
-                checkUpdate();
+                autoCheckUpdate();
             }
         }, WAIT_TIME);
     }
@@ -77,6 +80,12 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         homeFragment = HomeFragment.newInstance("First", UID);
         transaction.replace(R.id.content_table_layout, homeFragment);
         transaction.commit();
+    }
+
+    private void setMenuItemVisible(boolean feedback, boolean update, boolean search) {
+        feedbackMenuItem.setVisible(feedback);
+        updateMenuItem.setVisible(update);
+        searchMenuItem.setVisible(search);
     }
 
     @Override
@@ -92,8 +101,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                     homeFragment = HomeFragment.newInstance("Home", UID);
                 }
                 transaction.replace(R.id.content_table_layout, homeFragment);
-                feedbackMenuItem.setVisible(false);
-                searchMenuItem.setVisible(true);
+                setMenuItemVisible(false, false, true);
                 break;
             case 1:
                 if (actionBar != null)
@@ -102,8 +110,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                     messageFragment = MessageFragment.newInstance("Msg", "");
                 }
                 transaction.replace(R.id.content_table_layout, messageFragment);
-                feedbackMenuItem.setVisible(false);
-                searchMenuItem.setVisible(false);
+                setMenuItemVisible(false, false, false);
                 break;
             case 2:
                 if (actionBar != null)
@@ -112,8 +119,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                     meFragment = MeFragment.newInstance("Me", UID);
                 }
                 transaction.replace(R.id.content_table_layout, meFragment);
-                feedbackMenuItem.setVisible(true);
-                searchMenuItem.setVisible(false);
+                setMenuItemVisible(true, true, false);
                 break;
             default:
                 break;
@@ -145,6 +151,16 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         });
         feedbackMenuItem.setVisible(false);
 
+        updateMenuItem = menu.findItem(R.id.action_update);
+        updateMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                handCheckUpdate();
+                return true;
+            }
+        });
+        updateMenuItem.setVisible(false);
+
         searchMenuItem = menu.findItem(R.id.action_search);
         searchMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
@@ -158,7 +174,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         return true;
     }
 
-    private void checkUpdate() {
+    private void autoCheckUpdate() {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -175,10 +191,35 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         }).start();
     }
 
+    private void handCheckUpdate() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                UpdateChecker dbP = new UpdateChecker();
+                if (dbP.getConn() != null) {
+                    int code;
+                    if ((code = dbP.codeSelect("select max(code) from app_version")) > getVersionCode(getApplicationContext())) {
+                        UPDATE_URL = dbP.downloadUrlSelect("select url from download_url where code = " + code);
+                        updateHandler.post(updateRunnable);
+                    } else
+                        updateHandler.post(noUpdateRunnable);
+                }
+                dbP.closeConn();
+            }
+        }).start();
+    }
+
     private Runnable updateRunnable = new Runnable() {
         @Override
         public void run() {
             updateDialog(UPDATE_URL);
+        }
+    };
+
+    private Runnable noUpdateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(HomeActivity.this, "已经是最新版啦，谢谢关注哦", Toast.LENGTH_SHORT).show();
         }
     };
 
@@ -195,7 +236,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     private void updateDialog(final String url) {
         android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
         builder.setTitle("兴高采烈的提示框").setMessage("检测到有新版本哦（新功能、修复已知错误等），快快下载吧！").setCancelable(false)
-                .setPositiveButton("义不容辞", new DialogInterface.OnClickListener() {
+                .setPositiveButton("非常乐意", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -210,4 +251,17 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         final android.support.v7.app.AlertDialog alert = builder.create();
         alert.show();
     }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN) {
+            Intent backHome = new Intent(Intent.ACTION_MAIN);
+            backHome.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            backHome.addCategory(Intent.CATEGORY_HOME);
+            startActivity(backHome);
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
 }

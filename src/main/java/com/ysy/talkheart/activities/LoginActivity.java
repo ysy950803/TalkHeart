@@ -7,6 +7,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -17,6 +18,7 @@ import com.ysy.talkheart.R;
 import com.ysy.talkheart.utils.ActivitiesDestroyer;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
+import com.ysy.talkheart.utils.DataProcessor;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -160,9 +162,12 @@ public class LoginActivity extends AppCompatActivity {
                         if (res[0] == null)
                             loginHandler.post(userErrorRunnable);
                         else {
-                            if (res[1].equals(pw))
+                            if (res[1].equals(pw)) {
+                                DataProcessor dp = new DataProcessor(LoginActivity.this);
+                                dp.saveData("uid", res[0]);
+//                                dp.saveData("pw", res[1]);
                                 startActivity(new Intent(LoginActivity.this, HomeActivity.class).putExtra("uid", res[0]));
-                            else
+                            } else
                                 loginHandler.post(pwErrorRunnable);
                         }
                     }
@@ -177,5 +182,21 @@ public class LoginActivity extends AppCompatActivity {
     public void onBackPressed() {
         super.onBackPressed();
         ActivitiesDestroyer.getInstance().killAll();
+    }
+
+    // 连续按两次退出
+    private long exitTime;
+
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if ((System.currentTimeMillis() - exitTime) > 2000) {
+                Toast.makeText(this, "再按一次就能退出啦", Toast.LENGTH_SHORT).show();
+                exitTime = System.currentTimeMillis();
+            } else {
+                onBackPressed();
+            }
+            return false; // 此处返回true达到的效果相同，但若不返回值，会出现按一次就显示提示并直接退出
+        }
+        return super.onKeyDown(keyCode, event);
     }
 }

@@ -13,6 +13,7 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".activities.WelcomeActivity"
+            android:screenOrientation="portrait"
             android:theme="@style/AppCompatFullScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,36 +23,48 @@
         </activity>
         <activity
             android:name=".activities.LoginActivity"
+            android:screenOrientation="portrait"
             android:theme="@style/AppCompatFullScreen" />
         <activity
             android:name=".activities.RegisterActivity"
+            android:screenOrientation="portrait"
             android:theme="@style/AppCompatFullScreen" />
-        <activity android:name=".activities.HomeActivity" />
+        <activity
+            android:name=".activities.HomeActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".activities.WriteActivity"
             android:label="@string/write_name"
+            android:screenOrientation="portrait"
             android:windowSoftInputMode="stateVisible|adjustResize" />
         <activity
             android:name=".activities.DraftActivity"
-            android:label="@string/draft_name" />
+            android:label="@string/draft_name"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".activities.MarkActivity"
-            android:label="@string/mark_name" />
+            android:label="@string/mark_name"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".activities.ActiveActivity"
-            android:label="@string/me_active" />
+            android:label="@string/me_active"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".activities.WatchActivity"
-            android:label="@string/me_watch" />
+            android:label="@string/me_watch"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".activities.FansActivity"
-            android:label="@string/me_fans" />
+            android:label="@string/me_fans"
+            android:screenOrientation="portrait" />
         <activity
-            android:label="@string/content_loading"
             android:name=".activities.PersonActivity"
+            android:label="@string/content_loading"
+            android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".activities.SearchActivity"
+            android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
     </application>
 

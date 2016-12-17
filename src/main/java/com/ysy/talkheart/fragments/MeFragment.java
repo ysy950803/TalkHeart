@@ -27,6 +27,7 @@ import com.ysy.talkheart.activities.WatchActivity;
 import com.ysy.talkheart.utils.ActivitiesDestroyer;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.DataCleanManager;
+import com.ysy.talkheart.utils.DataProcessor;
 import com.ysy.talkheart.utils.ViewTurnAnimation;
 import com.ysy.talkheart.views.CircularImageView;
 
@@ -320,6 +321,8 @@ public class MeFragment extends StatedFragment {
         exitLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                DataProcessor dp = new DataProcessor(getActivity());
+                dp.saveData("uid", "");
                 startActivity(new Intent(getActivity(), LoginActivity.class));
                 getActivity().finish();
 //                ActivitiesDestroyer.getInstance().killAll();

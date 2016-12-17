@@ -49,6 +49,7 @@ public class WatchActivity extends AppCompatActivity {
         initData();
         initView();
         clickListener();
+        refreshLayout.setRefreshing(true);
         refresh();
     }
 
@@ -87,7 +88,7 @@ public class WatchActivity extends AppCompatActivity {
                     intent.putExtra("uid", watchUIDList.get(position));
                     intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
                     intent.putExtra("nickname", nicknameList.get(position));
-                        intent.putExtra("e_uid", E_UID);
+                    intent.putExtra("e_uid", E_UID);
                     startActivity(intent);
                 }
             }
@@ -143,7 +144,7 @@ public class WatchActivity extends AppCompatActivity {
                             watchUIDList.add(resList.get(0).get(i));
                             avatarList.add(resList.get(1).get(i).equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
                             nicknameList.add(resList.get(2).get(i));
-                            introList.add(resList.get(3).get(i));
+                            introList.add(resList.get(3).get(i) == null ? "未设置签名" : resList.get(3).get(i));
                             relationList.add(Integer.parseInt(resList.get(4).get(i)));
                         }
                         watchHandler.post(successRunnable);
@@ -162,10 +163,12 @@ public class WatchActivity extends AppCompatActivity {
     }
 
     public void updateRelation(int position, int relation) {
-        connectToUpdateRelation(UID, watchUIDList.get(position), relation);
+        String UID_L = Integer.parseInt(UID) < Integer.parseInt(watchUIDList.get(position)) ? UID : watchUIDList.get(position);
+        String UID_H = Integer.parseInt(UID) > Integer.parseInt(watchUIDList.get(position)) ? UID : watchUIDList.get(position);
+        connectToUpdateRelation(UID, watchUIDList.get(position), UID_L, UID_H, relation);
     }
 
-    private void connectToUpdateRelation(final String uid_a, final String uid_b, final int relation) {
+    private void connectToUpdateRelation(final String uid, final String watch_uid, final String uid_l, final String uid_h, final int relation) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -175,45 +178,41 @@ public class WatchActivity extends AppCompatActivity {
                 } else {
                     switch (relation) {
                         case -1: // 2 to -1
-                            int res = dbP.update("update user_relation set uid_a = " + uid_a + ", " +
-                                    "uid_b = " + uid_b + ", relation = -1 where (uid_a = " + uid_a + " and uid_b = " + uid_b + ") or (" +
-                                    "uid_a = " + uid_b + " and uid_b = " + uid_a + ")");
+                            int res = dbP.update("update user_relation set " +
+                                    "relation = " + (uid_l.equals(uid) ? -1 : 1) + " where uid_a = " + uid_l + " and uid_b = " + uid_h);
                             if (res == 1) {
-                                dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid_a);
-                                dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + uid_b);
+                                dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid);
+                                dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + watch_uid);
                                 watchHandler.post(unWatchRunnable);
                             } else
                                 watchHandler.post(serverErrorRunnable);
                             break;
                         case 0: // 1 to 0
-                            int res1 = dbP.update("update user_relation set uid_a = " + uid_a + ", " +
-                                    "uid_b = " + uid_b + ", relation = 0 where (uid_a = " + uid_a + " and uid_b = " + uid_b + ") or (" +
-                                    "uid_a = " + uid_b + " and uid_b = " + uid_a + ")");
+                            int res1 = dbP.update("update user_relation set " +
+                                    "relation = " + 0 + " where uid_a = " + uid_l + " and uid_b = " + uid_h);
                             if (res1 == 1) {
-                                dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid_a);
-                                dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + uid_b);
+                                dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid);
+                                dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + watch_uid);
                                 watchHandler.post(nothingRunnable);
                             } else
                                 watchHandler.post(serverErrorRunnable);
                             break;
                         case 2: // -1 to 2
-                            int res2 = dbP.update("update user_relation set uid_a = " + uid_a + ", " +
-                                    "uid_b = " + uid_b + ", relation = 2 where (uid_a = " + uid_a + " and uid_b = " + uid_b + ") or (" +
-                                    "uid_a = " + uid_b + " and uid_b = " + uid_a + ")");
+                            int res2 = dbP.update("update user_relation set " +
+                                    "relation = " + 2 + " where uid_a = " + uid_l + " and uid_b = " + uid_h);
                             if (res2 == 1) {
-                                dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_a);
-                                dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_b);
+                                dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid);
+                                dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + watch_uid);
                                 watchHandler.post(eachRunnable);
                             } else
                                 watchHandler.post(serverErrorRunnable);
                             break;
                         case 1: // 0 to 1
-                            int res3 = dbP.update("update user_relation set uid_a = " + uid_a + ", " +
-                                    "uid_b = " + uid_b + ", relation = 1 where (uid_a = " + uid_a + " and uid_b = " + uid_b + ") or (" +
-                                    "uid_a = " + uid_b + " and uid_b = " + uid_a + ")");
+                            int res3 = dbP.update("update user_relation set " +
+                                    "relation = " + (uid_l.equals(uid) ? 1 : -1) + " where uid_a = " + uid_l + " and uid_b = " + uid_h);
                             if (res3 == 1) {
-                                dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_a);
-                                dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_b);
+                                dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid);
+                                dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + watch_uid);
                                 watchHandler.post(watchRunnable);
                             } else
                                 watchHandler.post(serverErrorRunnable);

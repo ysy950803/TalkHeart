@@ -133,6 +133,7 @@ public class ActiveActivity extends AppCompatActivity {
                     else
                         activeHandler.post(serverErrorRunnable);
                 }
+                dbP.closeConn();
             }
         }).start();
     }
@@ -170,7 +171,8 @@ public class ActiveActivity extends AppCompatActivity {
                                     " order by actid desc"
                     );
                     List<List<String>> statusList = dbP.goodSelect(
-                            "select actid, isfav from favorite where uid = " + e_uid +
+                            "select actid, isfav from favorite f where f.uid = " + e_uid + " and actid in (" +
+                                    "select actid from active a where a.uid = " + uid + ")" +
                                     " order by actid desc"
                     );
                     clearAllLists();

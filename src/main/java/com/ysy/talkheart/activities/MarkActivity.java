@@ -1,8 +1,10 @@
 package com.ysy.talkheart.activities;
 
+import android.content.DialogInterface;
 import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -30,6 +32,7 @@ public class MarkActivity extends AppCompatActivity {
     private List<String> nicknameList = new ArrayList<>();
     private List<String> timeList = new ArrayList<>();
     private List<String> textList = new ArrayList<>();
+    private List<String> actidList = new ArrayList<>();
 
     private String UID = "0";
 
@@ -44,7 +47,7 @@ public class MarkActivity extends AppCompatActivity {
         initData();
         initView();
         clickListener();
-
+        refreshLayout.setRefreshing(true);
         refresh();
     }
 
@@ -78,9 +81,50 @@ public class MarkActivity extends AppCompatActivity {
 
             @Override
             public void onItemLongClick(View view, int position) {
-
+                showItemDialog(actidList.get(position), position);
             }
         });
+    }
+
+    private void showItemDialog(final String actid, final int position) {
+        final String items[] = {"删除"};
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                connectToDelete(actid, position);
+                dialog.dismiss();
+            }
+        });
+        builder.create().show();
+    }
+
+    private void connectToDelete(final String actid, final int position) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                DBProcessor dbP = new DBProcessor();
+                if (dbP.getConn() == null) {
+                    refreshHandler.post(timeOutRunnable);
+                } else {
+                    int res = dbP.delete(
+                            "delete from mark where actid = " + actid + " and uid = " + UID
+                    );
+                    if (res == 1) {
+                        timeList.remove(position);
+                        textList.remove(position);
+                        avatarList.remove(position);
+                        nicknameList.remove(position);
+                        actidList.remove(position);
+                        refreshHandler.post(deleteRunnable);
+                    } else if (res == -1)
+                        refreshHandler.post(deleteErrorRunnable);
+                    else
+                        refreshHandler.post(serverErrorRunnable);
+                }
+                dbP.closeConn();
+            }
+        }).start();
     }
 
     private void refresh(){
@@ -112,7 +156,7 @@ public class MarkActivity extends AppCompatActivity {
                     refreshHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.markSelect(
-                            "select sex, sendtime, nickname, content " +
+                            "select sex, sendtime, nickname, content, m.actid " +
                                     "from user u, mark m, active a where m.actid = a.actid and m.uid = " + uid + " and a.uid = u.uid"
                     );
                     clearAllLists();
@@ -126,6 +170,7 @@ public class MarkActivity extends AppCompatActivity {
                             timeList.add(resList.get(1).get(i).substring(0, 19));
                             nicknameList.add(resList.get(2).get(i));
                             textList.add(resList.get(3).get(i));
+                            actidList.add(resList.get(4).get(i));
                         }
                         refreshHandler.post(successRunnable);
                     }
@@ -140,6 +185,7 @@ public class MarkActivity extends AppCompatActivity {
         nicknameList.clear();
         timeList.clear();
         textList.clear();
+        actidList.clear();
     }
 
     private Runnable successRunnable = new Runnable() {
@@ -151,11 +197,26 @@ public class MarkActivity extends AppCompatActivity {
         }
     };
 
+    private Runnable deleteRunnable = new Runnable() {
+        @Override
+        public void run() {
+            listViewAdapter.notifyDataSetChanged();
+            Toast.makeText(MarkActivity.this, "删除成功", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    private Runnable deleteErrorRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(MarkActivity.this, "删除失败啦，它舍不得离开呢", Toast.LENGTH_SHORT).show();
+        }
+    };
+
     private Runnable nothingRunnable = new Runnable() {
         @Override
         public void run() {
             listViewAdapter.notifyDataSetChanged();
-            Toast.makeText(MarkActivity.this, "还没有任何草稿哦", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MarkActivity.this, "还没有任何收藏哦", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
         }

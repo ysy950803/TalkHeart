@@ -1,9 +1,11 @@
 package com.ysy.talkheart.activities;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -30,7 +32,7 @@ public class DraftActivity extends AppCompatActivity {
     private List<String> timeList = new ArrayList<>();
     private List<String> textList = new ArrayList<>();
     private List<String> dftidList = new ArrayList<>();
-    private Handler refreshHandler;
+    private Handler draftHandler;
 
     private String UID = "0";
 
@@ -39,11 +41,11 @@ public class DraftActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_draft);
         setupActionBar();
-        refreshHandler = new Handler();
+        draftHandler = new Handler();
         initData();
         initView();
         clickListener();
-
+        refreshLayout.setRefreshing(true);
         refresh();
     }
 
@@ -81,12 +83,51 @@ public class DraftActivity extends AppCompatActivity {
 
             @Override
             public void onItemLongClick(View view, int position) {
-
+                showItemDialog(dftidList.get(position), position);
             }
         });
     }
 
-    private void refresh(){
+    private void showItemDialog(final String dftid, final int position) {
+        final String items[] = {"删除"};
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                connectToDelete(dftid, position);
+                dialog.dismiss();
+            }
+        });
+        builder.create().show();
+    }
+
+    private void connectToDelete(final String dftid, final int position) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                DBProcessor dbP = new DBProcessor();
+                if (dbP.getConn() == null) {
+                    draftHandler.post(timeOutRunnable);
+                } else {
+                    int res = dbP.delete(
+                            "delete from draft where dftid = " + dftid
+                    );
+                    if (res == 1) {
+                        timeList.remove(position);
+                        textList.remove(position);
+                        dftidList.remove(position);
+                        draftHandler.post(deleteRunnable);
+                    } else if (res == -1)
+                        draftHandler.post(deleteErrorRunnable);
+                    else
+                        draftHandler.post(serverErrorRunnable);
+                }
+                dbP.closeConn();
+            }
+        }).start();
+    }
+
+    private void refresh() {
         if (!isRefreshing) {
             isRefreshing = true;
             if (!refreshData()) {
@@ -112,23 +153,23 @@ public class DraftActivity extends AppCompatActivity {
             public void run() {
                 DBProcessor dbP = new DBProcessor();
                 if (dbP.getConn() == null) {
-                    refreshHandler.post(timeOutRunnable);
+                    draftHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.draftSelect(
                             "select dftid, savetime, content from draft where uid = " + uid
                     );
                     clearAllLists();
                     if (resList == null) {
-                        refreshHandler.post(serverErrorRunnable);
+                        draftHandler.post(serverErrorRunnable);
                     } else if (resList.get(0).size() == 0) {
-                        refreshHandler.post(nothingRunnable);
+                        draftHandler.post(nothingRunnable);
                     } else if (resList.get(0).size() > 0) {
                         for (int i = 0; i < resList.get(0).size(); i++) {
                             dftidList.add(resList.get(0).get(i));
                             timeList.add(resList.get(1).get(i).substring(0, 19));
                             textList.add(resList.get(2).get(i));
                         }
-                        refreshHandler.post(successRunnable);
+                        draftHandler.post(successRunnable);
                     }
                 }
                 dbP.closeConn();
@@ -141,6 +182,21 @@ public class DraftActivity extends AppCompatActivity {
         timeList.clear();
         textList.clear();
     }
+
+    private Runnable deleteRunnable = new Runnable() {
+        @Override
+        public void run() {
+            listViewAdapter.notifyDataSetChanged();
+            Toast.makeText(DraftActivity.this, "删除成功", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    private Runnable deleteErrorRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(DraftActivity.this, "删除失败啦，它舍不得离开呢", Toast.LENGTH_SHORT).show();
+        }
+    };
 
     private Runnable successRunnable = new Runnable() {
         @Override

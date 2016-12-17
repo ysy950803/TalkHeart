@@ -11,4 +11,9 @@
         android:orderInCategory="100"
         android:title="@string/me_feedback"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/action_update"
+        android:orderInCategory="100"
+        android:title="@string/action_update"
+        app:showAsAction="never" />
 </menu>
