@@ -18,15 +18,18 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.inthecheesefactory.thecheeselibrary.fragment.support.v4.app.StatedFragment;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.ActiveActivity;
+import com.ysy.talkheart.activities.HomeActivity;
 import com.ysy.talkheart.activities.WatchActivity;
 import com.ysy.talkheart.activities.WriteActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.adapters.HomeActiveListViewAdapter;
+import com.ysy.talkheart.utils.RecyclerViewScrollListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +40,6 @@ import java.util.List;
 
 public class HomeFragment extends StatedFragment {
 
-    private FloatingActionButton addFab;
     private SwipeRefreshLayout refreshLayout;
 
     private List<Integer> avatarList = new ArrayList<>();
@@ -59,6 +61,8 @@ public class HomeFragment extends StatedFragment {
     private boolean isRefreshing = false;
     private Handler homeActiveHandler;
 
+    private HomeActivity context;
+
     public static HomeFragment newInstance(String param1, String param2) {
         HomeFragment fragment = new HomeFragment();
         Bundle args = new Bundle();
@@ -75,7 +79,7 @@ public class HomeFragment extends StatedFragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             UID = getArguments().getString(ARG_PARAM2);
         }
-
+        context = (HomeActivity) getActivity();
         homeActiveHandler = new Handler();
     }
 
@@ -101,10 +105,31 @@ public class HomeFragment extends StatedFragment {
 
     private void initView(View view) {
         refreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.home_active_refresh_layout);
-        addFab = (FloatingActionButton) view.findViewById(R.id.home_add_fab);
+        final FloatingActionButton addFab = context.getAddFab();
+        final BottomNavigationBar navigationBar = context.getBottomNavigationBar();
 
         RecyclerView activeRecyclerView = (RecyclerView) view.findViewById(R.id.home_active_listView);
         activeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        RecyclerViewScrollListener scrollListener =  new RecyclerViewScrollListener() {
+            @Override
+            public void onScrollUp() {
+                addFab.hide();
+                navigationBar.hide();
+            }
+
+            @Override
+            public void onScrollDown() {
+                addFab.show();
+                navigationBar.show();
+            }
+
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+
+            }
+        };
+        scrollListener.setScrollThreshold(4);
+        activeRecyclerView.setOnScrollListener(scrollListener);
 
         listViewAdapter = new HomeActiveListViewAdapter(this, avatarList, nicknameList, timeList, textList, goodStatusList, goodNumList);
         activeRecyclerView.setAdapter(listViewAdapter);
@@ -119,16 +144,6 @@ public class HomeFragment extends StatedFragment {
     }
 
     private void clickListener() {
-        addFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), addFab, getString(R.string.trans_add));
-                    startActivity(new Intent(getActivity(), WriteActivity.class).putExtra("uid", UID), tAO.toBundle());
-                } else
-                    startActivity(new Intent(getActivity(), WriteActivity.class).putExtra("uid", UID));
-            }
-        });
         listViewAdapter.setListOnItemClickListener(new ListOnItemClickListener() {
             @Override
             public void onItemClick(View view, int position) {
@@ -226,7 +241,7 @@ public class HomeFragment extends StatedFragment {
                             actidList.add(resList.get(0).get(i));
                             avatarList.add(resList.get(1).get(i).equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
                             nicknameList.add(resList.get(2).get(i));
-                            timeList.add(resList.get(3).get(i));
+                            timeList.add(resList.get(3).get(i).substring(0, 19));
                             textList.add(resList.get(4).get(i));
                             goodNumList.add(resList.get(5).get(i));
                             goodStatusList.add(getGoodStatus(i, actidList, statusList));

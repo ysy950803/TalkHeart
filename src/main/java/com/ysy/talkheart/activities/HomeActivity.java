@@ -1,12 +1,15 @@
 package com.ysy.talkheart.activities;
 
+import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
@@ -15,6 +18,7 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
@@ -40,6 +44,8 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     private Handler updateHandler;
     private String UPDATE_URL = "";
     private static final int WAIT_TIME = 2048;
+    private BottomNavigationBar bottomNavigationBar;
+    private FloatingActionButton addFab;
 
     private String UID = "0";
 
@@ -53,7 +59,19 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
 
         UID = getIntent().getExtras().getString("uid");
 
-        BottomNavigationBar bottomNavigationBar = (BottomNavigationBar) findViewById(R.id.bottom_navigation_bar);
+        addFab = (FloatingActionButton) findViewById(R.id.home_add_fab);
+        addFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(HomeActivity.this, addFab, getString(R.string.trans_add));
+                    startActivity(new Intent(HomeActivity.this, WriteActivity.class).putExtra("uid", UID), tAO.toBundle());
+                } else
+                    startActivity(new Intent(HomeActivity.this, WriteActivity.class).putExtra("uid", UID));
+            }
+        });
+
+        bottomNavigationBar = (BottomNavigationBar) findViewById(R.id.home_bottom_navigation_bar);
         bottomNavigationBar
                 .addItem(new BottomNavigationItem(R.drawable.ic_home_white_24dp, "首页"))
                 .addItem(new BottomNavigationItem(R.drawable.ic_message_white_24dp, "消息"))
@@ -70,6 +88,14 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 autoCheckUpdate();
             }
         }, WAIT_TIME);
+    }
+
+    public BottomNavigationBar getBottomNavigationBar() {
+        return bottomNavigationBar;
+    }
+
+    public FloatingActionButton getAddFab() {
+        return addFab;
     }
 
     private void setDefaultFragment() {
@@ -102,6 +128,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 }
                 transaction.replace(R.id.content_table_layout, homeFragment);
                 setMenuItemVisible(false, false, true);
+                addFab.setVisibility(View.VISIBLE);
                 break;
             case 1:
                 if (actionBar != null)
@@ -111,6 +138,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 }
                 transaction.replace(R.id.content_table_layout, messageFragment);
                 setMenuItemVisible(false, false, false);
+                addFab.setVisibility(View.GONE);
                 break;
             case 2:
                 if (actionBar != null)
@@ -120,6 +148,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 }
                 transaction.replace(R.id.content_table_layout, meFragment);
                 setMenuItemVisible(true, true, false);
+                addFab.setVisibility(View.GONE);
                 break;
             default:
                 break;
@@ -219,7 +248,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     private Runnable noUpdateRunnable = new Runnable() {
         @Override
         public void run() {
-            Toast.makeText(HomeActivity.this, "已经是最新版啦，谢谢关注哦", Toast.LENGTH_SHORT).show();
+            Toast.makeText(HomeActivity.this, "已经是最新版啦" + getVersionName(HomeActivity.this) + "，谢谢关注哦", Toast.LENGTH_SHORT).show();
         }
     };
 
@@ -230,6 +259,16 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
             return 0;
+        }
+    }
+
+    public static String getVersionName(Context context) {
+        try {
+            PackageInfo pi = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+            return "(v" + pi.versionName + ")";
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+            return "";
         }
     }
 
