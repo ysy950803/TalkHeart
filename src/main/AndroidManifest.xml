@@ -66,6 +66,10 @@
             android:name=".activities.SearchActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:label="@string/feedback_name"
+            android:screenOrientation="portrait"
+            android:name=".activities.FeedbackActivity" />
     </application>
 
 </manifest>

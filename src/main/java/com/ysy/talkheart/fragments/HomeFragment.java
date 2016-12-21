@@ -1,9 +1,6 @@
 package com.ysy.talkheart.fragments;
 
-import android.app.ActivityOptions;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -21,10 +18,7 @@ import android.widget.Toast;
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.inthecheesefactory.thecheeselibrary.fragment.support.v4.app.StatedFragment;
 import com.ysy.talkheart.R;
-import com.ysy.talkheart.activities.ActiveActivity;
 import com.ysy.talkheart.activities.HomeActivity;
-import com.ysy.talkheart.activities.WatchActivity;
-import com.ysy.talkheart.activities.WriteActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;

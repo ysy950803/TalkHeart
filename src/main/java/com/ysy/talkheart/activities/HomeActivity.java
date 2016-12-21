@@ -174,7 +174,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         feedbackMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                // startActivity
+                startActivity(new Intent(HomeActivity.this, FeedbackActivity.class).putExtra("uid", UID));
                 return true;
             }
         });
