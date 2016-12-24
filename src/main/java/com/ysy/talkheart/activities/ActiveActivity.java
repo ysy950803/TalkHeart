@@ -1,6 +1,7 @@
 package com.ysy.talkheart.activities;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
@@ -36,6 +37,7 @@ public class ActiveActivity extends AppCompatActivity {
     private MeActiveListViewAdapter listViewAdapter;
     private SwipeRefreshLayout refreshLayout;
     private boolean isRefreshing = false;
+    private int fav_actid_index = 0;
 
     private Handler activeHandler;
 
@@ -198,8 +200,6 @@ public class ActiveActivity extends AppCompatActivity {
         }).start();
     }
 
-    private int fav_actid_index = 0;
-
     private int getGoodStatus(int pos, List<String> actidList, List<List<String>> statusList) {
         int isfav = -1;
         if (statusList.get(0).size() == 0)
@@ -223,7 +223,7 @@ public class ActiveActivity extends AppCompatActivity {
         connectToUpdateGood(isSelf ? UID : E_UID, position);
     }
 
-    private void connectToUpdateGood(final String uid, final int position) {
+    private void connectToUpdateGood(final String e_uid, final int position) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -235,7 +235,7 @@ public class ActiveActivity extends AppCompatActivity {
                     if (goodStatusList.get(position) == 1) {
                         int res = dbP.goodUpdate(
                                 "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
-                                "update favorite set isfav = 0 where uid = " + uid + " and actid = " + actid
+                                "update favorite set isfav = 0 where uid = " + e_uid + " and actid = " + actid
                         );
                         if (res == 2)
                             goodStatusList.set(position, 0);
@@ -244,20 +244,24 @@ public class ActiveActivity extends AppCompatActivity {
                     } else if (goodStatusList.get(position) == -1) {
                         int res = dbP.goodUpdate(
                                 "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
-                                "insert into favorite(uid, actid, isfav) values(" + uid + ", " + actid + ", 1)"
+                                "insert into favorite(uid, actid, isfav) values(" + e_uid + ", " + actid + ", 1)"
                         );
-                        if (res == 2)
+                        if (res == 2) {
+                            if (!isSelf)
+                                dbP.update("update user set isread = 0 where uid = " + UID);
                             goodStatusList.set(position, 1);
-                        else
+                        } else
                             activeHandler.post(goodErrorRunnable);
                     } else if (goodStatusList.get(position) == 0) {
                         int res = dbP.goodUpdate(
                                 "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
-                                "update favorite set isfav = 1 where uid = " + uid + " and actid = " + actid
+                                "update favorite set isfav = 1 where uid = " + e_uid + " and actid = " + actid
                         );
-                        if (res == 2)
+                        if (res == 2) {
+                            if (!isSelf)
+                                dbP.update("update user set isread = 0 where uid = " + UID);
                             goodStatusList.set(position, 1);
-                        else
+                        } else
                             activeHandler.post(goodErrorRunnable);
                     }
                 }
@@ -268,6 +272,14 @@ public class ActiveActivity extends AppCompatActivity {
                 dbP.closeConn();
             }
         }).start();
+    }
+
+    public void openComment(int position) {
+        Intent intent = new Intent(this, CommentActivity.class);
+        intent.putExtra("uid", UID);
+        intent.putExtra("e_uid", E_UID);
+        intent.putExtra("actid", actidList.get(position));
+        startActivity(intent);
     }
 
     private Runnable nothingRunnable = new Runnable() {

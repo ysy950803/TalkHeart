@@ -150,6 +150,7 @@ public class FansActivity extends AppCompatActivity {
                         fansHandler.post(successRunnable);
                     }
                 }
+                dbP.closeConn();
             }
         }).start();
     }

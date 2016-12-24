@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -20,6 +21,7 @@ import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.ActiveActivity;
 import com.ysy.talkheart.activities.DraftActivity;
 import com.ysy.talkheart.activities.FansActivity;
+import com.ysy.talkheart.activities.HomeActivity;
 import com.ysy.talkheart.activities.LoginActivity;
 import com.ysy.talkheart.activities.MarkActivity;
 import com.ysy.talkheart.activities.PersonActivity;
@@ -66,6 +68,8 @@ public class MeFragment extends StatedFragment {
 
     private String mParam1;
     private String UID;
+
+    private HomeActivity context;
 
     private Handler meFragmentHandler;
 
@@ -147,6 +151,7 @@ public class MeFragment extends StatedFragment {
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
             UID = getArguments().getString(ARG_PARAM2);
+            context = (HomeActivity) getActivity();
         }
     }
 
@@ -318,17 +323,31 @@ public class MeFragment extends StatedFragment {
             }
         });
 
-        exitLayout.setOnClickListener(new View.OnClickListener() {
+        exitLayout.setOnTouchListener(new View.OnTouchListener() {
+            long lastTime;
+
             @Override
-            public void onClick(View v) {
-                DataProcessor dp = new DataProcessor(getActivity());
-                dp.saveData("uid", "");
-                startActivity(new Intent(getActivity(), LoginActivity.class));
-                getActivity().finish();
-//                ActivitiesDestroyer.getInstance().killAll();
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        lastTime = System.currentTimeMillis();
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        if (System.currentTimeMillis() - lastTime > 5000) {
+                            Toast.makeText(getActivity(), "强制更新已开启", Toast.LENGTH_SHORT).show();
+                            context.forceCheckUpdate();
+                        }
+                        else {
+                            DataProcessor dp = new DataProcessor(getActivity());
+                            dp.saveData("uid", "");
+                            startActivity(new Intent(getActivity(), LoginActivity.class));
+                            getActivity().finish();
+                        }
+                        break;
+                }
+                return true;
             }
         });
-
         setClickable(false);
     }
 

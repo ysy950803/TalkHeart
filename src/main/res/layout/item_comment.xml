@@ -3,8 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginLeft="4dp"
-    android:layout_marginRight="4dp"
     android:layout_marginTop="4dp"
     android:elevation="4dp"
     android:foreground="?attr/selectableItemBackground"
@@ -27,7 +25,7 @@
                 android:orientation="horizontal">
 
                 <com.ysy.talkheart.views.CircularImageView
-                    android:id="@+id/me_active_avatar_img"
+                    android:id="@+id/comment_avatar_img"
                     android:layout_width="36dp"
                     android:layout_height="36dp"
                     android:src="@drawable/me_avatar_boy" />
@@ -39,7 +37,7 @@
                     android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/me_active_nickname_tv"
+                        android:id="@+id/comment_nickname_tv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/content_loading"
@@ -47,7 +45,7 @@
                         android:textSize="16sp" />
 
                     <TextView
-                        android:id="@+id/me_active_time_tv"
+                        android:id="@+id/comment_time_tv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
@@ -61,7 +59,7 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/me_active_text_tv"
+            android:id="@+id/comment_text_tv"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -72,36 +70,16 @@
             android:layout_height="24dp"
             android:layout_marginTop="6dp">
 
-            <TextView
-                android:id="@+id/me_active_good_num_tv"
-                android:layout_width="32dp"
+            <ImageView
+                android:id="@+id/comment_reply_img"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
                 android:layout_alignParentEnd="true"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentTop="true"
                 android:gravity="center_vertical"
-                android:text="@string/home_active_good_num" />
-
-            <ImageView
-                android:id="@+id/me_active_good_img"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_marginRight="4dp"
-                android:layout_toLeftOf="@+id/me_active_good_num_tv"
-                android:layout_toStartOf="@+id/me_active_good_num_tv"
-                android:src="@mipmap/ic_favorite_blue_circle_36dp" />
-
-            <ImageView
-                android:id="@+id/me_active_comment_img"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_marginRight="8dp"
-                android:layout_toLeftOf="@+id/me_active_good_img"
-                android:layout_toStartOf="@+id/me_active_good_img"
-                android:src="@drawable/comment_press" />
+                android:src="@drawable/ic_reply_pink_24dp" />
 
         </RelativeLayout>
 

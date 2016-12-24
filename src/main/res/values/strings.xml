@@ -32,10 +32,11 @@
     <string name="write_save">保存</string>
     <string name="write_tip">说出你的真心话……</string>
     <string name="write_word">还能输入144个字</string>
+    <string name="reply_word">还能输入72个字</string>
     <string name="trans_add">Home To Write</string>
     <string name="me_draft_time">2016/11/23</string>
     <string name="me_draft_text">第九届全球健康促进大会发布了《上海宣言》，强调健康……</string>\
-    <string name="home_active_good_num">999+</string>
+    <string name="home_active_good_num">0</string>
     <string name="trans_mark">Me To Mark</string>
     <string name="trans_draft">Me To Draft</string>
     <string name="me_draft_clear_cache">非常干净，不用清理啦！</string>
@@ -58,6 +59,9 @@
     <string name="action_update">在线升级</string>
     <string name="feedback_name">吐槽</string>
     <string name="feedback_tips">尽情地吐槽吧……</string>
+    <string name="trans_comment">Comment To Write</string>
+    <string name="comment_name">评论</string>
+    <string name="reply_name">回复</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

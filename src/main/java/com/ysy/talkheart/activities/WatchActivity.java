@@ -150,6 +150,7 @@ public class WatchActivity extends AppCompatActivity {
                         watchHandler.post(successRunnable);
                     }
                 }
+                dbP.closeConn();
             }
         }).start();
     }

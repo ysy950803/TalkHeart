@@ -56,6 +56,7 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
         TextView textTv;
         ImageView goodImg;
         TextView goodNumTv;
+        ImageView commentImg;
 
         RecyclerViewHolder(View itemView) {
             super(itemView);
@@ -65,6 +66,7 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
             textTv = (TextView) itemView.findViewById(R.id.me_active_text_tv);
             goodImg = (ImageView) itemView.findViewById(R.id.me_active_good_img);
             goodNumTv = (TextView) itemView.findViewById(R.id.me_active_good_num_tv);
+            commentImg = (ImageView) itemView.findViewById(R.id.me_active_comment_img);
         }
     }
 
@@ -86,11 +88,10 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
         viewHolder.nicknameTv.setText(nicknameList.get(position));
         viewHolder.timeTv.setText(timeList.get(position));
         viewHolder.textTv.setText(textList.get(position));
+        final int pos = Integer.parseInt(position + "");
 
         final TextView goodNumTv = viewHolder.goodNumTv;
         goodNumTv.setText(goodNumList.get(position));
-
-        final int pos = Integer.parseInt(position + "");
         final ImageView goodImg = viewHolder.goodImg;
         goodImg.setImageResource(goodStatusList.get(position) == 1 ? R.mipmap.ic_favorite_pink_36dp : R.mipmap.ic_favorite_blue_circle_36dp);
         goodImg.setOnClickListener(new View.OnClickListener() {
@@ -117,6 +118,19 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
                         goodNumList.set(pos, goodNumStr);
                         context.updateGood(pos);
                     }
+                }
+            }
+        });
+
+        ImageView commentImg = viewHolder.commentImg;
+        commentImg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ConnectionDetector cd = new ConnectionDetector(context);
+                if (!cd.isConnectingToInternet()) {
+                    Toast.makeText(context, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+                } else {
+                    context.openComment(pos);
                 }
             }
         });

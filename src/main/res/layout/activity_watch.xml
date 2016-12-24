@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/activity_draft"
+    android:id="@+id/activity_watch"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:transitionName="@string/trans_watch"
-    tools:context="com.ysy.talkheart.activities.DraftActivity">
+    tools:context="com.ysy.talkheart.activities.WatchActivity">
 
     <android.support.v4.widget.SwipeRefreshLayout
         android:id="@+id/me_watch_refresh_layout"

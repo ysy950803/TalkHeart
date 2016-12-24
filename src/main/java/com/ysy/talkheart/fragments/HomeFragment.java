@@ -1,6 +1,7 @@
 package com.ysy.talkheart.fragments;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -9,7 +10,9 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -18,6 +21,7 @@ import android.widget.Toast;
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.inthecheesefactory.thecheeselibrary.fragment.support.v4.app.StatedFragment;
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.activities.CommentActivity;
 import com.ysy.talkheart.activities.HomeActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
@@ -43,6 +47,7 @@ public class HomeFragment extends StatedFragment {
     private List<Integer> goodStatusList = new ArrayList<>();
     private List<String> goodNumList = new ArrayList<>();
     private List<String> actidList = new ArrayList<>();
+    private List<String> uidList = new ArrayList<>();
 
     private HomeActiveListViewAdapter listViewAdapter;
 
@@ -56,6 +61,9 @@ public class HomeFragment extends StatedFragment {
     private Handler homeActiveHandler;
 
     private HomeActivity context;
+    private int fav_actid_index = 0;
+
+    public ImageView goodImg;
 
     public static HomeFragment newInstance(String param1, String param2) {
         HomeFragment fragment = new HomeFragment();
@@ -94,7 +102,8 @@ public class HomeFragment extends StatedFragment {
     }
 
     private void initData() {
-
+        isRefreshing = false;
+//        clearAllLists();
     }
 
     private void initView(View view) {
@@ -104,7 +113,7 @@ public class HomeFragment extends StatedFragment {
 
         RecyclerView activeRecyclerView = (RecyclerView) view.findViewById(R.id.home_active_listView);
         activeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        RecyclerViewScrollListener scrollListener =  new RecyclerViewScrollListener() {
+        RecyclerViewScrollListener scrollListener = new RecyclerViewScrollListener() {
             @Override
             public void onScrollUp() {
                 addFab.hide();
@@ -215,7 +224,7 @@ public class HomeFragment extends StatedFragment {
                     homeActiveHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.homeActiveSelect(
-                            "select actid, sex, nickname, sendtime, content, goodnum from active a, user u where a.uid = u.uid and u.uid in (" +
+                            "select actid, sex, nickname, sendtime, content, goodnum, u.uid from active a, user u where a.uid = u.uid and u.uid in (" +
                                     "select uid_a from user_relation where uid_b = " + uid + " and relation in (-1, 2) " +
                                     "union select uid_b from user_relation where uid_a = " + uid + " and relation in (1, 2) " +
                                     "union select uid from user where uid = " + uid + ")" +
@@ -239,6 +248,7 @@ public class HomeFragment extends StatedFragment {
                             textList.add(resList.get(4).get(i));
                             goodNumList.add(resList.get(5).get(i));
                             goodStatusList.add(getGoodStatus(i, actidList, statusList));
+                            uidList.add(resList.get(6).get(i));
                         }
                         homeActiveHandler.post(successRunnable);
                     }
@@ -256,10 +266,9 @@ public class HomeFragment extends StatedFragment {
         goodNumList.clear();
         textList.clear();
         actidList.clear();
+        uidList.clear();
         fav_actid_index = 0;
     }
-
-    private int fav_actid_index = 0;
 
     private int getGoodStatus(int pos, List<String> actidList, List<List<String>> statusList) {
         int isfav = -1;
@@ -280,13 +289,11 @@ public class HomeFragment extends StatedFragment {
         return isfav;
     }
 
-    public ImageView goodImg;
-
     public void updateGood(int position) {
         connectToUpdateGood(UID, position);
     }
 
-    private void connectToUpdateGood(final String uid, final int position) {
+    private void connectToUpdateGood(final String e_uid, final int position) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -298,7 +305,7 @@ public class HomeFragment extends StatedFragment {
                     if (goodStatusList.get(position) == 1) {
                         int res = dbP.goodUpdate(
                                 "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
-                                "update favorite set isfav = 0 where uid = " + uid + " and actid = " + actid
+                                "update favorite set isfav = 0 where uid = " + e_uid + " and actid = " + actid
                         );
                         if (res == 2)
                             goodStatusList.set(position, 0);
@@ -307,20 +314,24 @@ public class HomeFragment extends StatedFragment {
                     } else if (goodStatusList.get(position) == -1) {
                         int res = dbP.goodUpdate(
                                 "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
-                                "insert into favorite(uid, actid, isfav) values(" + uid + ", " + actid + ", 1)"
+                                "insert into favorite(uid, actid, isfav, favtime) values(" + e_uid + ", " + actid + ", 1, NOW())"
                         );
-                        if (res == 2)
+                        if (res == 2) {
+                            if (!uidList.get(position).equals(e_uid))
+                                dbP.update("update user set isread = 0 where uid = " + uidList.get(position));
                             goodStatusList.set(position, 1);
-                        else
+                        } else
                             homeActiveHandler.post(goodErrorRunnable);
                     } else if (goodStatusList.get(position) == 0) {
                         int res = dbP.goodUpdate(
                                 "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
-                                "update favorite set isfav = 1 where uid = " + uid + " and actid = " + actid
+                                "update favorite set isfav = 1, favtime = NOW() where uid = " + e_uid + " and actid = " + actid
                         );
-                        if (res == 2)
+                        if (res == 2) {
+                            if (!uidList.get(position).equals(e_uid))
+                                dbP.update("update user set isread = 0 where uid = " + uidList.get(position));
                             goodStatusList.set(position, 1);
-                        else
+                        } else
                             homeActiveHandler.post(goodErrorRunnable);
                     }
                 }
@@ -331,6 +342,14 @@ public class HomeFragment extends StatedFragment {
                 dbP.closeConn();
             }
         }).start();
+    }
+
+    public void openComment(int position) {
+        Intent intent = new Intent(getActivity(), CommentActivity.class);
+        intent.putExtra("uid", uidList.get(position));
+        intent.putExtra("e_uid", UID);
+        intent.putExtra("actid", actidList.get(position));
+        startActivity(intent);
     }
 
     private Runnable markRunnable = new Runnable() {

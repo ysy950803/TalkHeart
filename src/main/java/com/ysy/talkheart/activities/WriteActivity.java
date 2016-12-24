@@ -58,7 +58,7 @@ public class WriteActivity extends AppCompatActivity {
         writeEdt.setText(DFT_CONTENT);
     }
 
-    private boolean send(final int uid, final String sendTime, final String content) {
+    private boolean send(final int uid, final String content) {
         if (content.equals("")) {
             Toast.makeText(this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
             return false;
@@ -69,11 +69,11 @@ public class WriteActivity extends AppCompatActivity {
             return false;
         }
         waitDialog = ProgressDialog.show(WriteActivity.this, "请稍后", "正在和数据库君吃饭……");
-        connectToSend(uid, sendTime, content);
+        connectToSend(uid, content);
         return true;
     }
 
-    private void connectToSend(final int uid, final String sendTime, final String content) {
+    private void connectToSend(final int uid, final String content) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -83,7 +83,7 @@ public class WriteActivity extends AppCompatActivity {
                 } else {
                     int res = dbP.insert(
                             "insert into active(uid, sendtime, goodnum, content) values(" +
-                                    uid + ", '" + sendTime + "', 0, '" + content + "')"
+                                    uid + ", NOW(), 0, '" + content + "')"
                     );
                     if (res == 1) {
                         if (dbP.update("update user_info_count set act_num = (act_num + 1) where uid = " + uid) != 1) {
@@ -101,7 +101,7 @@ public class WriteActivity extends AppCompatActivity {
         }).start();
     }
 
-    private boolean save(final int uid, final String saveTime, final String content) {
+    private boolean save(final int uid, final String content) {
         if (content.equals("")) {
             Toast.makeText(this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
             return false;
@@ -112,11 +112,11 @@ public class WriteActivity extends AppCompatActivity {
             return false;
         }
         waitDialog = ProgressDialog.show(WriteActivity.this, "请稍后", "正在请数据库君吃饭……");
-        connectToSave(uid, saveTime, content);
+        connectToSave(uid, content);
         return true;
     }
 
-    private void connectToSave(final int uid, final String saveTime, final String content) {
+    private void connectToSave(final int uid, final String content) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -126,7 +126,7 @@ public class WriteActivity extends AppCompatActivity {
                 } else {
                     int res = dbP.insert(
                             "insert into draft(uid, savetime, content) values(" +
-                                    uid + ", '" + saveTime + "', '" + content + "')"
+                                    uid + ", NOW(), '" + content + "')"
                     );
                     if (res == 1)
                         writeHandler.post(saveRunnable);
@@ -211,8 +211,8 @@ public class WriteActivity extends AppCompatActivity {
         menuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
-                send(Integer.parseInt(UID), sendTime, writeEdt.getText().toString());
+//                String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+                send(Integer.parseInt(UID), writeEdt.getText().toString());
                 return true;
             }
         });
@@ -221,8 +221,8 @@ public class WriteActivity extends AppCompatActivity {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 // save to draft
-                String saveTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
-                save(Integer.parseInt(UID), saveTime, writeEdt.getText().toString());
+//                String saveTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+                save(Integer.parseInt(UID), writeEdt.getText().toString());
                 return true;
             }
         });

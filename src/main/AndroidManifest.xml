@@ -67,9 +67,18 @@
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
+            android:name=".activities.FeedbackActivity"
             android:label="@string/feedback_name"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".activities.CommentActivity"
+            android:label="@string/comment_name"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".activities.ReplyActivity"
+            android:label="@string/reply_name"
             android:screenOrientation="portrait"
-            android:name=".activities.FeedbackActivity" />
+            android:windowSoftInputMode="stateVisible|adjustResize" />
     </application>
 
 </manifest>

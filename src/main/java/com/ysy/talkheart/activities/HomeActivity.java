@@ -18,7 +18,9 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
@@ -28,6 +30,7 @@ import com.ysy.talkheart.fragments.HomeFragment;
 import com.ysy.talkheart.fragments.MeFragment;
 import com.ysy.talkheart.fragments.MessageFragment;
 import com.ysy.talkheart.utils.ActivitiesDestroyer;
+import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.UpdateChecker;
 
 public class HomeActivity extends AppCompatActivity implements BottomNavigationBar.OnTabSelectedListener {
@@ -41,13 +44,15 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     private MenuItem updateMenuItem;
     private MenuItem searchMenuItem;
 
-    private Handler updateHandler;
+    private Handler homeHandler;
     private String UPDATE_URL = "";
     private static final int WAIT_TIME = 2048;
     private BottomNavigationBar bottomNavigationBar;
-    private FloatingActionButton addFab;
 
-    private String UID = "0";
+    private FloatingActionButton addFab;
+    private ImageView msgUnreadImg;
+
+    private String UID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +63,9 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
 //        ActivitiesDestroyer.getInstance().addActivity(this);
 
         UID = getIntent().getExtras().getString("uid");
+
+        msgUnreadImg = (ImageView) findViewById(R.id.msg_unread_img);
+        msgUnreadImg.setVisibility(View.GONE);
 
         addFab = (FloatingActionButton) findViewById(R.id.home_add_fab);
         addFab.setOnClickListener(new View.OnClickListener() {
@@ -82,7 +90,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         bottomNavigationBar.setTabSelectedListener(this);
         setDefaultFragment();
 
-        updateHandler = new Handler();
+        homeHandler = new Handler();
         new Handler().postDelayed(new Runnable() {
             public void run() {
                 autoCheckUpdate();
@@ -90,8 +98,23 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         }, WAIT_TIME);
     }
 
+    @Override
+    protected void onResume() {
+        homeHandler.post(msgRefreshRunnable);
+        super.onResume();
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        return super.onTouchEvent(event);
+    }
+
     public BottomNavigationBar getBottomNavigationBar() {
         return bottomNavigationBar;
+    }
+
+    public ImageView getMsgUnreadImg() {
+        return msgUnreadImg;
     }
 
     public FloatingActionButton getAddFab() {
@@ -134,7 +157,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 if (actionBar != null)
                     actionBar.setTitle("消息");
                 if (messageFragment == null) {
-                    messageFragment = MessageFragment.newInstance("Msg", "");
+                    messageFragment = MessageFragment.newInstance("Msg", UID);
                 }
                 transaction.replace(R.id.content_table_layout, messageFragment);
                 setMenuItemVisible(false, false, false);
@@ -212,7 +235,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                     int code;
                     if ((code = dbP.codeSelect("select max(code) from app_version")) > getVersionCode(getApplicationContext())) {
                         UPDATE_URL = dbP.downloadUrlSelect("select url from download_url where code = " + code);
-                        updateHandler.post(updateRunnable);
+                        homeHandler.post(updateRunnable);
                     }
                 }
                 dbP.closeConn();
@@ -229,9 +252,23 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                     int code;
                     if ((code = dbP.codeSelect("select max(code) from app_version")) > getVersionCode(getApplicationContext())) {
                         UPDATE_URL = dbP.downloadUrlSelect("select url from download_url where code = " + code);
-                        updateHandler.post(updateRunnable);
+                        homeHandler.post(updateRunnable);
                     } else
-                        updateHandler.post(noUpdateRunnable);
+                        homeHandler.post(noUpdateRunnable);
+                }
+                dbP.closeConn();
+            }
+        }).start();
+    }
+
+    public void forceCheckUpdate() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                UpdateChecker dbP = new UpdateChecker();
+                if (dbP.getConn() != null) {
+                    UPDATE_URL = dbP.downloadUrlSelect("select url from download_url where code = " + getVersionCode(getApplicationContext()));
+                    homeHandler.post(updateRunnable);
                 }
                 dbP.closeConn();
             }
@@ -249,6 +286,35 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         @Override
         public void run() {
             Toast.makeText(HomeActivity.this, "已经是最新版啦" + getVersionName(HomeActivity.this) + "，谢谢关注哦", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    private int isRead = 1;
+    private Runnable msgRefreshRunnable = new Runnable() {
+        public void run() {
+            homeHandler.postDelayed(this, 30 * 1000);
+            // loop
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    DBProcessor dbP = new DBProcessor();
+                    if (dbP.getConn() != null) {
+                        isRead = dbP.isReadSelect("select isread from user where uid = " + UID);
+                        homeHandler.post(updateMsgIconRunnable);
+                    }
+                    dbP.closeConn();
+                }
+            }).start();
+        }
+    };
+
+    private Runnable updateMsgIconRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (isRead == 1)
+                msgUnreadImg.setVisibility(View.GONE);
+            else
+                msgUnreadImg.setVisibility(View.VISIBLE);
         }
     };
 
@@ -291,14 +357,22 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         alert.show();
     }
 
+    private long backTime;
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN) {
-            Intent backHome = new Intent(Intent.ACTION_MAIN);
-            backHome.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            backHome.addCategory(Intent.CATEGORY_HOME);
-            startActivity(backHome);
-            return true;
+            if ((System.currentTimeMillis() - backTime) > 2000) {
+                Toast.makeText(this, "再按一次返回桌面", Toast.LENGTH_SHORT).show();
+                backTime = System.currentTimeMillis();
+            } else {
+                Intent backHome = new Intent(Intent.ACTION_MAIN);
+                backHome.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                backHome.addCategory(Intent.CATEGORY_HOME);
+                startActivity(backHome);
+                return true;
+            }
+            return false;
         }
         return super.onKeyDown(keyCode, event);
     }

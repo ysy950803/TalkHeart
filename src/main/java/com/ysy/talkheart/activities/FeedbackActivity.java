@@ -27,7 +27,7 @@ public class FeedbackActivity extends AppCompatActivity {
     private static final int WORD_LIMIT = 144;
     private TextView restWordTv;
     private EditText writeEdt;
-    private String UID = "0";
+    private String UID;
     private Handler feedbackHandler;
     private ProgressDialog waitDialog;
 
@@ -52,7 +52,7 @@ public class FeedbackActivity extends AppCompatActivity {
         writeEdt.addTextChangedListener(tw);
     }
 
-    private boolean send(final int uid, final String sendTime, final String content) {
+    private boolean send(final int uid, final String content) {
         if (content.equals("")) {
             Toast.makeText(this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
             return false;
@@ -63,11 +63,11 @@ public class FeedbackActivity extends AppCompatActivity {
             return false;
         }
         waitDialog = ProgressDialog.show(FeedbackActivity.this, "请稍后", "正在疯狂吐槽开发君……");
-        connectToSend(uid, sendTime, content);
+        connectToSend(uid, content);
         return true;
     }
 
-    private void connectToSend(final int uid, final String sendTime, final String content) {
+    private void connectToSend(final int uid, final String content) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -77,7 +77,7 @@ public class FeedbackActivity extends AppCompatActivity {
                 } else {
                     int res = dbP.insert(
                             "insert into feedback(uid, sendtime, content) values(" +
-                                    uid + ", '" + sendTime + "', '" + content + "')"
+                                    uid + ", NOW(), '" + content + "')"
                     );
                     if (res == 1)
                         feedbackHandler.post(sendRunnable);
@@ -152,8 +152,8 @@ public class FeedbackActivity extends AppCompatActivity {
         menuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
-                send(Integer.parseInt(UID), sendTime, writeEdt.getText().toString());
+//                String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+                send(Integer.parseInt(UID), writeEdt.getText().toString());
                 return true;
             }
         });
