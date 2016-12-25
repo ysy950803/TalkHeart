@@ -31,6 +31,7 @@ import com.ysy.talkheart.fragments.MeFragment;
 import com.ysy.talkheart.fragments.MessageFragment;
 import com.ysy.talkheart.utils.ActivitiesDestroyer;
 import com.ysy.talkheart.utils.DBProcessor;
+import com.ysy.talkheart.utils.DataProcessor;
 import com.ysy.talkheart.utils.UpdateChecker;
 
 public class HomeActivity extends AppCompatActivity implements BottomNavigationBar.OnTabSelectedListener {
@@ -46,7 +47,8 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
 
     private Handler homeHandler;
     private String UPDATE_URL = "";
-    private static final int WAIT_TIME = 2048;
+    private static final int MSG_REFRESH_TIME = 24 * 1024;
+    private static final int UPDATE_CHECK_TIME = 2048;
     private BottomNavigationBar bottomNavigationBar;
 
     private FloatingActionButton addFab;
@@ -91,17 +93,8 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         setDefaultFragment();
 
         homeHandler = new Handler();
-        new Handler().postDelayed(new Runnable() {
-            public void run() {
-                autoCheckUpdate();
-            }
-        }, WAIT_TIME);
-    }
-
-    @Override
-    protected void onResume() {
+        homeHandler.post(autoCheckUpdateRunnable);
         homeHandler.post(msgRefreshRunnable);
-        super.onResume();
     }
 
     @Override
@@ -226,22 +219,28 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         return true;
     }
 
-    private void autoCheckUpdate() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                UpdateChecker dbP = new UpdateChecker();
-                if (dbP.getConn() != null) {
-                    int code;
-                    if ((code = dbP.codeSelect("select max(code) from app_version")) > getVersionCode(getApplicationContext())) {
-                        UPDATE_URL = dbP.downloadUrlSelect("select url from download_url where code = " + code);
-                        homeHandler.post(updateRunnable);
+    private Runnable autoCheckUpdateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    UpdateChecker dbP = new UpdateChecker();
+                    if (dbP.getConn() != null) {
+                        int code;
+                        if ((code = dbP.codeSelect("select max(code) from app_version")) > getVersionCode(getApplicationContext())) {
+                            UPDATE_URL = dbP.downloadUrlSelect("select url from download_url where code = " + code);
+                            homeHandler.removeCallbacks(autoCheckUpdateRunnable);
+                            homeHandler.post(updateRunnable);
+                        } else
+                            homeHandler.removeCallbacks(autoCheckUpdateRunnable);
                     }
+                    dbP.closeConn();
                 }
-                dbP.closeConn();
-            }
-        }).start();
-    }
+            }).start();
+            homeHandler.postDelayed(this, UPDATE_CHECK_TIME);
+        }
+    };
 
     private void handCheckUpdate() {
         new Thread(new Runnable() {
@@ -292,8 +291,6 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     private int isRead = 1;
     private Runnable msgRefreshRunnable = new Runnable() {
         public void run() {
-            homeHandler.postDelayed(this, 30 * 1000);
-            // loop
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -305,6 +302,8 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                     dbP.closeConn();
                 }
             }).start();
+            // loop
+            homeHandler.postDelayed(this, MSG_REFRESH_TIME);
         }
     };
 

@@ -1,6 +1,7 @@
 package com.ysy.talkheart.fragments;
 
 import android.app.ActivityOptions;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -93,7 +94,7 @@ public class MeFragment extends StatedFragment {
                     String[] res = dbP.meInfoSelect(
                             "select sex, nickname, intro, act_num, watch_num, fans_num from user u, user_info_count uic" +
                                     " where u.uid = " + uid + " and u.uid = uic.uid");
-                    if (res[1].equals("/(ㄒoㄒ)/~~")) {
+                    if (res[1] == null || res[1].equals("/(ㄒoㄒ)/~~")) {
                         meFragmentHandler.post(serverErrorRunnable);
                     } else {
                         SEX = res[0];
@@ -336,12 +337,8 @@ public class MeFragment extends StatedFragment {
                         if (System.currentTimeMillis() - lastTime > 5000) {
                             Toast.makeText(getActivity(), "强制更新已开启", Toast.LENGTH_SHORT).show();
                             context.forceCheckUpdate();
-                        }
-                        else {
-                            DataProcessor dp = new DataProcessor(getActivity());
-                            dp.saveData("uid", "");
-                            startActivity(new Intent(getActivity(), LoginActivity.class));
-                            getActivity().finish();
+                        } else {
+                            exitDialog();
                         }
                         break;
                 }
@@ -396,6 +393,27 @@ public class MeFragment extends StatedFragment {
         }
         Toast.makeText(getActivity(), cache_str, Toast.LENGTH_SHORT).show();
     }
+
+    private void exitDialog() {
+        android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(getActivity());
+        builder.setTitle("可爱的提示框").setMessage("确定要退出登录切换用户吗亲？").setCancelable(false)
+                .setPositiveButton("好哒", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        DataProcessor dp = new DataProcessor(getActivity());
+                        dp.saveData("uid", "");
+                        startActivity(new Intent(getActivity(), LoginActivity.class));
+                        getActivity().finish();
+                    }
+                }).setNegativeButton("再想想", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.cancel();
+            }
+        });
+        final android.support.v7.app.AlertDialog alert = builder.create();
+        alert.show();
+    }
+
 
     @Override
     protected void onSaveState(Bundle outState) {

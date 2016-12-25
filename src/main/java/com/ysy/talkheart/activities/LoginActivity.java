@@ -165,7 +165,6 @@ public class LoginActivity extends AppCompatActivity {
                             if (res[1].equals(pw)) {
                                 DataProcessor dp = new DataProcessor(LoginActivity.this);
                                 dp.saveData("uid", res[0]);
-//                                dp.saveData("pw", res[1]);
                                 startActivity(new Intent(LoginActivity.this, HomeActivity.class).putExtra("uid", res[0]));
                             } else
                                 loginHandler.post(pwErrorRunnable);
