@@ -17,10 +17,13 @@ import android.widget.Toast;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
+import com.ysy.talkheart.utils.StringUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class WriteActivity extends AppCompatActivity {
 
@@ -30,9 +33,11 @@ public class WriteActivity extends AppCompatActivity {
     private Handler writeHandler;
     private ProgressDialog waitDialog;
 
-    private String UID = "0";
-    private String DFT_ID = "0";
+    private String UID;
+    private String DFT_ID;
     private String DFT_CONTENT = "";
+    private String ACT_ID = "";
+    private String MODIFY_CONTENT = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,8 +51,10 @@ public class WriteActivity extends AppCompatActivity {
 
     private void initData() {
         UID = getIntent().getExtras().getString("uid");
-        DFT_ID = getIntent().getExtras().getString("dft_id", null);
+        DFT_ID = getIntent().getExtras().getString("dft_id");
         DFT_CONTENT = getIntent().getExtras().getString("dft_content", "");
+        ACT_ID = getIntent().getExtras().getString("actid");
+        MODIFY_CONTENT = getIntent().getExtras().getString("modify_content", "");
     }
 
     private void initView() {
@@ -55,21 +62,20 @@ public class WriteActivity extends AppCompatActivity {
         restWordTv = (TextView) findViewById(R.id.write_word_tv);
 
         writeEdt.addTextChangedListener(tw);
-        writeEdt.setText(DFT_CONTENT);
+        writeEdt.setText(DFT_CONTENT.equals("") ? MODIFY_CONTENT : DFT_CONTENT);
     }
 
     private boolean send(final int uid, final String content) {
-        if (content.equals("")) {
-            Toast.makeText(this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
-            return false;
-        }
         ConnectionDetector cd = new ConnectionDetector(this);
         if (!cd.isConnectingToInternet()) {
             Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
             return false;
         }
         waitDialog = ProgressDialog.show(WriteActivity.this, "请稍后", "正在和数据库君吃饭……");
-        connectToSend(uid, content);
+        if (ACT_ID == null)
+            connectToSend(uid, content);
+        else
+            connectToModify(ACT_ID, content);
         return true;
     }
 
@@ -102,10 +108,6 @@ public class WriteActivity extends AppCompatActivity {
     }
 
     private boolean save(final int uid, final String content) {
-        if (content.equals("")) {
-            Toast.makeText(this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
-            return false;
-        }
         ConnectionDetector cd = new ConnectionDetector(this);
         if (!cd.isConnectingToInternet()) {
             Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
@@ -139,11 +141,40 @@ public class WriteActivity extends AppCompatActivity {
         }).start();
     }
 
+    private void connectToModify(final String actid, final String content) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                DBProcessor dbP = new DBProcessor();
+                if (dbP.getConn() == null) {
+                    writeHandler.post(timeOutRunnable);
+                } else {
+                    int res = dbP.update(
+                            "update active set content = '" + content + "' where actid = " + actid
+                    );
+                    if (res == 1)
+                        writeHandler.post(modifyRunnable);
+                    else
+                        writeHandler.post(serverErrorRunnable);
+                }
+                dbP.closeConn();
+                waitDialog.dismiss();
+            }
+        }).start();
+    }
 
     private Runnable sendRunnable = new Runnable() {
         @Override
         public void run() {
             Toast.makeText(WriteActivity.this, "发送成功", Toast.LENGTH_SHORT).show();
+            onBackPressed();
+        }
+    };
+
+    private Runnable modifyRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(WriteActivity.this, "修改成功", Toast.LENGTH_SHORT).show();
             onBackPressed();
         }
     };
@@ -212,7 +243,11 @@ public class WriteActivity extends AppCompatActivity {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
 //                String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
-                send(Integer.parseInt(UID), writeEdt.getText().toString());
+                String writeContent = writeEdt.getText().toString();
+                if (!StringUtils.replaceBlank(writeContent).equals(""))
+                    send(Integer.parseInt(UID), writeContent);
+                else
+                    Toast.makeText(WriteActivity.this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
                 return true;
             }
         });
@@ -222,7 +257,11 @@ public class WriteActivity extends AppCompatActivity {
             public boolean onMenuItemClick(MenuItem item) {
                 // save to draft
 //                String saveTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
-                save(Integer.parseInt(UID), writeEdt.getText().toString());
+                String writeContent = writeEdt.getText().toString();
+                if (!StringUtils.replaceBlank(writeContent).equals(""))
+                    save(Integer.parseInt(UID), writeContent);
+                else
+                    Toast.makeText(WriteActivity.this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
                 return true;
             }
         });

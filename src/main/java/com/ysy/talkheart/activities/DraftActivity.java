@@ -156,7 +156,7 @@ public class DraftActivity extends AppCompatActivity {
                     draftHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.draftSelect(
-                            "select dftid, savetime, content from draft where uid = " + uid
+                            "select dftid, savetime, content from draft where uid = " + uid + " order by savetime desc"
                     );
                     clearAllLists();
                     if (resList == null) {

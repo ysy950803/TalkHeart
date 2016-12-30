@@ -78,12 +78,8 @@ public class MessageListViewAdapter extends RecyclerView.Adapter<MessageListView
         holder.avatarImg.setImageResource(avatarList.get(position));
         holder.nameActTv.setText(nameActList.get(position));
         holder.timeTv.setText(timeList.get(position));
-        if (quoteList.get(position).equals(""))
-            holder.quoteLayout.setVisibility(View.GONE);
-        else {
-            holder.quoteLayout.setVisibility(View.VISIBLE);
-            holder.quoteTv.setText(quoteList.get(position));
-        }
+        holder.quoteTv.setText(quoteList.get(position));
+
         if (contentList.get(position).equals(""))
             holder.contentTv.setVisibility(View.GONE);
         else {
@@ -96,11 +92,32 @@ public class MessageListViewAdapter extends RecyclerView.Adapter<MessageListView
             @Override
             public void onClick(View v) {
                 ConnectionDetector cd = new ConnectionDetector(context.getActivity());
-                if (!cd.isConnectingToInternet()) {
+                if (!cd.isConnectingToInternet())
                     Toast.makeText(context.getActivity(), "请检查网络连接哦", Toast.LENGTH_SHORT).show();
-                } else {
+                else
                     context.reply(pos);
-                }
+            }
+        });
+
+        holder.quoteLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ConnectionDetector cd = new ConnectionDetector(context.getActivity());
+                if (!cd.isConnectingToInternet())
+                    Toast.makeText(context.getActivity(), "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+                else
+                    context.openComment(pos);
+            }
+        });
+
+        holder.avatarImg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ConnectionDetector cd = new ConnectionDetector(context.getActivity());
+                if (!cd.isConnectingToInternet())
+                    Toast.makeText(context.getActivity(), "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+                else
+                    context.openPerson(pos);
             }
         });
 

@@ -72,11 +72,21 @@ public class CommentListViewAdapter extends RecyclerView.Adapter<CommentListView
             @Override
             public void onClick(View v) {
                 ConnectionDetector cd = new ConnectionDetector(context);
-                if (!cd.isConnectingToInternet()) {
+                if (!cd.isConnectingToInternet())
                     Toast.makeText(context, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
-                } else {
+                else
                     context.reply(pos);
-                }
+            }
+        });
+
+        holder.avatarImg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ConnectionDetector cd = new ConnectionDetector(context);
+                if (!cd.isConnectingToInternet())
+                    Toast.makeText(context, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+                else
+                    context.openPerson(pos);
             }
         });
     }

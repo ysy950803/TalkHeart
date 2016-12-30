@@ -1,6 +1,7 @@
 package com.ysy.talkheart.activities;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
@@ -33,6 +34,7 @@ public class MarkActivity extends AppCompatActivity {
     private List<String> timeList = new ArrayList<>();
     private List<String> textList = new ArrayList<>();
     private List<String> actidList = new ArrayList<>();
+    private List<String> uidList = new ArrayList<>();
 
     private String UID = "0";
 
@@ -60,7 +62,7 @@ public class MarkActivity extends AppCompatActivity {
         RecyclerView markRecyclerView = (RecyclerView) findViewById(R.id.me_mark_listView);
 
         markRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        listViewAdapter = new MeMarkListViewAdapter(avatarList, nicknameList, timeList, textList);
+        listViewAdapter = new MeMarkListViewAdapter(this, avatarList, nicknameList, timeList, textList);
         markRecyclerView.setAdapter(listViewAdapter);
 
         refreshLayout.setColorSchemeResources(R.color.colorAccent);
@@ -156,8 +158,9 @@ public class MarkActivity extends AppCompatActivity {
                     refreshHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.markSelect(
-                            "select sex, sendtime, nickname, content, m.actid " +
-                                    "from user u, mark m, active a where m.actid = a.actid and m.uid = " + uid + " and a.uid = u.uid"
+                            "select sex, sendtime, nickname, content, m.actid, a.uid " +
+                                    "from user u, mark m, active a where m.actid = a.actid and m.uid = " + uid + " and a.uid = u.uid " +
+                                    "order by sendtime desc"
                     );
                     clearAllLists();
                     if (resList == null) {
@@ -171,6 +174,7 @@ public class MarkActivity extends AppCompatActivity {
                             nicknameList.add(resList.get(2).get(i));
                             textList.add(resList.get(3).get(i));
                             actidList.add(resList.get(4).get(i));
+                            uidList.add(resList.get(5).get(i));
                         }
                         refreshHandler.post(successRunnable);
                     }
@@ -180,12 +184,22 @@ public class MarkActivity extends AppCompatActivity {
         }).start();
     }
 
+    public void openPerson(int position) {
+        Intent intent = new Intent(this, PersonActivity.class);
+        intent.putExtra("uid", uidList.get(position));
+        intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
+        intent.putExtra("nickname", nicknameList.get(position));
+        intent.putExtra("e_uid", UID);
+        startActivity(intent);
+    }
+
     private void clearAllLists() {
         avatarList.clear();
         nicknameList.clear();
         timeList.clear();
         textList.clear();
         actidList.clear();
+        uidList.clear();
     }
 
     private Runnable successRunnable = new Runnable() {

@@ -3,7 +3,6 @@ package com.ysy.talkheart.activities;
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.os.Handler;
-import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -17,6 +16,8 @@ import android.widget.Toast;
 
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.utils.DBProcessor;
+import com.ysy.talkheart.utils.NoDoubleClickListener;
+import com.ysy.talkheart.utils.StringUtils;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -66,9 +67,9 @@ public class RegisterActivity extends AppCompatActivity {
             }
         });
 
-        doneImg.setOnClickListener(new View.OnClickListener() {
+        doneImg.setOnClickListener(new NoDoubleClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 String user = userEdt.getText().toString();
                 String pw = pwEdt.getText().toString();
                 String rePw = rePwEdt.getText().toString();
@@ -117,16 +118,22 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private boolean register(final String username, final String pw, String rePw, final String nickname, final String birthday, final int sex) {
-        if (username.equals("")) {
+        if (StringUtils.isHavingBlank(username)) {
+            Toast.makeText(this, "用户名不能包含空格哦", Toast.LENGTH_SHORT).show();
+            return false;
+        } else if (StringUtils.isHavingBlank(pw) || StringUtils.isHavingBlank(rePw)) {
+            Toast.makeText(this, "密码不能包含空格哦", Toast.LENGTH_SHORT).show();
+            return false;
+        } else if (StringUtils.replaceBlank(username).equals("")) {
             Toast.makeText(this, "要有用户名哦", Toast.LENGTH_SHORT).show();
             return false;
-        } else if (pw.equals("") || rePw.equals("")) {
+        } else if (StringUtils.replaceBlank(pw).equals("") || StringUtils.replaceBlank(rePw).equals("")) {
             Toast.makeText(this, "要有密码哦", Toast.LENGTH_SHORT).show();
             return false;
         } else if (!pw.equals(rePw)) {
             Toast.makeText(this, "两次输入密码不一样呢", Toast.LENGTH_SHORT).show();
             return false;
-        } else if (nickname.equals("")) {
+        } else if (StringUtils.replaceBlank(nickname).equals("")) {
             Toast.makeText(this, "要有昵称哦", Toast.LENGTH_SHORT).show();
             return false;
         } else if (!birthday.contains("-")) {

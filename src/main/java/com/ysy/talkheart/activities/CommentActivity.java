@@ -189,6 +189,15 @@ public class CommentActivity extends AppCompatActivity {
         }
     }
 
+    public void openPerson(int position) {
+        Intent intent = new Intent(this, PersonActivity.class);
+        intent.putExtra("uid", uidList.get(position));
+        intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
+        intent.putExtra("nickname", nicknameList.get(position));
+        intent.putExtra("e_uid", E_UID);
+        startActivity(intent);
+    }
+
     private void clearAllLists() {
         avatarList.clear();
         nicknameList.clear();

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_register"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBackground"
+    tools:context="com.ysy.talkheart.activities.ModifyActivity">
+
+    <ImageView
+        android:id="@+id/modify_done_img"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="@drawable/ic_done_white_24dp" />
+
+    <ImageView
+        android:id="@+id/modify_back_img"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="@drawable/ic_arrow_back_white_24dp" />
+
+    <LinearLayout
+        android:id="@+id/modify_info_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginBottom="8dp"
+            android:text="@string/modify_title"
+            android:textColor="@android:color/white"
+            android:textSize="32sp" />
+
+        <EditText
+            android:id="@+id/modify_nickname_edt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:ems="10"
+            android:hint="@string/register_nickname"
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/modify_school_edt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:ems="10"
+            android:hint="@string/modify_school"
+            android:inputType="text" />
+
+
+        <EditText
+            android:id="@+id/modify_new_pw_edt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:ems="10"
+            android:hint="@string/modify_new_pw"
+            android:inputType="textPassword" />
+
+        <EditText
+            android:id="@+id/modify_re_new_pw_edt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:ems="10"
+            android:hint="@string/modify_re_new_pw"
+            android:inputType="textPassword" />
+
+        <EditText
+            android:id="@+id/modify_old_pw_edt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:ems="10"
+            android:hint="@string/modify_old_pw"
+            android:inputType="textPassword" />
+
+        <TextView
+            android:id="@+id/modify_birthday_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:hint="@string/modify_birthday"
+            android:textSize="18sp" />
+
+        <LinearLayout
+            android:id="@+id/modify_sex_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="@string/register_boy" />
+
+            <Switch
+                android:id="@+id/modify_sex_switch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="@string/register_girl" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>

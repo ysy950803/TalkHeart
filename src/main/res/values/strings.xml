@@ -62,6 +62,12 @@
     <string name="trans_comment">Comment To Write</string>
     <string name="comment_name">评论</string>
     <string name="reply_name">回复</string>
+    <string name="modify_title">修&#160;&#160;改</string>
+    <string name="modify_school">院校</string>
+    <string name="modify_old_pw">验证旧密码（必须）</string>
+    <string name="modify_new_pw">新密码（空则不修改）</string>
+    <string name="modify_re_new_pw">确认新密码</string>
+    <string name="modify_birthday">点击修改生日</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

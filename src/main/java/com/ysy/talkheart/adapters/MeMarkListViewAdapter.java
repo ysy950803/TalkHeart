@@ -5,8 +5,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.activities.MarkActivity;
+import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
@@ -22,6 +25,7 @@ public class MeMarkListViewAdapter extends RecyclerView.Adapter<MeMarkListViewAd
     private List<String> nicknameList;
     private List<String> timeList;
     private List<String> textList;
+    private MarkActivity context;
 
     private ListOnItemClickListener mOnItemClickListener;
 
@@ -29,11 +33,12 @@ public class MeMarkListViewAdapter extends RecyclerView.Adapter<MeMarkListViewAd
         this.mOnItemClickListener = mOnItemClickListener;
     }
 
-    public MeMarkListViewAdapter(List<Integer> avatarList, List<String> nicknameList, List<String> timeList, List<String> textList) {
+    public MeMarkListViewAdapter(MarkActivity context, List<Integer> avatarList, List<String> nicknameList, List<String> timeList, List<String> textList) {
         this.avatarList = avatarList;
         this.nicknameList = nicknameList;
         this.timeList = timeList;
         this.textList = textList;
+        this.context = context;
     }
 
     class RecyclerViewHolder extends RecyclerView.ViewHolder {
@@ -64,6 +69,19 @@ public class MeMarkListViewAdapter extends RecyclerView.Adapter<MeMarkListViewAd
         holder.nicknameTv.setText(nicknameList.get(position));
         holder.timeTv.setText(timeList.get(position));
         holder.textTv.setText(textList.get(position));
+
+        final int pos = Integer.parseInt(position + "");
+
+        holder.avatarImg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ConnectionDetector cd = new ConnectionDetector(context);
+                if (!cd.isConnectingToInternet())
+                    Toast.makeText(context, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+                else
+                    context.openPerson(pos);
+            }
+        });
 
         // 如果设置了回调，则设置点击事件
         if (mOnItemClickListener != null) {

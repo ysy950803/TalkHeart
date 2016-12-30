@@ -130,11 +130,21 @@ public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveLi
             @Override
             public void onClick(View v) {
                 ConnectionDetector cd = new ConnectionDetector(context.getActivity());
-                if (!cd.isConnectingToInternet()) {
+                if (!cd.isConnectingToInternet())
                     Toast.makeText(context.getActivity(), "请检查网络连接哦", Toast.LENGTH_SHORT).show();
-                } else {
+                else
                     context.openComment(pos);
-                }
+            }
+        });
+
+        viewHolder.avatarImg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ConnectionDetector cd = new ConnectionDetector(context.getActivity());
+                if (!cd.isConnectingToInternet())
+                    Toast.makeText(context.getActivity(), "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+                else
+                    context.openPerson(pos);
             }
         });
 

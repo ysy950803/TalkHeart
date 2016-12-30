@@ -16,7 +16,9 @@ import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.ashokvarma.bottomnavigation.BottomNavigationItem;
 import com.inthecheesefactory.thecheeselibrary.fragment.support.v4.app.StatedFragment;
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.activities.CommentActivity;
 import com.ysy.talkheart.activities.HomeActivity;
+import com.ysy.talkheart.activities.PersonActivity;
 import com.ysy.talkheart.activities.ReplyActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
@@ -191,8 +193,8 @@ public class MessageFragment extends StatedFragment {
                                     "(select flag_reply, sex, nickname, c1.sendtime, c1.content, c2.content, c1.actid, c1.uid, c1.cmtid from comment_flag, user u, comment c1, comment c2 where " +
                                     "u.uid = c1.uid and c2.uid = " + e_uid + " and c1.cmtid_p = c2.cmtid) " +
                                     "union " +
-                                    "(select flag_replyfav, sex, nickname, sendtime, content, flag_content, actid, u.uid, cmtid from comment_flag, user u, comment c where " +
-                                    "c.uid = u.uid and c.uid != " + e_uid + " and c.uid_p = " + e_uid + " and cmtid_p = -1) " +
+                                    "(select flag_replyfav, sex, nickname, c.sendtime, c.content, a.content, c.actid, u.uid, cmtid from comment_flag, user u, comment c, active a where " +
+                                    "c.uid = u.uid and c.uid != " + e_uid + " and c.uid_p = " + e_uid + " and cmtid_p = -1 and a.actid = c.actid) " +
                                     "union " +
                                     "(select flag_fav, sex, nickname, favtime, flag_content, content, a.actid, u.uid, flag_cmtid from comment_flag, user u, favorite f, active a where " +
                                     "u.uid != " + e_uid + " and u.uid = f.uid and f.actid = a.actid and f.isfav = 1 and a.uid = " + e_uid + ") order by sendtime desc"
@@ -234,7 +236,7 @@ public class MessageFragment extends StatedFragment {
                                     case "4": // replyfav
                                         nameActList.add(cmtList.get(2).get(i) + " 感谢了你");
                                         contentList.add(cmtList.get(4).get(i));
-                                        quoteList.add("");
+                                        quoteList.add(cmtList.get(5).get(i));
                                         cmtidList.add(cmtList.get(8).get(i));
                                         break;
                                 }
@@ -257,6 +259,23 @@ public class MessageFragment extends StatedFragment {
         intent.putExtra("actid", actidList.get(position));
         intent.putExtra("cmtid", cmtidList.get(position));
         intent.putExtra("nickname", nicknameList.get(position));
+        startActivity(intent);
+    }
+
+    public void openComment(int position) {
+        Intent intent = new Intent(getActivity(), CommentActivity.class);
+        intent.putExtra("uid", uidpList.get(position));
+        intent.putExtra("e_uid", UID);
+        intent.putExtra("actid", actidList.get(position));
+        startActivity(intent);
+    }
+
+    public void openPerson(int position) {
+        Intent intent = new Intent(getActivity(), PersonActivity.class);
+        intent.putExtra("uid", uidpList.get(position));
+        intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
+        intent.putExtra("nickname", nicknameList.get(position));
+        intent.putExtra("e_uid", UID);
         startActivity(intent);
     }
 

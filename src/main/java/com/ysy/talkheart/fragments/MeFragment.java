@@ -31,6 +31,7 @@ import com.ysy.talkheart.utils.ActivitiesDestroyer;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.DataCleanManager;
 import com.ysy.talkheart.utils.DataProcessor;
+import com.ysy.talkheart.utils.StringUtils;
 import com.ysy.talkheart.utils.ViewTurnAnimation;
 import com.ysy.talkheart.views.CircularImageView;
 
@@ -284,7 +285,7 @@ public class MeFragment extends StatedFragment {
             public void onClick(View v) {
                 introInputLayout.startAnimation(animation.getSATo(0));
                 String intro = introEdt.getText().toString();
-                if (!intro.equals(introductionTv.getText().toString()) && !intro.equals(""))
+                if (!intro.equals(introductionTv.getText().toString()) && !StringUtils.replaceBlank(introEdt.getText().toString()).equals(""))
                     connectToUpdateIntro(intro);
             }
         });

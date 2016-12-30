@@ -25,7 +25,6 @@ public class PersonActivity extends AppCompatActivity {
 
     private ActionBar actionBar;
     private FloatingActionButton watchFab;
-    private ImageView avatarImg;
     private TextView introTv;
     private LinearLayout activeNumLayout;
     private LinearLayout watchNumLayout;
@@ -35,7 +34,6 @@ public class PersonActivity extends AppCompatActivity {
     private TextView fansNumTv;
     private TextView schoolTv;
     private TextView birthdayTv;
-    private MenuItem modifyMenuItem;
 
     private Handler personHandler;
 
@@ -82,7 +80,7 @@ public class PersonActivity extends AppCompatActivity {
     }
 
     private void initView() {
-        avatarImg = (ImageView) findViewById(R.id.person_avatar_img);
+        ImageView avatarImg = (ImageView) findViewById(R.id.person_avatar_img);
         watchFab = (FloatingActionButton) findViewById(R.id.person_watch_fab);
         activeNumLayout = (LinearLayout) findViewById(R.id.person_active_layout);
         watchNumLayout = (LinearLayout) findViewById(R.id.person_watch_layout);
@@ -500,11 +498,17 @@ public class PersonActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_person, menu);
-        modifyMenuItem = menu.findItem(R.id.action_modify);
+        MenuItem modifyMenuItem = menu.findItem(R.id.action_modify);
         modifyMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-
+                Intent intent = new Intent(PersonActivity.this, ModifyActivity.class);
+                intent.putExtra("uid", E_UID);
+                intent.putExtra("school", SCHOOL.equals("未设置院校") ? "" : SCHOOL);
+                intent.putExtra("nickname", NICKNAME);
+                intent.putExtra("sex", Integer.parseInt(SEX));
+                intent.putExtra("birthday", BIRTHDAY);
+                startActivity(intent);
                 return true;
             }
         });

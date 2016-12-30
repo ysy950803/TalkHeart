@@ -99,22 +99,83 @@ public class ActiveActivity extends AppCompatActivity {
 
             @Override
             public void onItemLongClick(View view, int position) {
-                showItemDialog(isSelf ? UID : E_UID, actidList.get(position));
+                ConnectionDetector cd = new ConnectionDetector(ActiveActivity.this);
+                if (cd.isConnectingToInternet()) {
+                    if (isSelf) {
+                        String items[] = {"收藏", "修改", "删除"};
+                        showItemDialog(items, UID, actidList.get(position), textList.get(position));
+                    } else {
+                        String item[] = {"收藏"};
+                        showItemDialog(item, UID, actidList.get(position), null);
+                    }
+                } else
+                    Toast.makeText(ActiveActivity.this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void showItemDialog(final String uid, final String actid) {
-        final String items[] = {"收藏"};
+    private void showItemDialog(String[] items, final String uid, final String actid, final String modify_content) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setItems(items, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                connectToMark(uid, actid);
+                switch (which) {
+                    case 0:
+                        connectToMark(uid, actid);
+                        break;
+                    case 1:
+                        openModify(uid, actid, modify_content);
+                        break;
+                    case 2:
+                        connectToDelete(uid, actid);
+                        break;
+                }
                 dialog.dismiss();
             }
         });
         builder.create().show();
+    }
+
+    private void connectToDelete(final String uid, final String actid) {
+        android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
+        builder.setTitle("紧张的提示框").setMessage("确定要删除这条动态吗亲？（与之相关联信息都会删除哦）").setCancelable(false)
+                .setPositiveButton("我意已决", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                DBProcessor dbP = new DBProcessor();
+                                if (dbP.getConn() == null) {
+                                    activeHandler.post(timeOutRunnable);
+                                } else {
+                                    int res = dbP.delete(
+                                            "delete from active where actid = " + actid
+                                    );
+                                    if (res == 1) {
+                                        dbP.update("update user_info_count set act_num = (act_num - 1) where uid = " + uid);
+                                        activeHandler.post(deleteRunnable);
+                                    } else
+                                        activeHandler.post(serverErrorRunnable);
+                                }
+                            }
+                        }).start();
+                    }
+                }).setNegativeButton("再想想", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.cancel();
+            }
+        });
+        final android.support.v7.app.AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    private void openModify(String uid, String actid, String modify_content) {
+        Intent intent = new Intent(this, WriteActivity.class);
+        intent.putExtra("uid", uid);
+        intent.putExtra("actid", actid);
+        intent.putExtra("modify_content", modify_content);
+        startActivity(intent);
     }
 
     private void connectToMark(final String uid, final String actid) {
@@ -298,6 +359,14 @@ public class ActiveActivity extends AppCompatActivity {
             listViewAdapter.notifyDataSetChanged();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
+        }
+    };
+
+    private Runnable deleteRunnable = new Runnable() {
+        @Override
+        public void run() {
+            refresh();
+            Toast.makeText(ActiveActivity.this, "删除成功", Toast.LENGTH_SHORT).show();
         }
     };
 

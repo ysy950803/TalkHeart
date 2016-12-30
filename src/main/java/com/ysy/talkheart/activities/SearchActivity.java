@@ -20,6 +20,7 @@ import com.ysy.talkheart.adapters.SearchUserListViewAdapter;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
+import com.ysy.talkheart.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,14 +76,8 @@ public class SearchActivity extends AppCompatActivity {
                 ConnectionDetector cd = new ConnectionDetector(SearchActivity.this);
                 if (!cd.isConnectingToInternet())
                     Toast.makeText(SearchActivity.this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
-                else {
-                    Intent intent = new Intent(SearchActivity.this, PersonActivity.class);
-                    intent.putExtra("uid", uidList.get(position));
-                    intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
-                    intent.putExtra("nickname", nicknameList.get(position));
-                    intent.putExtra("e_uid", UID);
-                    startActivity(intent);
-                }
+                else
+                    openPerson(position);
             }
 
             @Override
@@ -90,6 +85,15 @@ public class SearchActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    private void openPerson(int position) {
+        Intent intent = new Intent(SearchActivity.this, PersonActivity.class);
+        intent.putExtra("uid", uidList.get(position));
+        intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
+        intent.putExtra("nickname", nicknameList.get(position));
+        intent.putExtra("e_uid", UID);
+        startActivity(intent);
     }
 
     private void setSearchContent() {
@@ -104,7 +108,7 @@ public class SearchActivity extends AppCompatActivity {
         if (!cd.isConnectingToInternet()) {
             Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
         } else {
-            if (nicknameLike.equals("")) {
+            if (StringUtils.replaceBlank(nicknameLike).equals("")) {
                 Toast.makeText(this, "Ta叫什么名字呢？", Toast.LENGTH_SHORT).show();
             } else {
                 refreshLayout.setRefreshing(true);

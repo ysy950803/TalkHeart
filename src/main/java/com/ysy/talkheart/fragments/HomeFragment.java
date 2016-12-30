@@ -23,11 +23,14 @@ import com.inthecheesefactory.thecheeselibrary.fragment.support.v4.app.StatedFra
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.CommentActivity;
 import com.ysy.talkheart.activities.HomeActivity;
+import com.ysy.talkheart.activities.PersonActivity;
+import com.ysy.talkheart.activities.WriteActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.adapters.HomeActiveListViewAdapter;
 import com.ysy.talkheart.utils.RecyclerViewScrollListener;
+import com.ysy.talkheart.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -155,22 +158,85 @@ public class HomeFragment extends StatedFragment {
 
             @Override
             public void onItemLongClick(View view, int position) {
-                showItemDialog(UID, actidList.get(position));
+                ConnectionDetector cd = new ConnectionDetector(context);
+                if (cd.isConnectingToInternet()) {
+                    boolean isSelf = UID.equals(uidList.get(position));
+                    if (isSelf) {
+                        String items[] = {"收藏", "修改", "删除"};
+                        showItemDialog(items, UID, actidList.get(position), textList.get(position));
+                    } else {
+                        String item[] = {"收藏"};
+                        showItemDialog(item, UID, actidList.get(position), null);
+                    }
+                } else
+                    Toast.makeText(context, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void showItemDialog(final String uid, final String actid) {
-        final String items[] = {"收藏"};
+    private void showItemDialog(String[] items, final String uid, final String actid,
+                                final String modify_content) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setItems(items, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                connectToMark(uid, actid);
+                switch (which) {
+                    case 0:
+                        connectToMark(uid, actid);
+                        break;
+                    case 1:
+                        openModify(uid, actid, modify_content);
+                        break;
+                    case 2:
+                        connectToDelete(uid, actid);
+                        break;
+                }
                 dialog.dismiss();
             }
         });
         builder.create().show();
+    }
+
+    private void openModify(String uid, String actid, String modify_content) {
+        Intent intent = new Intent(getActivity(), WriteActivity.class);
+        intent.putExtra("uid", uid);
+        intent.putExtra("actid", actid);
+        intent.putExtra("modify_content", modify_content);
+        startActivity(intent);
+    }
+
+    private void connectToDelete(final String uid, final String actid) {
+        android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(getActivity());
+        builder.setTitle("紧张的提示框").setMessage("确定要删除这条动态吗亲？（与之相关联信息都会删除哦）").setCancelable(false)
+                .setPositiveButton("我意已决", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                DBProcessor dbP = new DBProcessor();
+                                if (dbP.getConn() == null) {
+                                    homeActiveHandler.post(timeOutRunnable);
+                                } else {
+                                    int res = dbP.delete(
+                                            "delete from active where actid = " + actid
+                                    );
+                                    if (res == 1) {
+                                        dbP.update("update user_info_count set act_num = (act_num - 1) where uid = " + uid);
+                                        homeActiveHandler.post(deleteRunnable);
+                                    } else
+                                        homeActiveHandler.post(serverErrorRunnable);
+                                }
+                            }
+                        }).start();
+                    }
+                }).setNegativeButton("再想想", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.cancel();
+            }
+        });
+        final android.support.v7.app.AlertDialog alert = builder.create();
+        alert.show();
     }
 
     private void connectToMark(final String uid, final String actid) {
@@ -352,10 +418,27 @@ public class HomeFragment extends StatedFragment {
         startActivity(intent);
     }
 
+    public void openPerson(int position) {
+        Intent intent = new Intent(getActivity(), PersonActivity.class);
+        intent.putExtra("uid", uidList.get(position));
+        intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
+        intent.putExtra("nickname", nicknameList.get(position));
+        intent.putExtra("e_uid", UID);
+        startActivity(intent);
+    }
+
     private Runnable markRunnable = new Runnable() {
         @Override
         public void run() {
             Toast.makeText(getActivity(), "收藏成功啦", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    private Runnable deleteRunnable = new Runnable() {
+        @Override
+        public void run() {
+            refresh();
+            Toast.makeText(getActivity(), "删除成功", Toast.LENGTH_SHORT).show();
         }
     };
 
