@@ -103,10 +103,10 @@ public class ActiveActivity extends AppCompatActivity {
                 if (cd.isConnectingToInternet()) {
                     if (isSelf) {
                         String items[] = {"收藏", "修改", "删除"};
-                        showItemDialog(items, UID, actidList.get(position), textList.get(position));
+                        showItemDialog(items, E_UID, actidList.get(position), textList.get(position));
                     } else {
                         String item[] = {"收藏"};
-                        showItemDialog(item, UID, actidList.get(position), null);
+                        showItemDialog(item, E_UID, actidList.get(position), null);
                     }
                 } else
                     Toast.makeText(ActiveActivity.this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
@@ -114,20 +114,20 @@ public class ActiveActivity extends AppCompatActivity {
         });
     }
 
-    private void showItemDialog(String[] items, final String uid, final String actid, final String modify_content) {
+    private void showItemDialog(String[] items, final String e_uid, final String actid, final String modify_content) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setItems(items, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 switch (which) {
                     case 0:
-                        connectToMark(uid, actid);
+                        connectToMark(e_uid, actid);
                         break;
                     case 1:
-                        openModify(uid, actid, modify_content);
+                        openModify(e_uid, actid, modify_content);
                         break;
                     case 2:
-                        connectToDelete(uid, actid);
+                        connectToDelete(e_uid, actid);
                         break;
                 }
                 dialog.dismiss();
@@ -136,7 +136,7 @@ public class ActiveActivity extends AppCompatActivity {
         builder.create().show();
     }
 
-    private void connectToDelete(final String uid, final String actid) {
+    private void connectToDelete(final String e_uid, final String actid) {
         android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
         builder.setTitle("紧张的提示框").setMessage("确定要删除这条动态吗亲？（与之相关联信息都会删除哦）").setCancelable(false)
                 .setPositiveButton("我意已决", new DialogInterface.OnClickListener() {
@@ -153,7 +153,7 @@ public class ActiveActivity extends AppCompatActivity {
                                             "delete from active where actid = " + actid
                                     );
                                     if (res == 1) {
-                                        dbP.update("update user_info_count set act_num = (act_num - 1) where uid = " + uid);
+                                        dbP.update("update user_info_count set act_num = (act_num - 1) where uid = " + e_uid);
                                         activeHandler.post(deleteRunnable);
                                     } else
                                         activeHandler.post(serverErrorRunnable);
@@ -170,15 +170,15 @@ public class ActiveActivity extends AppCompatActivity {
         alert.show();
     }
 
-    private void openModify(String uid, String actid, String modify_content) {
+    private void openModify(String e_uid, String actid, String modify_content) {
         Intent intent = new Intent(this, WriteActivity.class);
-        intent.putExtra("uid", uid);
+        intent.putExtra("uid", e_uid);
         intent.putExtra("actid", actid);
         intent.putExtra("modify_content", modify_content);
         startActivity(intent);
     }
 
-    private void connectToMark(final String uid, final String actid) {
+    private void connectToMark(final String e_uid, final String actid) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -187,7 +187,7 @@ public class ActiveActivity extends AppCompatActivity {
                     activeHandler.post(timeOutRunnable);
                 } else {
                     int res = dbP.insert(
-                            "insert into mark(uid, actid) values(" + uid + ", " + actid + ")"
+                            "insert into mark(uid, actid) values(" + e_uid + ", " + actid + ")"
                     );
                     if (res == 1)
                         activeHandler.post(markRunnable);
@@ -230,16 +230,12 @@ public class ActiveActivity extends AppCompatActivity {
                     activeHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.activeSelect(
-                            "select actid, sendtime, goodnum, content from active where uid = " + uid +
-                                    " order by actid desc"
-                    );
-                    List<List<String>> statusList = dbP.goodSelect(
-                            "select actid, isfav from favorite f where f.uid = " + e_uid + " and actid in (" +
-                                    "select actid from active a where a.uid = " + uid + ")" +
+                            "select a.actid, sendtime, goodnum, content, ifnull(isfav, -1) as isfav from " +
+                                    "active a left join favorite f on f.actid = a.actid and f.uid = " + e_uid + " where a.uid = " + uid +
                                     " order by actid desc"
                     );
                     clearAllLists();
-                    if (statusList == null || resList == null) {
+                    if (resList == null) {
                         activeHandler.post(serverErrorRunnable);
                     } else if (resList.get(0).size() == 0) {
                         activeHandler.post(nothingRunnable);
@@ -248,10 +244,10 @@ public class ActiveActivity extends AppCompatActivity {
                             avatarList.add(sex == 1 ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
                             nicknameList.add(nickname);
                             actidList.add(resList.get(0).get(i));
-                            goodStatusList.add(getGoodStatus(i, actidList, statusList));
                             timeList.add(resList.get(1).get(i).substring(0, 19));
                             goodNumList.add(resList.get(2).get(i));
                             textList.add(resList.get(3).get(i));
+                            goodStatusList.add(Integer.parseInt(resList.get(4).get(i)));
                         }
                         activeHandler.post(successRunnable);
                     }
@@ -261,24 +257,24 @@ public class ActiveActivity extends AppCompatActivity {
         }).start();
     }
 
-    private int getGoodStatus(int pos, List<String> actidList, List<List<String>> statusList) {
-        int isfav = -1;
-        if (statusList.get(0).size() == 0)
-            isfav = -1;
-        else {
-            if (fav_actid_index >= statusList.get(0).size())
-                isfav = -1;
-            else {
-                if (!actidList.get(pos).equals(statusList.get(0).get(fav_actid_index)))
-                    isfav = -1;
-                else if (actidList.get(pos).equals(statusList.get(0).get(fav_actid_index))) {
-                    isfav = Integer.parseInt(statusList.get(1).get(fav_actid_index)); // 0 or 1
-                    ++fav_actid_index;
-                }
-            }
-        }
-        return isfav;
-    }
+//    private int getGoodStatus(int pos, List<String> actidList, List<List<String>> statusList) {
+//        int isfav = -1;
+//        if (statusList.get(0).size() == 0)
+//            isfav = -1;
+//        else {
+//            if (fav_actid_index >= statusList.get(0).size())
+//                isfav = -1;
+//            else {
+//                if (!actidList.get(pos).equals(statusList.get(0).get(fav_actid_index)))
+//                    isfav = -1;
+//                else if (actidList.get(pos).equals(statusList.get(0).get(fav_actid_index))) {
+//                    isfav = Integer.parseInt(statusList.get(1).get(fav_actid_index)); // 0 or 1
+//                    ++fav_actid_index;
+//                }
+//            }
+//        }
+//        return isfav;
+//    }
 
     public void updateGood(int position) {
         connectToUpdateGood(isSelf ? UID : E_UID, position);
@@ -305,7 +301,7 @@ public class ActiveActivity extends AppCompatActivity {
                     } else if (goodStatusList.get(position) == -1) {
                         int res = dbP.goodUpdate(
                                 "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
-                                "insert into favorite(uid, actid, isfav) values(" + e_uid + ", " + actid + ", 1)"
+                                "insert into favorite(uid, actid, isfav, favtime) values(" + e_uid + ", " + actid + ", 1, NOW())"
                         );
                         if (res == 2) {
                             if (!isSelf)
@@ -340,6 +336,15 @@ public class ActiveActivity extends AppCompatActivity {
         intent.putExtra("uid", UID);
         intent.putExtra("e_uid", E_UID);
         intent.putExtra("actid", actidList.get(position));
+        startActivity(intent);
+    }
+
+    public void openPerson(int position) {
+        Intent intent = new Intent(this, PersonActivity.class);
+        intent.putExtra("uid", UID);
+        intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
+        intent.putExtra("nickname", nicknameList.get(position));
+        intent.putExtra("e_uid", E_UID);
         startActivity(intent);
     }
 

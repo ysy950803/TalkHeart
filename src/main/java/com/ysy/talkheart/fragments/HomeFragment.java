@@ -290,18 +290,14 @@ public class HomeFragment extends StatedFragment {
                     homeActiveHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.homeActiveSelect(
-                            "select actid, sex, nickname, sendtime, content, goodnum, u.uid from active a, user u where a.uid = u.uid and u.uid in (" +
+                            "select a.actid, sex, nickname, sendtime, content, goodnum, u.uid, ifnull(isfav, -1) as isfav from " +
+                                    "user u, active a left join favorite f on a.actid = f.actid and f.uid = " + uid + " where a.uid = u.uid and u.uid in (" +
                                     "select uid_a from user_relation where uid_b = " + uid + " and relation in (-1, 2) " +
                                     "union select uid_b from user_relation where uid_a = " + uid + " and relation in (1, 2) " +
-                                    "union select uid from user where uid = " + uid + ")" +
-                                    " order by actid desc"
-                    );
-                    List<List<String>> statusList = dbP.goodSelect(
-                            "select actid, isfav from favorite where uid = " + uid +
-                                    " order by actid desc"
+                                    "union select uid from user where uid = " + uid + ") order by actid desc"
                     );
                     clearAllLists();
-                    if (statusList == null || resList == null) {
+                    if (resList == null) {
                         homeActiveHandler.post(serverErrorRunnable);
                     } else if (resList.get(0).size() == 0) {
                         homeActiveHandler.post(nothingListRunnable);
@@ -313,8 +309,8 @@ public class HomeFragment extends StatedFragment {
                             timeList.add(resList.get(3).get(i).substring(0, 19));
                             textList.add(resList.get(4).get(i));
                             goodNumList.add(resList.get(5).get(i));
-                            goodStatusList.add(getGoodStatus(i, actidList, statusList));
                             uidList.add(resList.get(6).get(i));
+                            goodStatusList.add(Integer.parseInt(resList.get(7).get(i)));
                         }
                         homeActiveHandler.post(successRunnable);
                     }
@@ -336,24 +332,24 @@ public class HomeFragment extends StatedFragment {
         fav_actid_index = 0;
     }
 
-    private int getGoodStatus(int pos, List<String> actidList, List<List<String>> statusList) {
-        int isfav = -1;
-        if (statusList.get(0).size() == 0)
-            isfav = -1;
-        else {
-            if (fav_actid_index >= statusList.get(0).size())
-                isfav = -1;
-            else {
-                if (!actidList.get(pos).equals(statusList.get(0).get(fav_actid_index)))
-                    isfav = -1;
-                else if (actidList.get(pos).equals(statusList.get(0).get(fav_actid_index))) {
-                    isfav = Integer.parseInt(statusList.get(1).get(fav_actid_index)); // 0 or 1
-                    ++fav_actid_index;
-                }
-            }
-        }
-        return isfav;
-    }
+//    private int getGoodStatus(int pos, List<String> actidList, List<List<String>> statusList) {
+//        int isfav = -1;
+//        if (statusList.get(0).size() == 0)
+//            isfav = -1;
+//        else {
+//            if (fav_actid_index >= statusList.get(0).size())
+//                isfav = -1;
+//            else {
+//                if (!actidList.get(pos).equals(statusList.get(0).get(fav_actid_index)))
+//                    isfav = -1;
+//                else if (actidList.get(pos).equals(statusList.get(0).get(fav_actid_index))) {
+//                    isfav = Integer.parseInt(statusList.get(1).get(fav_actid_index)); // 0 or 1
+//                    ++fav_actid_index;
+//                }
+//            }
+//        }
+//        return isfav;
+//    }
 
     public void updateGood(int position) {
         connectToUpdateGood(UID, position);

@@ -131,7 +131,8 @@ public class ReplyActivity extends AppCompatActivity {
                                         e_uid + ", " + ACT_ID + ", '" + content + "', NOW(), " + uid + ")"
                         );
                         if (res == 1) {
-                            dbP.update("update user set isread = 0 where uid = " + uid);
+                            if (e_uid != uid)
+                                dbP.update("update user set isread = 0 where uid = " + uid);
                             replyHandler.post(sendRunnable);
                         } else
                             replyHandler.post(serverErrorRunnable);

@@ -31,7 +31,6 @@ import com.ysy.talkheart.fragments.MeFragment;
 import com.ysy.talkheart.fragments.MessageFragment;
 import com.ysy.talkheart.utils.ActivitiesDestroyer;
 import com.ysy.talkheart.utils.DBProcessor;
-import com.ysy.talkheart.utils.DataProcessor;
 import com.ysy.talkheart.utils.UpdateChecker;
 
 public class HomeActivity extends AppCompatActivity implements BottomNavigationBar.OnTabSelectedListener {
@@ -94,7 +93,18 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
 
         homeHandler = new Handler();
         homeHandler.post(autoCheckUpdateRunnable);
+    }
+
+    @Override
+    protected void onResume() {
         homeHandler.post(msgRefreshRunnable);
+        super.onResume();
+    }
+
+    @Override
+    protected void onStop() {
+        homeHandler.removeCallbacks(msgRefreshRunnable);
+        super.onStop();
     }
 
     @Override

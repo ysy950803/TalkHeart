@@ -135,6 +135,17 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
             }
         });
 
+        viewHolder.avatarImg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ConnectionDetector cd = new ConnectionDetector(context);
+                if (!cd.isConnectingToInternet())
+                    Toast.makeText(context, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+                else
+                    context.openPerson(pos);
+            }
+        });
+
         // 如果设置了回调，则设置点击事件
         if (mOnItemClickListener != null) {
             viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
