@@ -17,6 +17,7 @@ import android.widget.Toast;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
+import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 
 import java.text.SimpleDateFormat;
@@ -239,30 +240,25 @@ public class WriteActivity extends AppCompatActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_write, menu);
         MenuItem menuItem = menu.findItem(R.id.action_send);
-        menuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+        menuItem.setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
             @Override
-            public boolean onMenuItemClick(MenuItem item) {
-//                String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+            protected void onNoDoubleClick(MenuItem item) {
                 String writeContent = writeEdt.getText().toString();
                 if (!StringUtils.replaceBlank(writeContent).equals(""))
                     send(Integer.parseInt(UID), writeContent);
                 else
                     Toast.makeText(WriteActivity.this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
-                return true;
             }
         });
 
-        menu.findItem(R.id.action_save).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+        menu.findItem(R.id.action_save).setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
             @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                // save to draft
-//                String saveTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+            protected void onNoDoubleClick(MenuItem item) {
                 String writeContent = writeEdt.getText().toString();
                 if (!StringUtils.replaceBlank(writeContent).equals(""))
                     save(Integer.parseInt(UID), writeContent);
                 else
                     Toast.makeText(WriteActivity.this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
-                return true;
             }
         });
         return true;

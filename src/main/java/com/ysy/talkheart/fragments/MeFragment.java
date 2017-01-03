@@ -7,6 +7,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -28,6 +29,7 @@ import com.ysy.talkheart.activities.MarkActivity;
 import com.ysy.talkheart.activities.PersonActivity;
 import com.ysy.talkheart.activities.WatchActivity;
 import com.ysy.talkheart.utils.ActivitiesDestroyer;
+import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.DataCleanManager;
 import com.ysy.talkheart.utils.DataProcessor;
@@ -65,93 +67,27 @@ public class MeFragment extends StatedFragment {
     private String WATCH_NUM = "0";
     private String FANS_NUM = "0";
 
-    private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
-    private String mParam1;
     private String UID;
-
     private HomeActivity context;
-
     private Handler meFragmentHandler;
+    private SwipeRefreshLayout refreshLayout;
+    private boolean isRefreshing = false;
+    private boolean isSeen = false;
 
-    public static MeFragment newInstance(String param1, String param2) {
+    public static MeFragment newInstance(String param2) {
         MeFragment fragment = new MeFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
 
-    private void connectToGetMeInfo(final String uid) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
-                    meFragmentHandler.post(timeOutRunnable);
-                } else {
-                    String[] res = dbP.meInfoSelect(
-                            "select sex, nickname, intro, act_num, watch_num, fans_num from user u, user_info_count uic" +
-                                    " where u.uid = " + uid + " and u.uid = uic.uid");
-                    if (res[1] == null || res[1].equals("/(ㄒoㄒ)/~~")) {
-                        meFragmentHandler.post(serverErrorRunnable);
-                    } else {
-                        SEX = res[0];
-                        NICKNAME = res[1];
-                        INTRODUCTION = res[2] == null ? "点击设置签名" : res[2];
-                        ACTIVE_NUM = res[3];
-                        WATCH_NUM = res[4];
-                        FANS_NUM = res[5];
-                        meFragmentHandler.post(successRunnable);
-                    }
-                }
-                dbP.closeConn();
-            }
-        }).start();
-    }
-
-    private Runnable successRunnable = new Runnable() {
-        @Override
-        public void run() {
-            avatarImg.setImageResource(Integer.parseInt(SEX) == 1 ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
-            nicknameTv.setText(NICKNAME);
-            introductionTv.setText(INTRODUCTION);
-            activeNumTv.setText(ACTIVE_NUM);
-            watchNumTv.setText(WATCH_NUM);
-            fansNumTv.setText(FANS_NUM);
-            setClickable(true);
-        }
-    };
-
-    private Runnable updateIntroRunnable = new Runnable() {
-        @Override
-        public void run() {
-            introductionTv.setText(introEdt.getText().toString());
-            INTRODUCTION = introEdt.getText().toString();
-        }
-    };
-
-    private Runnable serverErrorRunnable = new Runnable() {
-        @Override
-        public void run() {
-            Toast.makeText(getActivity(), "服务器君生病了，重试一下吧", Toast.LENGTH_SHORT).show();
-        }
-    };
-
-    private Runnable timeOutRunnable = new Runnable() {
-        @Override
-        public void run() {
-            Toast.makeText(getActivity(), "连接超时啦，重试一下吧", Toast.LENGTH_SHORT).show();
-        }
-    };
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
             UID = getArguments().getString(ARG_PARAM2);
             context = (HomeActivity) getActivity();
         }
@@ -165,13 +101,23 @@ public class MeFragment extends StatedFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_me, container, false);
+        initData();
         initView(view);
         clickListener();
-        connectToGetMeInfo(UID);
+        if (!isSeen) {
+            refreshLayout.setRefreshing(true);
+            refresh();
+        }
         return view;
     }
 
+    private void initData() {
+        isSeen = context.getIsSeen();
+        isRefreshing = false;
+    }
+
     private void initView(View view) {
+        refreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.me_refresh_layout);
         avatarImg = (CircularImageView) view.findViewById(R.id.me_avatar_img);
         nicknameTv = (TextView) view.findViewById(R.id.me_nickname_tv);
         activeNumTv = (TextView) view.findViewById(R.id.me_active_num_tv);
@@ -191,6 +137,14 @@ public class MeFragment extends StatedFragment {
 
         introInputLayout.setVisibility(View.GONE);
         introductionTv.setVisibility(View.VISIBLE);
+
+        refreshLayout.setColorSchemeResources(R.color.colorAccent);
+        refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refresh();
+            }
+        });
     }
 
     private void clickListener() {
@@ -349,6 +303,54 @@ public class MeFragment extends StatedFragment {
         setClickable(false);
     }
 
+    private void refresh() {
+        if (!isRefreshing) {
+            isRefreshing = true;
+            if (!refreshData()) {
+                refreshLayout.setRefreshing(false);
+                isRefreshing = false;
+            }
+        }
+    }
+
+    private boolean refreshData() {
+        ConnectionDetector cd = new ConnectionDetector(getActivity());
+        if (!cd.isConnectingToInternet()) {
+            Toast.makeText(getActivity(), "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        connectToGetMeInfo(UID);
+        return true;
+    }
+
+    private void connectToGetMeInfo(final String uid) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                DBProcessor dbP = new DBProcessor();
+                if (dbP.getConn() == null) {
+                    meFragmentHandler.post(timeOutRunnable);
+                } else {
+                    String[] res = dbP.meInfoSelect(
+                            "select sex, nickname, intro, act_num, watch_num, fans_num from user u, user_info_count uic" +
+                                    " where u.uid = " + uid + " and u.uid = uic.uid");
+                    if (res[1] == null || res[1].equals("/(ㄒoㄒ)/~~")) {
+                        meFragmentHandler.post(serverErrorRunnable);
+                    } else {
+                        SEX = res[0];
+                        NICKNAME = res[1];
+                        INTRODUCTION = res[2] == null ? "点击设置签名" : res[2];
+                        ACTIVE_NUM = res[3];
+                        WATCH_NUM = res[4];
+                        FANS_NUM = res[5];
+                        meFragmentHandler.post(successRunnable);
+                    }
+                }
+                dbP.closeConn();
+            }
+        }).start();
+    }
+
     private void connectToUpdateIntro(final String intro) {
         new Thread(new Runnable() {
             @Override
@@ -415,14 +417,89 @@ public class MeFragment extends StatedFragment {
         alert.show();
     }
 
+    private Runnable successRunnable = new Runnable() {
+        @Override
+        public void run() {
+            avatarImg.setImageResource(Integer.parseInt(SEX) == 1 ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
+            nicknameTv.setText(NICKNAME);
+            introductionTv.setText(INTRODUCTION);
+            activeNumTv.setText(ACTIVE_NUM);
+            watchNumTv.setText(WATCH_NUM);
+            fansNumTv.setText(FANS_NUM);
+            setClickable(true);
+            refreshLayout.setRefreshing(false);
+            isRefreshing = false;
+            isSeen = true;
+            context.setIsSeen(true);
+        }
+    };
+
+    private Runnable updateIntroRunnable = new Runnable() {
+        @Override
+        public void run() {
+            introductionTv.setText(introEdt.getText().toString());
+            INTRODUCTION = introEdt.getText().toString();
+        }
+    };
+
+    private Runnable serverErrorRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (MeFragment.this.isAdded())
+                Toast.makeText(getActivity(), "服务器君生病了，重试一下吧", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    private Runnable timeOutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (MeFragment.this.isAdded())
+                Toast.makeText(getActivity(), "连接超时啦，重试一下吧", Toast.LENGTH_SHORT).show();
+        }
+    };
 
     @Override
     protected void onSaveState(Bundle outState) {
+        saveMeInfoState(outState);
         super.onSaveState(outState);
     }
 
     @Override
     protected void onRestoreState(Bundle savedInstanceState) {
         super.onRestoreState(savedInstanceState);
+        readMeInfoState(savedInstanceState);
     }
+
+    private void saveMeInfoState(Bundle outState) {
+        if (isSeen) {
+            outState.putString("me_sex", SEX);
+            outState.putString("me_nickname", NICKNAME);
+            outState.putString("me_act_num", ACTIVE_NUM);
+            outState.putString("me_watch_num", WATCH_NUM);
+            outState.putString("me_fans_num", FANS_NUM);
+            outState.putString("me_intro", INTRODUCTION);
+        }
+    }
+
+    private void readMeInfoState(Bundle savedInstanceState) {
+        if (isSeen) {
+            if (savedInstanceState.getString("me_nickname", null) != null) {
+                SEX = savedInstanceState.getString("me_sex");
+                NICKNAME = savedInstanceState.getString("me_nickname");
+                ACTIVE_NUM = savedInstanceState.getString("me_act_num");
+                WATCH_NUM = savedInstanceState.getString("me_watch_num");
+                FANS_NUM = savedInstanceState.getString("me_fans_num");
+                INTRODUCTION = savedInstanceState.getString("me_intro");
+                avatarImg.setImageResource(Integer.parseInt(SEX) == 1 ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
+                nicknameTv.setText(NICKNAME);
+                introductionTv.setText(INTRODUCTION);
+                activeNumTv.setText(ACTIVE_NUM);
+                watchNumTv.setText(WATCH_NUM);
+                fansNumTv.setText(FANS_NUM);
+                setClickable(true);
+            } else
+                Toast.makeText(context, "内存君打瞌睡了，下拉刷新一下吧", Toast.LENGTH_SHORT).show();
+        }
+    }
+
 }

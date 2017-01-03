@@ -17,6 +17,7 @@ import android.widget.Toast;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
+import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 
 import java.text.SimpleDateFormat;
@@ -148,16 +149,15 @@ public class FeedbackActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_feedback, menu);
         MenuItem menuItem = menu.findItem(R.id.action_send);
-        menuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+        menuItem.setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
             @Override
-            public boolean onMenuItemClick(MenuItem item) {
+            protected void onNoDoubleClick(MenuItem item) {
 //                String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
                 String writeContent = writeEdt.getText().toString();
                 if (!StringUtils.replaceBlank(writeContent).equals(""))
                     send(Integer.parseInt(UID), writeContent);
                 else
                     Toast.makeText(FeedbackActivity.this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
-                return true;
             }
         });
         return true;

@@ -54,24 +54,20 @@ public class HomeFragment extends StatedFragment {
 
     private HomeActiveListViewAdapter listViewAdapter;
 
-    private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
-    private String mParam1;
     private String UID;
 
     private boolean isRefreshing = false;
     private Handler homeActiveHandler;
 
     private HomeActivity context;
-    private int fav_actid_index = 0;
 
     public ImageView goodImg;
 
-    public static HomeFragment newInstance(String param1, String param2) {
+    public static HomeFragment newInstance(String param2) {
         HomeFragment fragment = new HomeFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
@@ -81,7 +77,6 @@ public class HomeFragment extends StatedFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
             UID = getArguments().getString(ARG_PARAM2);
         }
         context = (HomeActivity) getActivity();
@@ -106,7 +101,6 @@ public class HomeFragment extends StatedFragment {
 
     private void initData() {
         isRefreshing = false;
-//        clearAllLists();
     }
 
     private void initView(View view) {
@@ -273,7 +267,7 @@ public class HomeFragment extends StatedFragment {
 
     private boolean refreshData() {
         ConnectionDetector cd = new ConnectionDetector(getActivity());
-        if (!cd.isConnectingToInternet()) {
+        if (!cd.isConnectingToInternet() && HomeFragment.this.isAdded()) {
             Toast.makeText(getActivity(), "请检查网络连接哦", Toast.LENGTH_SHORT).show();
             return false;
         }
@@ -329,7 +323,7 @@ public class HomeFragment extends StatedFragment {
         textList.clear();
         actidList.clear();
         uidList.clear();
-        fav_actid_index = 0;
+//        fav_actid_index = 0;
     }
 
 //    private int getGoodStatus(int pos, List<String> actidList, List<List<String>> statusList) {
@@ -457,7 +451,8 @@ public class HomeFragment extends StatedFragment {
     private Runnable timeOutRunnable = new Runnable() {
         @Override
         public void run() {
-            Toast.makeText(getActivity(), "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
+            if (HomeFragment.this.isAdded())
+                Toast.makeText(getActivity(), "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
         }
@@ -466,7 +461,8 @@ public class HomeFragment extends StatedFragment {
     private Runnable serverErrorRunnable = new Runnable() {
         @Override
         public void run() {
-            Toast.makeText(getActivity(), "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
+            if (HomeFragment.this.isAdded())
+                Toast.makeText(getActivity(), "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
         }
@@ -476,7 +472,8 @@ public class HomeFragment extends StatedFragment {
         @Override
         public void run() {
             listViewAdapter.notifyDataSetChanged();
-            Toast.makeText(getActivity(), "还没有关注任何动态哦", Toast.LENGTH_SHORT).show();
+            if (HomeFragment.this.isAdded())
+                Toast.makeText(getActivity(), "还没有关注任何动态哦", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
         }

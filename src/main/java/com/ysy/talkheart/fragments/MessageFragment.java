@@ -57,17 +57,17 @@ public class MessageFragment extends StatedFragment {
     private boolean isRefreshing = false;
     private Handler msgHandler;
 
-    private static final String ARG_PARAM1 = "param1";
+    //    private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
-    private String mParam1;
+    //    private String mParam1;
     private String UID;
     private HomeActivity context;
 
-    public static MessageFragment newInstance(String param1, String param2) {
+    public static MessageFragment newInstance(String param2) {
         MessageFragment fragment = new MessageFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
+//        args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
@@ -77,7 +77,7 @@ public class MessageFragment extends StatedFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
+//            mParam1 = getArguments().getString(ARG_PARAM1);
             UID = getArguments().getString(ARG_PARAM2);
         }
         context = (HomeActivity) getActivity();
@@ -158,6 +158,11 @@ public class MessageFragment extends StatedFragment {
         });
     }
 
+    public void getNewMsg() {
+        refreshLayout.setRefreshing(true);
+        refresh();
+    }
+
     private void refresh() {
         if (!isRefreshing) {
             isRefreshing = true;
@@ -170,7 +175,7 @@ public class MessageFragment extends StatedFragment {
 
     private boolean refreshData() {
         ConnectionDetector cd = new ConnectionDetector(getActivity());
-        if (!cd.isConnectingToInternet()) {
+        if (!cd.isConnectingToInternet() && MessageFragment.this.isAdded()) {
             Toast.makeText(getActivity(), "请检查网络连接哦", Toast.LENGTH_SHORT).show();
             return false;
         }
@@ -291,65 +296,65 @@ public class MessageFragment extends StatedFragment {
         nicknameList.clear();
     }
 
-    private void sortListsByTime() {
-        quickSort(timeList, 0, timeList.size() - 1);
-    }
-
-    private int getMid(List<String> timeList, int low, int high) {
-        String time_temp = timeList.get(low);
-        int avatar_temp = avatarList.get(low);
-        String nameAct_temp = nameActList.get(low);
-        String content_temp = contentList.get(low);
-        String cmtid_temp = cmtidList.get(low);
-        String actid_temp = actidList.get(low);
-        String quote_temp = quoteList.get(low);
-        String uidp_temp = uidpList.get(low);
-        String nickname_temp = nicknameList.get(low);
-
-        while (low < high) {
-            while (low < high && timeList.get(high).compareTo(time_temp) < 0)
-                high--;
-            timeList.set(low, timeList.get(high));
-            avatarList.set(low, avatarList.get(high));
-            nameActList.set(low, nameActList.get(high));
-            contentList.set(low, contentList.get(high));
-            cmtidList.set(low, cmtidList.get(high));
-            actidList.set(low, actidList.get(high));
-            quoteList.set(low, quoteList.get(high));
-            uidpList.set(low, uidpList.get(high));
-            nicknameList.set(low, nicknameList.get(high));
-
-            while (low < high && timeList.get(low).compareTo(time_temp) > 0)
-                low++;
-            timeList.set(high, timeList.get(low));
-            avatarList.set(high, avatarList.get(low));
-            nameActList.set(high, nameActList.get(low));
-            contentList.set(high, contentList.get(low));
-            cmtidList.set(high, cmtidList.get(low));
-            actidList.set(high, actidList.get(low));
-            quoteList.set(high, quoteList.get(low));
-            uidpList.set(high, uidpList.get(low));
-            nicknameList.set(high, nicknameList.get(low));
-        }
-        timeList.set(low, time_temp);
-        avatarList.set(low, avatar_temp);
-        nameActList.set(low, nameAct_temp);
-        contentList.set(low, content_temp);
-        cmtidList.set(low, cmtid_temp);
-        actidList.set(low, actid_temp);
-        quoteList.set(low, quote_temp);
-        uidpList.set(low, uidp_temp);
-        nicknameList.set(low, nickname_temp);
-        return low;
-    }
-
-    private void quickSort(List<String> timeList, int low, int high) {
-        if (low < high) {
-            int mid = getMid(timeList, low, high);
-            quickSort(timeList, low, mid - 1);
-            quickSort(timeList, mid + 1, high);
-        }
-    }
+//    private void sortListsByTime() {
+//        quickSort(timeList, 0, timeList.size() - 1);
+//    }
+//
+//    private int getMid(List<String> timeList, int low, int high) {
+//        String time_temp = timeList.get(low);
+//        int avatar_temp = avatarList.get(low);
+//        String nameAct_temp = nameActList.get(low);
+//        String content_temp = contentList.get(low);
+//        String cmtid_temp = cmtidList.get(low);
+//        String actid_temp = actidList.get(low);
+//        String quote_temp = quoteList.get(low);
+//        String uidp_temp = uidpList.get(low);
+//        String nickname_temp = nicknameList.get(low);
+//
+//        while (low < high) {
+//            while (low < high && timeList.get(high).compareTo(time_temp) < 0)
+//                high--;
+//            timeList.set(low, timeList.get(high));
+//            avatarList.set(low, avatarList.get(high));
+//            nameActList.set(low, nameActList.get(high));
+//            contentList.set(low, contentList.get(high));
+//            cmtidList.set(low, cmtidList.get(high));
+//            actidList.set(low, actidList.get(high));
+//            quoteList.set(low, quoteList.get(high));
+//            uidpList.set(low, uidpList.get(high));
+//            nicknameList.set(low, nicknameList.get(high));
+//
+//            while (low < high && timeList.get(low).compareTo(time_temp) > 0)
+//                low++;
+//            timeList.set(high, timeList.get(low));
+//            avatarList.set(high, avatarList.get(low));
+//            nameActList.set(high, nameActList.get(low));
+//            contentList.set(high, contentList.get(low));
+//            cmtidList.set(high, cmtidList.get(low));
+//            actidList.set(high, actidList.get(low));
+//            quoteList.set(high, quoteList.get(low));
+//            uidpList.set(high, uidpList.get(low));
+//            nicknameList.set(high, nicknameList.get(low));
+//        }
+//        timeList.set(low, time_temp);
+//        avatarList.set(low, avatar_temp);
+//        nameActList.set(low, nameAct_temp);
+//        contentList.set(low, content_temp);
+//        cmtidList.set(low, cmtid_temp);
+//        actidList.set(low, actid_temp);
+//        quoteList.set(low, quote_temp);
+//        uidpList.set(low, uidp_temp);
+//        nicknameList.set(low, nickname_temp);
+//        return low;
+//    }
+//
+//    private void quickSort(List<String> timeList, int low, int high) {
+//        if (low < high) {
+//            int mid = getMid(timeList, low, high);
+//            quickSort(timeList, low, mid - 1);
+//            quickSort(timeList, mid + 1, high);
+//        }
+//    }
 
     @Override
     protected void onSaveState(Bundle outState) {
@@ -364,7 +369,8 @@ public class MessageFragment extends StatedFragment {
     private Runnable timeOutRunnable = new Runnable() {
         @Override
         public void run() {
-            Toast.makeText(getActivity(), "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
+            if (MessageFragment.this.isAdded())
+                Toast.makeText(getActivity(), "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
         }
@@ -373,7 +379,8 @@ public class MessageFragment extends StatedFragment {
     private Runnable serverErrorRunnable = new Runnable() {
         @Override
         public void run() {
-            Toast.makeText(getActivity(), "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
+            if (MessageFragment.this.isAdded())
+                Toast.makeText(getActivity(), "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
         }
@@ -383,7 +390,8 @@ public class MessageFragment extends StatedFragment {
         @Override
         public void run() {
             listViewAdapter.notifyDataSetChanged();
-            Toast.makeText(getActivity(), "还没有消息哦", Toast.LENGTH_SHORT).show();
+            if (MessageFragment.this.isAdded())
+                Toast.makeText(getActivity(), "还没有消息哦", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
             context.getMsgUnreadImg().setVisibility(View.GONE);
@@ -397,6 +405,7 @@ public class MessageFragment extends StatedFragment {
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
             context.getMsgUnreadImg().setVisibility(View.GONE);
+            context.setIsRead(1);
         }
     };
 }

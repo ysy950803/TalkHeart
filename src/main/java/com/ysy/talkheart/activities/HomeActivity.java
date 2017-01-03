@@ -54,6 +54,20 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     private ImageView msgUnreadImg;
 
     private String UID;
+    private boolean isSeen = false;
+    private int isRead = 1;
+
+    public void setIsSeen(boolean isSeen) {
+        this.isSeen = isSeen;
+    }
+
+    public void setIsRead(int isRead) {
+        this.isRead = isRead;
+    }
+
+    public boolean getIsSeen() {
+        return isSeen;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,10 +75,18 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         setContentView(R.layout.activity_home);
         actionBar = getSupportActionBar();
         ActivitiesDestroyer.getInstance().killAll();
-//        ActivitiesDestroyer.getInstance().addActivity(this);
+        initData();
+        initView();
+        homeHandler = new Handler();
+        homeHandler.post(autoCheckUpdateRunnable);
+    }
 
+    private void initData() {
         UID = getIntent().getExtras().getString("uid");
+        isSeen = false;
+    }
 
+    private void initView() {
         msgUnreadImg = (ImageView) findViewById(R.id.msg_unread_img);
         msgUnreadImg.setVisibility(View.GONE);
 
@@ -90,9 +112,6 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 .initialise();
         bottomNavigationBar.setTabSelectedListener(this);
         setDefaultFragment();
-
-        homeHandler = new Handler();
-        homeHandler.post(autoCheckUpdateRunnable);
     }
 
     @Override
@@ -124,20 +143,25 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         return addFab;
     }
 
+    private void setMenuItemVisible(boolean feedback, boolean update, boolean search) {
+        feedbackMenuItem.setVisible(feedback);
+        updateMenuItem.setVisible(update);
+        searchMenuItem.setVisible(search);
+    }
+
     private void setDefaultFragment() {
         if (actionBar != null)
             actionBar.setTitle("首页");
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction transaction = fm.beginTransaction();
-        homeFragment = HomeFragment.newInstance("First", UID);
-        transaction.replace(R.id.content_table_layout, homeFragment);
+        hideAllFragments(transaction);
+        homeFragment = (HomeFragment) fm.findFragmentByTag("Home");
+        if (homeFragment == null) {
+            homeFragment = HomeFragment.newInstance(UID);
+            transaction.add(R.id.content_table_layout, homeFragment, "Home");
+        } else
+            transaction.show(homeFragment);
         transaction.commit();
-    }
-
-    private void setMenuItemVisible(boolean feedback, boolean update, boolean search) {
-        feedbackMenuItem.setVisible(feedback);
-        updateMenuItem.setVisible(update);
-        searchMenuItem.setVisible(search);
     }
 
     @Override
@@ -145,34 +169,47 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         FragmentManager fm = this.getSupportFragmentManager();
         // 开启事务
         FragmentTransaction transaction = fm.beginTransaction();
+        hideAllFragments(transaction);
         switch (position) {
             case 0:
+                homeFragment = (HomeFragment) fm.findFragmentByTag("Home");
+                if (homeFragment == null) {
+                    homeFragment = HomeFragment.newInstance(UID);
+                    transaction.add(R.id.content_table_layout, homeFragment, "Home");
+                } else
+                    transaction.show(homeFragment);
+
                 if (actionBar != null)
                     actionBar.setTitle("首页");
-                if (homeFragment == null) {
-                    homeFragment = HomeFragment.newInstance("Home", UID);
-                }
-                transaction.replace(R.id.content_table_layout, homeFragment);
                 setMenuItemVisible(false, false, true);
                 addFab.setVisibility(View.VISIBLE);
                 break;
             case 1:
+                messageFragment = (MessageFragment) fm.findFragmentByTag("Msg");
+                if (messageFragment == null) {
+                    messageFragment = MessageFragment.newInstance(UID);
+                    transaction.add(R.id.content_table_layout, messageFragment, "Msg");
+                } else {
+                    transaction.show(messageFragment);
+                    if (isRead == 0)
+                        messageFragment.getNewMsg();
+                }
+
                 if (actionBar != null)
                     actionBar.setTitle("消息");
-                if (messageFragment == null) {
-                    messageFragment = MessageFragment.newInstance("Msg", UID);
-                }
-                transaction.replace(R.id.content_table_layout, messageFragment);
                 setMenuItemVisible(false, false, false);
                 addFab.setVisibility(View.GONE);
                 break;
             case 2:
+                meFragment = (MeFragment) fm.findFragmentByTag("Me");
+                if (meFragment == null) {
+                    meFragment = MeFragment.newInstance(UID);
+                    transaction.add(R.id.content_table_layout, meFragment, "Me");
+                } else
+                    transaction.show(meFragment);
+
                 if (actionBar != null)
                     actionBar.setTitle("个人");
-                if (meFragment == null) {
-                    meFragment = MeFragment.newInstance("Me", UID);
-                }
-                transaction.replace(R.id.content_table_layout, meFragment);
                 setMenuItemVisible(true, true, false);
                 addFab.setVisibility(View.GONE);
                 break;
@@ -181,6 +218,15 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         }
         // 事务提交
         transaction.commit();
+    }
+
+    private void hideAllFragments(FragmentTransaction transaction) {
+        if (homeFragment != null)
+            transaction.hide(homeFragment);
+        if (messageFragment != null)
+            transaction.hide(messageFragment);
+        if (meFragment != null)
+            transaction.hide(meFragment);
     }
 
     @Override
@@ -229,29 +275,6 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         return true;
     }
 
-    private Runnable autoCheckUpdateRunnable = new Runnable() {
-        @Override
-        public void run() {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    UpdateChecker dbP = new UpdateChecker();
-                    if (dbP.getConn() != null) {
-                        int code;
-                        if ((code = dbP.codeSelect("select max(code) from app_version")) > getVersionCode(getApplicationContext())) {
-                            UPDATE_URL = dbP.downloadUrlSelect("select url from download_url where code = " + code);
-                            homeHandler.removeCallbacks(autoCheckUpdateRunnable);
-                            homeHandler.post(updateRunnable);
-                        } else
-                            homeHandler.removeCallbacks(autoCheckUpdateRunnable);
-                    }
-                    dbP.closeConn();
-                }
-            }).start();
-            homeHandler.postDelayed(this, UPDATE_CHECK_TIME);
-        }
-    };
-
     private void handCheckUpdate() {
         new Thread(new Runnable() {
             @Override
@@ -298,7 +321,6 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         }
     };
 
-    private int isRead = 1;
     private Runnable msgRefreshRunnable = new Runnable() {
         public void run() {
             new Thread(new Runnable() {
@@ -322,8 +344,34 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         public void run() {
             if (isRead == 1)
                 msgUnreadImg.setVisibility(View.GONE);
-            else
+            else {
                 msgUnreadImg.setVisibility(View.VISIBLE);
+                if (lastSelectedPosition != 1)
+                    messageFragment.getNewMsg();
+            }
+        }
+    };
+
+    private Runnable autoCheckUpdateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    UpdateChecker dbP = new UpdateChecker();
+                    if (dbP.getConn() != null) {
+                        int code;
+                        if ((code = dbP.codeSelect("select max(code) from app_version")) > getVersionCode(getApplicationContext())) {
+                            UPDATE_URL = dbP.downloadUrlSelect("select url from download_url where code = " + code);
+                            homeHandler.removeCallbacks(autoCheckUpdateRunnable);
+                            homeHandler.post(updateRunnable);
+                        } else
+                            homeHandler.removeCallbacks(autoCheckUpdateRunnable);
+                    }
+                    dbP.closeConn();
+                }
+            }).start();
+            homeHandler.postDelayed(this, UPDATE_CHECK_TIME);
         }
     };
 

@@ -17,6 +17,7 @@ import android.widget.Toast;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
+import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
 
 public class ReplyActivity extends AppCompatActivity {
 
@@ -171,11 +172,10 @@ public class ReplyActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_reply, menu);
         MenuItem menuItem = menu.findItem(R.id.action_send);
-        menuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+        menuItem.setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
             @Override
-            public boolean onMenuItemClick(MenuItem item) {
+            protected void onNoDoubleClick(MenuItem item) {
                 send(SEND_MODE, Integer.parseInt(E_UID), Integer.parseInt(UID), writeEdt.getText().toString());
-                return true;
             }
         });
         return true;
