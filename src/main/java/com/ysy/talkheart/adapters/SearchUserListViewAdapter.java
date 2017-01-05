@@ -21,7 +21,6 @@ public class SearchUserListViewAdapter extends RecyclerView.Adapter<SearchUserLi
     private List<Integer> avatarList;
     private List<String> nicknameList;
     private List<String> infoList;
-
     private ListOnItemClickListener mOnItemClickListener;
 
     public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
@@ -85,6 +84,5 @@ public class SearchUserListViewAdapter extends RecyclerView.Adapter<SearchUserLi
             });
         }
     }
-
 }
 

@@ -34,13 +34,13 @@ public class CommentActivity extends AppCompatActivity {
     private FloatingActionButton commentFab;
     private CommentListViewAdapter listViewAdapter;
     private boolean isRefreshing = false;
-
     private List<Integer> avatarList = new ArrayList<>();
     private List<String> nicknameList = new ArrayList<>();
     private List<String> timeList = new ArrayList<>();
     private List<String> textList = new ArrayList<>();
     private List<String> cmtidList = new ArrayList<>();
     private List<String> uidList = new ArrayList<>();
+    private String[] opts_o;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +55,7 @@ public class CommentActivity extends AppCompatActivity {
     }
 
     private void initData() {
+        opts_o = getIntent().getExtras().getStringArray("opts_o");
         UID = getIntent().getExtras().getString("uid");
         E_UID = getIntent().getExtras().getString("e_uid");
         ACT_ID = getIntent().getExtras().getString("actid");
@@ -108,19 +109,6 @@ public class CommentActivity extends AppCompatActivity {
         });
     }
 
-    private void comment(String e_uid, String uid, String actid) {
-        Intent intent = new Intent(this, ReplyActivity.class);
-        intent.putExtra("e_uid", e_uid);
-        intent.putExtra("uid", uid);
-        intent.putExtra("actid", actid);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(CommentActivity.this, commentFab, getString(R.string.trans_comment));
-            startActivity(intent, tAO.toBundle());
-        } else
-            startActivity(intent);
-    }
-
     private void refresh() {
         if (!isRefreshing) {
             isRefreshing = true;
@@ -141,17 +129,31 @@ public class CommentActivity extends AppCompatActivity {
         return true;
     }
 
+    private void comment(String e_uid, String uid, String actid) {
+        Intent intent = new Intent(this, ReplyActivity.class);
+        intent.putExtra("e_uid", e_uid);
+        intent.putExtra("uid", uid);
+        intent.putExtra("actid", actid);
+        intent.putExtra("opts_o", opts_o);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(CommentActivity.this, commentFab, getString(R.string.trans_comment));
+            startActivity(intent, tAO.toBundle());
+        } else
+            startActivity(intent);
+    }
+
     private void connectToGetComment(final String actid) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     commentHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.commentSelect(
-                            "select sex, nickname, sendtime, content, cmtid, c.uid from user u, comment c where actid = " + actid + " and " +
-                                    "c.uid = u.uid order by cmtid asc"
+                            "select u1.sex, u1.nickname, sendtime, content, cmtid, c.uid, u2.nickname, cmtid_p" +
+                                    " from user u1, user u2, comment c where actid = " + actid + " and " +
+                                    "c.uid = u1.uid and u2.uid = c.uid_p order by cmtid asc"
                     );
                     clearAllLists();
                     if (resList == null) {
@@ -163,7 +165,10 @@ public class CommentActivity extends AppCompatActivity {
                             avatarList.add(resList.get(0).get(i).equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
                             nicknameList.add(resList.get(1).get(i));
                             timeList.add(resList.get(2).get(i).substring(0, 19));
-                            textList.add(resList.get(3).get(i));
+                            if (resList.get(7).get(i).equals("0"))
+                                textList.add(resList.get(3).get(i));
+                            else
+                                textList.add("回复 " + resList.get(6).get(i) + "：" + resList.get(3).get(i));
                             cmtidList.add(resList.get(4).get(i));
                             uidList.add(resList.get(5).get(i));
                         }
@@ -175,6 +180,15 @@ public class CommentActivity extends AppCompatActivity {
         }).start();
     }
 
+    private void clearAllLists() {
+        avatarList.clear();
+        nicknameList.clear();
+        timeList.clear();
+        textList.clear();
+        cmtidList.clear();
+        uidList.clear();
+    }
+
     public void reply(int position) {
         if (E_UID.equals(uidList.get(position))) {
             Toast.makeText(this, "不能回复自己哦", Toast.LENGTH_SHORT).show();
@@ -184,7 +198,7 @@ public class CommentActivity extends AppCompatActivity {
             intent.putExtra("e_uid", E_UID);
             intent.putExtra("actid", ACT_ID);
             intent.putExtra("cmtid", cmtidList.get(position));
-            intent.putExtra("nickname", nicknameList.get(position));
+            intent.putExtra("opts_o", opts_o);
             startActivity(intent);
         }
     }
@@ -195,34 +209,8 @@ public class CommentActivity extends AppCompatActivity {
         intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
         intent.putExtra("nickname", nicknameList.get(position));
         intent.putExtra("e_uid", E_UID);
+        intent.putExtra("opts_o", opts_o);
         startActivity(intent);
-    }
-
-    private void clearAllLists() {
-        avatarList.clear();
-        nicknameList.clear();
-        timeList.clear();
-        textList.clear();
-        cmtidList.clear();
-        uidList.clear();
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == android.R.id.home) {
-            onBackPressed();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    private void setupActionBar() {
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            // Show the Up button in the action bar.
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
     }
 
     private Runnable serverErrorRunnable = new Runnable() {
@@ -261,4 +249,22 @@ public class CommentActivity extends AppCompatActivity {
             isRefreshing = false;
         }
     };
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == android.R.id.home) {
+            onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void setupActionBar() {
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            // Show the Up button in the action bar.
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+    }
 }

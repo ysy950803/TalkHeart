@@ -28,10 +28,10 @@ public class ReplyActivity extends AppCompatActivity {
     private String E_UID;
     private String ACT_ID;
     private String CMT_ID;
-    private String NICKNAME;
     private Handler replyHandler;
     private ProgressDialog waitDialog;
     private int SEND_MODE; // 0:error 1:comment 2:reply
+    private String[] opts_o;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,11 +44,11 @@ public class ReplyActivity extends AppCompatActivity {
     }
 
     private boolean initData() {
+        opts_o = getIntent().getExtras().getStringArray("opts_o");
         UID = getIntent().getExtras().getString("uid");
         E_UID = getIntent().getExtras().getString("e_uid");
         ACT_ID = getIntent().getExtras().getString("actid");
         CMT_ID = getIntent().getExtras().getString("cmtid");
-        NICKNAME = getIntent().getExtras().getString("nickname");
         if (UID == null || E_UID == null || ACT_ID == null) {
             SEND_MODE = 0;
             return false;
@@ -68,6 +68,73 @@ public class ReplyActivity extends AppCompatActivity {
         restWordTv = (TextView) findViewById(R.id.reply_write_word_tv);
 
         writeEdt.addTextChangedListener(tw);
+    }
+
+    private boolean send(int send_mode, int e_uid, final int uid, final String content) {
+        if (content.equals("")) {
+            Toast.makeText(this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        ConnectionDetector cd = new ConnectionDetector(this);
+        if (!cd.isConnectingToInternet()) {
+            Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        waitDialog = ProgressDialog.show(ReplyActivity.this, "请稍后", "正在抽服务器君鞭子……");
+        connectToSend(send_mode, e_uid, uid, content);
+        return true;
+    }
+
+    private void connectToSend(final int send_mode, final int e_uid, final int uid, final String content) {
+        if (send_mode == 0)
+            Toast.makeText(this, "出现未知错误，请返回重试", Toast.LENGTH_SHORT).show();
+        else if (send_mode == 1) { // comment
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    DBProcessor dbP = new DBProcessor();
+                    if (dbP.getConn(opts_o) == null) {
+                        replyHandler.post(timeOutRunnable);
+                    } else {
+                        int res = dbP.insert(
+                                "insert into comment(uid, actid, content, sendtime, uid_p) values(" +
+                                        e_uid + ", " + ACT_ID + ", '" + content + "', NOW(), " + uid + ")"
+                        );
+                        if (res == 1) {
+                            if (e_uid != uid)
+                                dbP.update("update user set isread = 0 where uid = " + uid);
+                            replyHandler.post(sendRunnable);
+                        } else
+                            replyHandler.post(serverErrorRunnable);
+                    }
+                    dbP.closeConn();
+                    waitDialog.dismiss();
+                }
+            }).start();
+        } else if (send_mode == 2) { // reply
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    DBProcessor dbP = new DBProcessor();
+                    if (dbP.getConn(opts_o) == null) {
+                        replyHandler.post(timeOutRunnable);
+                    } else {
+                        int res = dbP.insert(
+                                "insert into comment(uid, actid, content, sendtime, uid_p, cmtid_p) values(" +
+                                        e_uid + ", " + ACT_ID + ", '" + content + "', NOW(), " +
+                                        uid + ", " + (CMT_ID.equals("") ? "-1" : CMT_ID) + ")"
+                        );
+                        if (res == 1) {
+                            dbP.update("update user set isread = 0 where uid = " + uid);
+                            replyHandler.post(sendRunnable);
+                        } else
+                            replyHandler.post(serverErrorRunnable);
+                    }
+                    dbP.closeConn();
+                    waitDialog.dismiss();
+                }
+            }).start();
+        }
     }
 
     private TextWatcher tw = new TextWatcher() {
@@ -101,72 +168,27 @@ public class ReplyActivity extends AppCompatActivity {
         }
     };
 
-    private boolean send(int send_mode, int e_uid, final int uid, final String content) {
-        if (content.equals("")) {
-            Toast.makeText(this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
-            return false;
+    private Runnable sendRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(ReplyActivity.this, "发送成功", Toast.LENGTH_SHORT).show();
+            onBackPressed();
         }
-        ConnectionDetector cd = new ConnectionDetector(this);
-        if (!cd.isConnectingToInternet()) {
-            Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        waitDialog = ProgressDialog.show(ReplyActivity.this, "请稍后", "正在抽服务器君鞭子……");
-        connectToSend(send_mode, e_uid, uid, content);
-        return true;
-    }
+    };
 
-    private void connectToSend(final int send_mode, final int e_uid, final int uid, final String content) {
-        if (send_mode == 0)
-            Toast.makeText(this, "出现未知错误，请返回重试", Toast.LENGTH_SHORT).show();
-        else if (send_mode == 1) { // comment
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    DBProcessor dbP = new DBProcessor();
-                    if (dbP.getConn() == null) {
-                        replyHandler.post(timeOutRunnable);
-                    } else {
-                        int res = dbP.insert(
-                                "insert into comment(uid, actid, content, sendtime, uid_p) values(" +
-                                        e_uid + ", " + ACT_ID + ", '" + content + "', NOW(), " + uid + ")"
-                        );
-                        if (res == 1) {
-                            if (e_uid != uid)
-                                dbP.update("update user set isread = 0 where uid = " + uid);
-                            replyHandler.post(sendRunnable);
-                        } else
-                            replyHandler.post(serverErrorRunnable);
-                    }
-                    dbP.closeConn();
-                    waitDialog.dismiss();
-                }
-            }).start();
-        } else if (send_mode == 2) { // reply
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    DBProcessor dbP = new DBProcessor();
-                    if (dbP.getConn() == null) {
-                        replyHandler.post(timeOutRunnable);
-                    } else {
-                        int res = dbP.insert(
-                                "insert into comment(uid, actid, content, sendtime, uid_p, cmtid_p) values(" +
-                                        e_uid + ", " + ACT_ID + ", '回复 " + NICKNAME + "：" + content + "', NOW(), " +
-                                        uid + ", " + (CMT_ID.equals("") ? "-1" : CMT_ID) + ")"
-                        );
-                        if (res == 1) {
-                            dbP.update("update user set isread = 0 where uid = " + uid);
-                            replyHandler.post(sendRunnable);
-                        } else
-                            replyHandler.post(serverErrorRunnable);
-                    }
-                    dbP.closeConn();
-                    waitDialog.dismiss();
-                }
-            }).start();
+    private Runnable serverErrorRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(ReplyActivity.this, "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
         }
-    }
+    };
+
+    private Runnable timeOutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(ReplyActivity.this, "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
+        }
+    };
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -198,26 +220,4 @@ public class ReplyActivity extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
     }
-
-    private Runnable sendRunnable = new Runnable() {
-        @Override
-        public void run() {
-            Toast.makeText(ReplyActivity.this, "发送成功", Toast.LENGTH_SHORT).show();
-            onBackPressed();
-        }
-    };
-
-    private Runnable serverErrorRunnable = new Runnable() {
-        @Override
-        public void run() {
-            Toast.makeText(ReplyActivity.this, "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
-        }
-    };
-
-    private Runnable timeOutRunnable = new Runnable() {
-        @Override
-        public void run() {
-            Toast.makeText(ReplyActivity.this, "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
-        }
-    };
 }

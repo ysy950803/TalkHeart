@@ -26,9 +26,7 @@ public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListView
     private List<String> nicknameList;
     private List<String> introList;
     private List<Integer> relationList; // 0:watch 1:each_other -1:fans -2:nothing
-
     private ListOnItemClickListener mOnItemClickListener;
-
     private WatchActivity context;
     private boolean isObserver;
 
@@ -141,5 +139,4 @@ public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListView
     public int getItemCount() {
         return nicknameList.size();
     }
-
 }

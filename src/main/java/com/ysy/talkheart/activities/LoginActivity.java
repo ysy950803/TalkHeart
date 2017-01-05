@@ -27,15 +27,19 @@ public class LoginActivity extends AppCompatActivity {
     private EditText pwEdt;
     private RelativeLayout registerLayout;
     private View focusView;
-
+    private long exitTime;
     private Handler loginHandler;
     private ProgressDialog waitDialog;
+    private String[] opts_o;
+    private String[] opts_t;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ActivitiesDestroyer.getInstance().addActivity(this);
+        opts_o = getIntent().getExtras().getStringArray("opts_o");
+        opts_t = getIntent().getExtras().getStringArray("opts_t");
         initView();
         clickListener();
         loginHandler = new Handler();
@@ -66,34 +70,13 @@ public class LoginActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(LoginActivity.this, registerLayout, getString(R.string.trans_register));
-                    startActivity(new Intent(LoginActivity.this, RegisterActivity.class), tAO.toBundle());
+                    startActivity(new Intent(LoginActivity.this, RegisterActivity.class).putExtra("opts_o", opts_o), tAO.toBundle());
                 } else {
-                    startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
+                    startActivity(new Intent(LoginActivity.this, RegisterActivity.class).putExtra("opts_o", opts_o));
                 }
             }
         });
     }
-
-//    private Handler loginHandler = new Handler() {
-//        @Override
-//        public void handleMessage(Message msg) {
-//            super.handleMessage(msg);
-//            switch (msg.what) {
-//                case 0:
-//                    userEdt.setError("用户不存在");
-//                    focusView = userEdt;
-//                    focusView.requestFocusFromTouch();
-//                    break;
-//                case 1:
-//                    pwEdt.setError("密码错误");
-//                    focusView = pwEdt;
-//                    focusView.requestFocusFromTouch();
-//                    break;
-//                default:
-//                    break;
-//            }
-//        }
-//    };
 
     private boolean login(final String username, final String pw) {
         userEdt.setError(null);
@@ -113,6 +96,40 @@ public class LoginActivity extends AppCompatActivity {
         waitDialog = ProgressDialog.show(LoginActivity.this, "请稍后", "正在开启新世界的大门……");
         connectToLogin(username, pw);
         return true;
+    }
+
+    private void connectToLogin(final String username, final String pw) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                DBProcessor dbP = new DBProcessor();
+                if (dbP.getConn(opts_o) == null)
+                    loginHandler.post(timeOutRunnable);
+                else {
+                    String[] res = dbP.loginSelect("select uid, pw from user where username = '" + username + "'");
+                    if (res == null)
+                        loginHandler.post(serverErrorRunnable);
+                    else {
+                        if (res[0] == null)
+                            loginHandler.post(userErrorRunnable);
+                        else {
+                            if (res[1].equals(pw)) {
+                                DataProcessor dp = new DataProcessor(LoginActivity.this);
+                                dp.saveData("uid", res[0]);
+                                Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
+                                intent.putExtra("opts_o", opts_o);
+                                intent.putExtra("opts_t", opts_t);
+                                intent.putExtra("uid", res[0]);
+                                startActivity(intent);
+                            } else
+                                loginHandler.post(pwErrorRunnable);
+                        }
+                    }
+                }
+                dbP.closeConn();
+                waitDialog.dismiss();
+            }
+        }).start();
     }
 
     private Runnable userErrorRunnable = new Runnable() {
@@ -147,44 +164,11 @@ public class LoginActivity extends AppCompatActivity {
         }
     };
 
-    private void connectToLogin(final String username, final String pw) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null)
-                    loginHandler.post(timeOutRunnable);
-                else {
-                    String[] res = dbP.loginSelect("select uid, pw from user where username = '" + username + "'");
-                    if (res == null)
-                        loginHandler.post(serverErrorRunnable);
-                    else {
-                        if (res[0] == null)
-                            loginHandler.post(userErrorRunnable);
-                        else {
-                            if (res[1].equals(pw)) {
-                                DataProcessor dp = new DataProcessor(LoginActivity.this);
-                                dp.saveData("uid", res[0]);
-                                startActivity(new Intent(LoginActivity.this, HomeActivity.class).putExtra("uid", res[0]));
-                            } else
-                                loginHandler.post(pwErrorRunnable);
-                        }
-                    }
-                }
-                dbP.closeConn();
-                waitDialog.dismiss();
-            }
-        }).start();
-    }
-
     @Override
     public void onBackPressed() {
         super.onBackPressed();
         ActivitiesDestroyer.getInstance().killAll();
     }
-
-    // 连续按两次退出
-    private long exitTime;
 
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {

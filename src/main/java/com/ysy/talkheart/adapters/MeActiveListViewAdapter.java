@@ -28,9 +28,7 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
     private List<String> textList;
     private List<Integer> goodStatusList;
     private List<String> goodNumList;
-
     private ListOnItemClickListener mOnItemClickListener;
-
     private ActiveActivity context;
 
     public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
@@ -166,5 +164,4 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
             });
         }
     }
-
 }

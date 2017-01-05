@@ -29,7 +29,6 @@ public class MessageListViewAdapter extends RecyclerView.Adapter<MessageListView
     private List<String> contentList;
     private List<String> quoteList;
     private MessageFragment context;
-
     private ListOnItemClickListener mOnItemClickListener;
 
     public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {

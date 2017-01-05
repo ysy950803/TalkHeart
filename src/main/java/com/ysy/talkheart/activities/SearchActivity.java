@@ -30,7 +30,6 @@ public class SearchActivity extends AppCompatActivity {
     private EditText searchEdt;
     private ImageView searchImg;
     private SwipeRefreshLayout refreshLayout;
-
     private SearchUserListViewAdapter listViewAdapter;
     private List<Integer> avatarList = new ArrayList<>();
     private List<String> nicknameList = new ArrayList<>();
@@ -38,6 +37,7 @@ public class SearchActivity extends AppCompatActivity {
     private List<String> uidList = new ArrayList<>();
     private String UID;
     private Handler searchHandler;
+    private String[] opts_o;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,9 +45,8 @@ public class SearchActivity extends AppCompatActivity {
         setContentView(R.layout.activity_search);
         setSupportActionBar((Toolbar) findViewById(R.id.search_toolbar));
         setupActionBar();
-
+        opts_o = getIntent().getExtras().getStringArray("opts_o");
         UID = getIntent().getExtras().getString("uid");
-
         initView();
         setSearchContent();
         clickListener();
@@ -87,20 +86,21 @@ public class SearchActivity extends AppCompatActivity {
         });
     }
 
+    private void setSearchContent() {
+        RecyclerView searchRecyclerView = (RecyclerView) findViewById(R.id.search_recyclerView);
+        searchRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        listViewAdapter = new SearchUserListViewAdapter(avatarList, nicknameList, introList);
+        searchRecyclerView.setAdapter(listViewAdapter);
+    }
+
     private void openPerson(int position) {
         Intent intent = new Intent(SearchActivity.this, PersonActivity.class);
         intent.putExtra("uid", uidList.get(position));
         intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
         intent.putExtra("nickname", nicknameList.get(position));
         intent.putExtra("e_uid", UID);
+        intent.putExtra("opts_o", opts_o);
         startActivity(intent);
-    }
-
-    private void setSearchContent() {
-        RecyclerView searchRecyclerView = (RecyclerView) findViewById(R.id.search_recyclerView);
-        searchRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        listViewAdapter = new SearchUserListViewAdapter(avatarList, nicknameList, introList);
-        searchRecyclerView.setAdapter(listViewAdapter);
     }
 
     private void searchUser(String nicknameLike) {
@@ -122,7 +122,7 @@ public class SearchActivity extends AppCompatActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     searchHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.searchUserSelect(
@@ -146,6 +146,13 @@ public class SearchActivity extends AppCompatActivity {
                 dbP.closeConn();
             }
         }).start();
+    }
+
+    private void clearAllLists() {
+        avatarList.clear();
+        nicknameList.clear();
+        introList.clear();
+        uidList.clear();
     }
 
     private Runnable successRunnable = new Runnable() {
@@ -181,21 +188,6 @@ public class SearchActivity extends AppCompatActivity {
         }
     };
 
-    private void clearAllLists() {
-        avatarList.clear();
-        nicknameList.clear();
-        introList.clear();
-        uidList.clear();
-    }
-
-    private void setupActionBar() {
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            // Show the Up button in the action bar.
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
-    }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
@@ -204,5 +196,13 @@ public class SearchActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void setupActionBar() {
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            // Show the Up button in the action bar.
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
     }
 }

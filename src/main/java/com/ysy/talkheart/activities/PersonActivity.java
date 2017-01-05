@@ -4,6 +4,7 @@ import android.app.ActivityOptions;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -23,8 +24,9 @@ import com.ysy.talkheart.utils.DBProcessor;
 
 public class PersonActivity extends AppCompatActivity {
 
-    private ActionBar actionBar;
+    private CollapsingToolbarLayout toolbarLayout;
     private FloatingActionButton watchFab;
+    private ImageView avatarImg;
     private TextView introTv;
     private LinearLayout activeNumLayout;
     private LinearLayout watchNumLayout;
@@ -34,9 +36,7 @@ public class PersonActivity extends AppCompatActivity {
     private TextView fansNumTv;
     private TextView schoolTv;
     private TextView birthdayTv;
-
     private Handler personHandler;
-
     private boolean isSelf;
     private String E_UID = "0";
     private String UID = "0";
@@ -46,14 +46,13 @@ public class PersonActivity extends AppCompatActivity {
     private String ACTIVE_NUM = "0";
     private String WATCH_NUM = "0";
     private String FANS_NUM = "0";
-
     private String SCHOOL = "加载中…";
     private String BIRTHDAY = "加载中…";
-
     private boolean isEmptyRelation = true;
     private String RELATION = "-2";
     private String UID_L = "0";
     private String UID_H = "0";
+    private String[] opts_o;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,25 +61,29 @@ public class PersonActivity extends AppCompatActivity {
         setSupportActionBar((Toolbar) findViewById(R.id.person_toolbar));
         setupActionBar();
         personHandler = new Handler();
-
         initData();
         initView();
         clickListener();
+    }
+
+    @Override
+    protected void onResume() {
         connectToGetPersonInfo();
+        super.onResume();
     }
 
     private void initData() {
+        opts_o = getIntent().getExtras().getStringArray("opts_o");
         E_UID = getIntent().getExtras().getString("e_uid");
         UID = getIntent().getExtras().getString("uid");
-        SEX = getIntent().getExtras().getString("sex");
-        NICKNAME = getIntent().getExtras().getString("nickname");
         UID_L = Integer.parseInt(E_UID) < Integer.parseInt(UID) ? E_UID : UID;
         UID_H = Integer.parseInt(E_UID) > Integer.parseInt(UID) ? E_UID : UID;
         isSelf = E_UID.equals(UID);
     }
 
     private void initView() {
-        ImageView avatarImg = (ImageView) findViewById(R.id.person_avatar_img);
+        toolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.person_toolbar_layout);
+        avatarImg = (ImageView) findViewById(R.id.person_avatar_img);
         watchFab = (FloatingActionButton) findViewById(R.id.person_watch_fab);
         activeNumLayout = (LinearLayout) findViewById(R.id.person_active_layout);
         watchNumLayout = (LinearLayout) findViewById(R.id.person_watch_layout);
@@ -91,10 +94,7 @@ public class PersonActivity extends AppCompatActivity {
         fansNumTv = (TextView) findViewById(R.id.person_fans_num_tv);
         schoolTv = (TextView) findViewById(R.id.person_school_tv);
         birthdayTv = (TextView) findViewById(R.id.person_birthday_tv);
-
-        actionBar.setTitle(NICKNAME);
         watchFab.setVisibility(isSelf ? View.GONE : View.VISIBLE);
-        avatarImg.setImageResource(SEX.equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
     }
 
     private void clickListener() {
@@ -113,6 +113,7 @@ public class PersonActivity extends AppCompatActivity {
                 intent.putExtra("e_uid", E_UID);
                 intent.putExtra("sex", SEX);
                 intent.putExtra("nickname", NICKNAME);
+                intent.putExtra("opts_o", opts_o);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(PersonActivity.this, activeNumTv, getString(R.string.trans_active));
                     startActivity(intent, tAO.toBundle());
@@ -127,6 +128,7 @@ public class PersonActivity extends AppCompatActivity {
                 Intent intent = new Intent(PersonActivity.this, WatchActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", E_UID);
+                intent.putExtra("opts_o", opts_o);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(PersonActivity.this, watchNumTv, getString(R.string.trans_watch));
                     startActivity(intent, tAO.toBundle());
@@ -142,6 +144,7 @@ public class PersonActivity extends AppCompatActivity {
                 Intent intent = new Intent(PersonActivity.this, FansActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", E_UID);
+                intent.putExtra("opts_o", opts_o);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(PersonActivity.this, fansNumTv, getString(R.string.trans_fans));
                     startActivity(intent, tAO.toBundle());
@@ -169,7 +172,7 @@ public class PersonActivity extends AppCompatActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     personHandler.post(timeOutRunnable);
                 } else {
                     if (!isEmptyRelation) {
@@ -301,22 +304,24 @@ public class PersonActivity extends AppCompatActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     personHandler.post(timeOutRunnable);
                 } else {
                     String[] res = dbP.personInfoSelect(
-                            "select school, birthday, intro, act_num, watch_num, fans_num " +
+                            "select sex, nickname, school, birthday, intro, act_num, watch_num, fans_num " +
                                     "from user u, user_info_count uic where u.uid = " + UID + " and u.uid = uic.uid"
                     );
                     if (res[1].equals("/(ㄒoㄒ)/~~")) {
                         personHandler.post(serverErrorRunnable);
                     } else {
-                        SCHOOL = res[0] == null ? "未设置院校" : res[0];
-                        BIRTHDAY = res[1] == null ? "未设置生日" : res[1];
-                        INTRODUCTION = res[2] == null ? "未设置签名" : res[2];
-                        ACTIVE_NUM = res[3];
-                        WATCH_NUM = res[4];
-                        FANS_NUM = res[5];
+                        SEX = res[0];
+                        NICKNAME = res[1];
+                        SCHOOL = res[2] == null ? "未设置院校" : res[2];
+                        BIRTHDAY = res[3] == null ? "未设置生日" : res[3];
+                        INTRODUCTION = res[4] == null ? "未设置签名" : res[4];
+                        ACTIVE_NUM = res[5];
+                        WATCH_NUM = res[6];
+                        FANS_NUM = res[7];
 
                         if (isSelf)
                             personHandler.post(successShowRunnable);
@@ -392,13 +397,7 @@ public class PersonActivity extends AppCompatActivity {
         @Override
         public void run() {
             watchFab.setImageResource(R.mipmap.ic_watch_blue_pink_36dp);
-            schoolTv.setText(SCHOOL);
-            birthdayTv.setText(BIRTHDAY);
-            introTv.setText(INTRODUCTION);
-            activeNumTv.setText(ACTIVE_NUM);
-            watchNumTv.setText(WATCH_NUM);
-            fansNumTv.setText(FANS_NUM);
-            setClickable(true);
+            refreshView();
         }
     };
 
@@ -406,13 +405,7 @@ public class PersonActivity extends AppCompatActivity {
         @Override
         public void run() {
             watchFab.setImageResource(R.mipmap.ic_fans_pink_blue_36dp);
-            schoolTv.setText(SCHOOL);
-            birthdayTv.setText(BIRTHDAY);
-            introTv.setText(INTRODUCTION);
-            activeNumTv.setText(ACTIVE_NUM);
-            watchNumTv.setText(WATCH_NUM);
-            fansNumTv.setText(FANS_NUM);
-            setClickable(true);
+            refreshView();
         }
     };
 
@@ -420,26 +413,14 @@ public class PersonActivity extends AppCompatActivity {
         @Override
         public void run() {
             watchFab.setImageResource(R.mipmap.ic_nothing_blue_36dp);
-            schoolTv.setText(SCHOOL);
-            birthdayTv.setText(BIRTHDAY);
-            introTv.setText(INTRODUCTION);
-            activeNumTv.setText(ACTIVE_NUM);
-            watchNumTv.setText(WATCH_NUM);
-            fansNumTv.setText(FANS_NUM);
-            setClickable(true);
+            refreshView();
         }
     };
 
     private Runnable successShowRunnable = new Runnable() {
         @Override
         public void run() {
-            schoolTv.setText(SCHOOL);
-            birthdayTv.setText(BIRTHDAY);
-            introTv.setText(INTRODUCTION);
-            activeNumTv.setText(ACTIVE_NUM);
-            watchNumTv.setText(WATCH_NUM);
-            fansNumTv.setText(FANS_NUM);
-            setClickable(true);
+            refreshView();
         }
     };
 
@@ -447,13 +428,7 @@ public class PersonActivity extends AppCompatActivity {
         @Override
         public void run() {
             watchFab.setImageResource(R.mipmap.ic_each_other_pink_36dp);
-            schoolTv.setText(SCHOOL);
-            birthdayTv.setText(BIRTHDAY);
-            introTv.setText(INTRODUCTION);
-            activeNumTv.setText(ACTIVE_NUM);
-            watchNumTv.setText(WATCH_NUM);
-            fansNumTv.setText(FANS_NUM);
-            setClickable(true);
+            refreshView();
         }
     };
 
@@ -471,28 +446,22 @@ public class PersonActivity extends AppCompatActivity {
         }
     };
 
+    private void refreshView() {
+        avatarImg.setImageResource(SEX.equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
+        toolbarLayout.setTitle(NICKNAME);
+        schoolTv.setText(SCHOOL);
+        birthdayTv.setText(BIRTHDAY);
+        introTv.setText(INTRODUCTION);
+        activeNumTv.setText(ACTIVE_NUM);
+        watchNumTv.setText(WATCH_NUM);
+        fansNumTv.setText(FANS_NUM);
+        setClickable(true);
+    }
+
     private void setClickable(boolean isAble) {
         activeNumLayout.setClickable(isAble);
         watchNumLayout.setClickable(isAble);
         fansNumLayout.setClickable(isAble);
-    }
-
-    private void setupActionBar() {
-        actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            // Show the Up button in the action bar.
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == android.R.id.home) {
-            onBackPressed();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -508,6 +477,7 @@ public class PersonActivity extends AppCompatActivity {
                 intent.putExtra("nickname", NICKNAME);
                 intent.putExtra("sex", Integer.parseInt(SEX));
                 intent.putExtra("birthday", BIRTHDAY);
+                intent.putExtra("opts_o", opts_o);
                 startActivity(intent);
                 return true;
             }
@@ -516,4 +486,21 @@ public class PersonActivity extends AppCompatActivity {
         return true;
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == android.R.id.home) {
+            onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void setupActionBar() {
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            // Show the Up button in the action bar.
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+    }
 }

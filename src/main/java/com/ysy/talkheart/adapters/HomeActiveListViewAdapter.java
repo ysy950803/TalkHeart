@@ -1,6 +1,5 @@
 package com.ysy.talkheart.adapters;
 
-import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,7 +9,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.ysy.talkheart.R;
-import com.ysy.talkheart.activities.HomeActivity;
 import com.ysy.talkheart.fragments.HomeFragment;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
@@ -31,9 +29,7 @@ public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveLi
     private List<String> textList;
     private List<Integer> goodStatusList;
     private List<String> goodNumList;
-
     private ListOnItemClickListener mOnItemClickListener;
-
     private HomeFragment context;
 
     public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
@@ -168,5 +164,4 @@ public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveLi
             });
         }
     }
-
 }

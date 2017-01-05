@@ -26,9 +26,7 @@ public class MeFansListViewAdapter extends RecyclerView.Adapter<MeFansListViewAd
     private List<String> nicknameList;
     private List<String> infoList;
     private List<Integer> relationList;
-
     private FansActivity context;
-
     private ListOnItemClickListener mOnItemClickListener;
     private boolean isObserver;
 
@@ -131,5 +129,4 @@ public class MeFansListViewAdapter extends RecyclerView.Adapter<MeFansListViewAd
     public int getItemCount() {
         return nicknameList.size();
     }
-
 }

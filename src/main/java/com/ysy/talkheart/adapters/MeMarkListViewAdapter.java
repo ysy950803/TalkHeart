@@ -26,7 +26,6 @@ public class MeMarkListViewAdapter extends RecyclerView.Adapter<MeMarkListViewAd
     private List<String> timeList;
     private List<String> textList;
     private MarkActivity context;
-
     private ListOnItemClickListener mOnItemClickListener;
 
     public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {

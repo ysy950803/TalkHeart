@@ -28,17 +28,15 @@ public class MarkActivity extends AppCompatActivity {
     private MeMarkListViewAdapter listViewAdapter;
     private SwipeRefreshLayout refreshLayout;
     private boolean isRefreshing = false;
-
     private List<Integer> avatarList = new ArrayList<>();
     private List<String> nicknameList = new ArrayList<>();
     private List<String> timeList = new ArrayList<>();
     private List<String> textList = new ArrayList<>();
     private List<String> actidList = new ArrayList<>();
     private List<String> uidList = new ArrayList<>();
-
     private String UID = "0";
-
     private Handler refreshHandler;
+    private String[] opts_o;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +52,7 @@ public class MarkActivity extends AppCompatActivity {
     }
 
     private void initData() {
+        opts_o = getIntent().getExtras().getStringArray("opts_o");
         UID = getIntent().getExtras().getString("uid");
     }
 
@@ -88,6 +87,26 @@ public class MarkActivity extends AppCompatActivity {
         });
     }
 
+    private void refresh() {
+        if (!isRefreshing) {
+            isRefreshing = true;
+            if (!refreshData()) {
+                refreshLayout.setRefreshing(false);
+                isRefreshing = false;
+            }
+        }
+    }
+
+    private boolean refreshData() {
+        ConnectionDetector cd = new ConnectionDetector(this);
+        if (!cd.isConnectingToInternet()) {
+            Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        connectToGetMark(UID);
+        return true;
+    }
+
     private void showItemDialog(final String actid, final int position) {
         final String items[] = {"删除"};
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -101,12 +120,22 @@ public class MarkActivity extends AppCompatActivity {
         builder.create().show();
     }
 
+    public void openPerson(int position) {
+        Intent intent = new Intent(this, PersonActivity.class);
+        intent.putExtra("uid", uidList.get(position));
+        intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
+        intent.putExtra("nickname", nicknameList.get(position));
+        intent.putExtra("e_uid", UID);
+        intent.putExtra("opts_o", opts_o);
+        startActivity(intent);
+    }
+
     private void connectToDelete(final String actid, final int position) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     refreshHandler.post(timeOutRunnable);
                 } else {
                     int res = dbP.delete(
@@ -129,32 +158,12 @@ public class MarkActivity extends AppCompatActivity {
         }).start();
     }
 
-    private void refresh(){
-        if (!isRefreshing) {
-            isRefreshing = true;
-            if (!refreshData()) {
-                refreshLayout.setRefreshing(false);
-                isRefreshing = false;
-            }
-        }
-    }
-
-    private boolean refreshData() {
-        ConnectionDetector cd = new ConnectionDetector(this);
-        if (!cd.isConnectingToInternet()) {
-            Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        connectToGetMark(UID);
-        return true;
-    }
-
     private void connectToGetMark(final String uid) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     refreshHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.markSelect(
@@ -182,15 +191,6 @@ public class MarkActivity extends AppCompatActivity {
                 dbP.closeConn();
             }
         }).start();
-    }
-
-    public void openPerson(int position) {
-        Intent intent = new Intent(this, PersonActivity.class);
-        intent.putExtra("uid", uidList.get(position));
-        intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
-        intent.putExtra("nickname", nicknameList.get(position));
-        intent.putExtra("e_uid", UID);
-        startActivity(intent);
     }
 
     private void clearAllLists() {

@@ -33,21 +33,18 @@ public class ActiveActivity extends AppCompatActivity {
     private List<Integer> goodStatusList = new ArrayList<>();
     private List<String> goodNumList = new ArrayList<>();
     private List<String> actidList = new ArrayList<>();
-
     private MeActiveListViewAdapter listViewAdapter;
     private SwipeRefreshLayout refreshLayout;
     private boolean isRefreshing = false;
-    private int fav_actid_index = 0;
-
     private Handler activeHandler;
-
     private String UID = "0";
     private String E_UID = "0";
     private String SEX = "1";
     private String NICKNAME = "加载中…";
-
     public ImageView goodImg;
     private boolean isSelf;
+    private String[] opts_o;
+//    private int fav_actid_index = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +62,7 @@ public class ActiveActivity extends AppCompatActivity {
     }
 
     private void initData() {
+        opts_o = getIntent().getExtras().getStringArray("opts_o");
         E_UID = getIntent().getExtras().getString("e_uid");
         UID = getIntent().getExtras().getString("uid");
         SEX = getIntent().getExtras().getString("sex");
@@ -114,6 +112,26 @@ public class ActiveActivity extends AppCompatActivity {
         });
     }
 
+    private void refresh() {
+        if (!isRefreshing) {
+            isRefreshing = true;
+            if (!refreshData()) {
+                refreshLayout.setRefreshing(false);
+                isRefreshing = false;
+            }
+        }
+    }
+
+    private boolean refreshData() {
+        ConnectionDetector cd = new ConnectionDetector(this);
+        if (!cd.isConnectingToInternet()) {
+            Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        connectToGetActive(UID, isSelf ? UID : E_UID, Integer.parseInt(SEX), NICKNAME);
+        return true;
+    }
+
     private void showItemDialog(String[] items, final String e_uid, final String actid, final String modify_content) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setItems(items, new DialogInterface.OnClickListener() {
@@ -124,7 +142,7 @@ public class ActiveActivity extends AppCompatActivity {
                         connectToMark(e_uid, actid);
                         break;
                     case 1:
-                        openModify(e_uid, actid, modify_content);
+                        openContentModify(e_uid, actid, modify_content);
                         break;
                     case 2:
                         connectToDelete(e_uid, actid);
@@ -134,6 +152,10 @@ public class ActiveActivity extends AppCompatActivity {
             }
         });
         builder.create().show();
+    }
+
+    public void updateGood(int position) {
+        connectToUpdateGood(isSelf ? UID : E_UID, position);
     }
 
     private void connectToDelete(final String e_uid, final String actid) {
@@ -146,7 +168,7 @@ public class ActiveActivity extends AppCompatActivity {
                             @Override
                             public void run() {
                                 DBProcessor dbP = new DBProcessor();
-                                if (dbP.getConn() == null) {
+                                if (dbP.getConn(opts_o) == null) {
                                     activeHandler.post(timeOutRunnable);
                                 } else {
                                     int res = dbP.delete(
@@ -170,20 +192,12 @@ public class ActiveActivity extends AppCompatActivity {
         alert.show();
     }
 
-    private void openModify(String e_uid, String actid, String modify_content) {
-        Intent intent = new Intent(this, WriteActivity.class);
-        intent.putExtra("uid", e_uid);
-        intent.putExtra("actid", actid);
-        intent.putExtra("modify_content", modify_content);
-        startActivity(intent);
-    }
-
     private void connectToMark(final String e_uid, final String actid) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     activeHandler.post(timeOutRunnable);
                 } else {
                     int res = dbP.insert(
@@ -201,32 +215,12 @@ public class ActiveActivity extends AppCompatActivity {
         }).start();
     }
 
-    private void refresh() {
-        if (!isRefreshing) {
-            isRefreshing = true;
-            if (!refreshData()) {
-                refreshLayout.setRefreshing(false);
-                isRefreshing = false;
-            }
-        }
-    }
-
-    private boolean refreshData() {
-        ConnectionDetector cd = new ConnectionDetector(this);
-        if (!cd.isConnectingToInternet()) {
-            Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        connectToGetActive(UID, isSelf ? UID : E_UID, Integer.parseInt(SEX), NICKNAME);
-        return true;
-    }
-
     private void connectToGetActive(final String uid, final String e_uid, final int sex, final String nickname) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     activeHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.activeSelect(
@@ -276,16 +270,12 @@ public class ActiveActivity extends AppCompatActivity {
 //        return isfav;
 //    }
 
-    public void updateGood(int position) {
-        connectToUpdateGood(isSelf ? UID : E_UID, position);
-    }
-
     private void connectToUpdateGood(final String e_uid, final int position) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     activeHandler.post(timeOutRunnable);
                 } else {
                     String actid = actidList.get(position);
@@ -331,11 +321,32 @@ public class ActiveActivity extends AppCompatActivity {
         }).start();
     }
 
+    private void clearAllLists() {
+        avatarList.clear();
+        nicknameList.clear();
+        goodStatusList.clear();
+        timeList.clear();
+        goodNumList.clear();
+        textList.clear();
+        actidList.clear();
+//        fav_actid_index = 0;
+    }
+
+    private void openContentModify(String e_uid, String actid, String modify_content) {
+        Intent intent = new Intent(this, WriteActivity.class);
+        intent.putExtra("uid", e_uid);
+        intent.putExtra("actid", actid);
+        intent.putExtra("modify_content", modify_content);
+        intent.putExtra("opts_o", opts_o);
+        startActivity(intent);
+    }
+
     public void openComment(int position) {
         Intent intent = new Intent(this, CommentActivity.class);
         intent.putExtra("uid", UID);
         intent.putExtra("e_uid", E_UID);
         intent.putExtra("actid", actidList.get(position));
+        intent.putExtra("opts_o", opts_o);
         startActivity(intent);
     }
 
@@ -345,6 +356,7 @@ public class ActiveActivity extends AppCompatActivity {
         intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
         intent.putExtra("nickname", nicknameList.get(position));
         intent.putExtra("e_uid", E_UID);
+        intent.putExtra("opts_o", opts_o);
         startActivity(intent);
     }
 
@@ -420,17 +432,6 @@ public class ActiveActivity extends AppCompatActivity {
             Toast.makeText(ActiveActivity.this, "心连心不易断，请刷新重试", Toast.LENGTH_SHORT).show();
         }
     };
-
-    private void clearAllLists() {
-        avatarList.clear();
-        nicknameList.clear();
-        goodStatusList.clear();
-        timeList.clear();
-        goodNumList.clear();
-        textList.clear();
-        actidList.clear();
-        fav_actid_index = 0;
-    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

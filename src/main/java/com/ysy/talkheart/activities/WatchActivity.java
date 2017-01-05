@@ -28,17 +28,16 @@ public class WatchActivity extends AppCompatActivity {
     private SwipeRefreshLayout refreshLayout;
     private boolean isRefreshing = false;
     private Handler watchHandler;
-
     private List<Integer> avatarList = new ArrayList<>();
     private List<String> nicknameList = new ArrayList<>();
     private List<String> introList = new ArrayList<>();
     private List<Integer> relationList = new ArrayList<>();
     private List<String> watchUIDList = new ArrayList<>();
-
     private String UID = "0";
     private String E_UID = "0";
     public ImageView eachOtherImg;
     private boolean isSelf;
+    private String[] opts_o;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +53,7 @@ public class WatchActivity extends AppCompatActivity {
     }
 
     private void initData() {
+        opts_o = getIntent().getExtras().getStringArray("opts_o");
         E_UID = getIntent().getExtras().getString("e_uid");
         UID = getIntent().getExtras().getString("uid");
         isSelf = E_UID.equals(UID);
@@ -89,6 +89,7 @@ public class WatchActivity extends AppCompatActivity {
                     intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
                     intent.putExtra("nickname", nicknameList.get(position));
                     intent.putExtra("e_uid", E_UID);
+                    intent.putExtra("opts_o", opts_o);
                     startActivity(intent);
                 }
             }
@@ -125,7 +126,7 @@ public class WatchActivity extends AppCompatActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     watchHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.watchSelect(
@@ -155,26 +156,12 @@ public class WatchActivity extends AppCompatActivity {
         }).start();
     }
 
-    private void clearAllLists() {
-        avatarList.clear();
-        nicknameList.clear();
-        introList.clear();
-        relationList.clear();
-        watchUIDList.clear();
-    }
-
-    public void updateRelation(int position, int relation) {
-        String UID_L = Integer.parseInt(UID) < Integer.parseInt(watchUIDList.get(position)) ? UID : watchUIDList.get(position);
-        String UID_H = Integer.parseInt(UID) > Integer.parseInt(watchUIDList.get(position)) ? UID : watchUIDList.get(position);
-        connectToUpdateRelation(UID, watchUIDList.get(position), UID_L, UID_H, relation);
-    }
-
     private void connectToUpdateRelation(final String uid, final String watch_uid, final String uid_l, final String uid_h, final int relation) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     watchHandler.post(timeOutRunnable);
                 } else {
                     switch (relation) {
@@ -227,6 +214,20 @@ public class WatchActivity extends AppCompatActivity {
                 dbP.closeConn();
             }
         }).start();
+    }
+
+    private void clearAllLists() {
+        avatarList.clear();
+        nicknameList.clear();
+        introList.clear();
+        relationList.clear();
+        watchUIDList.clear();
+    }
+
+    public void updateRelation(int position, int relation) {
+        String UID_L = Integer.parseInt(UID) < Integer.parseInt(watchUIDList.get(position)) ? UID : watchUIDList.get(position);
+        String UID_H = Integer.parseInt(UID) > Integer.parseInt(watchUIDList.get(position)) ? UID : watchUIDList.get(position);
+        connectToUpdateRelation(UID, watchUIDList.get(position), UID_L, UID_H, relation);
     }
 
     private Runnable successRunnable = new Runnable() {

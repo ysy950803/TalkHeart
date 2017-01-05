@@ -20,12 +20,6 @@ import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public class FeedbackActivity extends AppCompatActivity {
 
     private static final int WORD_LIMIT = 144;
@@ -34,6 +28,7 @@ public class FeedbackActivity extends AppCompatActivity {
     private String UID;
     private Handler feedbackHandler;
     private ProgressDialog waitDialog;
+    private String[] opts_o;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +41,7 @@ public class FeedbackActivity extends AppCompatActivity {
     }
 
     private void initData() {
+        opts_o = getIntent().getExtras().getStringArray("opts_o");
         UID = getIntent().getExtras().getString("uid");
     }
 
@@ -72,7 +68,7 @@ public class FeedbackActivity extends AppCompatActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     feedbackHandler.post(timeOutRunnable);
                 } else {
                     int res = dbP.insert(

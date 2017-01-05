@@ -20,12 +20,6 @@ import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public class WriteActivity extends AppCompatActivity {
 
     private EditText writeEdt;
@@ -33,12 +27,12 @@ public class WriteActivity extends AppCompatActivity {
     private static final int WORD_LIMIT = 144;
     private Handler writeHandler;
     private ProgressDialog waitDialog;
-
     private String UID;
     private String DFT_ID;
     private String DFT_CONTENT = "";
     private String ACT_ID = "";
     private String MODIFY_CONTENT = "";
+    private String[] opts_o;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +45,7 @@ public class WriteActivity extends AppCompatActivity {
     }
 
     private void initData() {
+        opts_o = getIntent().getExtras().getStringArray("opts_o");
         UID = getIntent().getExtras().getString("uid");
         DFT_ID = getIntent().getExtras().getString("dft_id");
         DFT_CONTENT = getIntent().getExtras().getString("dft_content", "");
@@ -80,12 +75,23 @@ public class WriteActivity extends AppCompatActivity {
         return true;
     }
 
+    private boolean save(final int uid, final String content) {
+        ConnectionDetector cd = new ConnectionDetector(this);
+        if (!cd.isConnectingToInternet()) {
+            Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        waitDialog = ProgressDialog.show(WriteActivity.this, "请稍后", "正在请数据库君吃饭……");
+        connectToSave(uid, content);
+        return true;
+    }
+
     private void connectToSend(final int uid, final String content) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     writeHandler.post(timeOutRunnable);
                 } else {
                     int res = dbP.insert(
@@ -108,23 +114,12 @@ public class WriteActivity extends AppCompatActivity {
         }).start();
     }
 
-    private boolean save(final int uid, final String content) {
-        ConnectionDetector cd = new ConnectionDetector(this);
-        if (!cd.isConnectingToInternet()) {
-            Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        waitDialog = ProgressDialog.show(WriteActivity.this, "请稍后", "正在请数据库君吃饭……");
-        connectToSave(uid, content);
-        return true;
-    }
-
     private void connectToSave(final int uid, final String content) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     writeHandler.post(timeOutRunnable);
                 } else {
                     int res = dbP.insert(
@@ -147,7 +142,7 @@ public class WriteActivity extends AppCompatActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     writeHandler.post(timeOutRunnable);
                 } else {
                     int res = dbP.update(
@@ -163,6 +158,39 @@ public class WriteActivity extends AppCompatActivity {
             }
         }).start();
     }
+
+    private TextWatcher tw = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+//            Log.d("TEST", "beforeTC:\n" + "start: " + start + "\nafter:" + after + "\ncount" + count);
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+//            Log.d("TEST", "onTC:\n" + "start: " + start + "\nbefore:" + before + "\ncount" + count);
+            Editable editable = writeEdt.getText();
+            int len = editable.length();
+            restWordTv.setText("还能输入" + (WORD_LIMIT - len) + "个字");
+            if (len > WORD_LIMIT) {
+                int selectEndIndex = Selection.getSelectionEnd(editable); // getSelectionEnd获取光标结束的索引值
+                String str = editable.toString(); // 旧字符串
+                String newStr = str.substring(0, WORD_LIMIT); // 截取新字符串
+                writeEdt.setText(newStr);
+                editable = writeEdt.getText();
+                int newLength = editable.length(); // 新字符串长度
+                if (selectEndIndex > newLength) { // 如果光标结束的索引值超过新字符串长度
+                    selectEndIndex = editable.length();
+//                    Toast.makeText(WriteActivity.this, "最多只能输入" + selectEndIndex + "个字哦！", Toast.LENGTH_SHORT).show();
+                }
+                Selection.setSelection(editable, selectEndIndex); // 设置新光标所在的位置
+            }
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+
+        }
+    };
 
     private Runnable sendRunnable = new Runnable() {
         @Override
@@ -199,39 +227,6 @@ public class WriteActivity extends AppCompatActivity {
         @Override
         public void run() {
             Toast.makeText(WriteActivity.this, "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
-        }
-    };
-
-    private TextWatcher tw = new TextWatcher() {
-        @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-//            Log.d("TEST", "beforeTC:\n" + "start: " + start + "\nafter:" + after + "\ncount" + count);
-        }
-
-        @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
-//            Log.d("TEST", "onTC:\n" + "start: " + start + "\nbefore:" + before + "\ncount" + count);
-            Editable editable = writeEdt.getText();
-            int len = editable.length();
-            restWordTv.setText("还能输入" + (WORD_LIMIT - len) + "个字");
-            if (len > WORD_LIMIT) {
-                int selectEndIndex = Selection.getSelectionEnd(editable); // getSelectionEnd获取光标结束的索引值
-                String str = editable.toString(); // 旧字符串
-                String newStr = str.substring(0, WORD_LIMIT); // 截取新字符串
-                writeEdt.setText(newStr);
-                editable = writeEdt.getText();
-                int newLength = editable.length(); // 新字符串长度
-                if (selectEndIndex > newLength) { // 如果光标结束的索引值超过新字符串长度
-                    selectEndIndex = editable.length();
-//                    Toast.makeText(WriteActivity.this, "最多只能输入" + selectEndIndex + "个字哦！", Toast.LENGTH_SHORT).show();
-                }
-                Selection.setSelection(editable, selectEndIndex); // 设置新光标所在的位置
-            }
-        }
-
-        @Override
-        public void afterTextChanged(Editable s) {
-
         }
     };
 

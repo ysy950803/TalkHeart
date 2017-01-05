@@ -19,7 +19,6 @@ public class MeDraftListViewAdapter extends RecyclerView.Adapter<MeDraftListView
 
     private List<String> timeList;
     private List<String> textList;
-
     private ListOnItemClickListener mOnItemClickListener;
 
     public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {

@@ -13,7 +13,6 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
-import com.ashokvarma.bottomnavigation.BottomNavigationItem;
 import com.inthecheesefactory.thecheeselibrary.fragment.support.v4.app.StatedFragment;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.CommentActivity;
@@ -24,25 +23,17 @@ import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.adapters.MessageListViewAdapter;
-import com.ysy.talkheart.utils.RecyclerViewScrollListener;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Created by Shengyu Yao on 2016/11/22.
  */
 
 public class MessageFragment extends StatedFragment {
-    private SwipeRefreshLayout refreshLayout;
 
+    private SwipeRefreshLayout refreshLayout;
     private List<Integer> avatarList = new ArrayList<>();
     private List<String> nameActList = new ArrayList<>();
     private List<String> nicknameList = new ArrayList<>();
@@ -52,23 +43,20 @@ public class MessageFragment extends StatedFragment {
     private List<String> actidList = new ArrayList<>();
     private List<String> cmtidList = new ArrayList<>();
     private List<String> uidpList = new ArrayList<>();
-
     private MessageListViewAdapter listViewAdapter;
     private boolean isRefreshing = false;
     private Handler msgHandler;
-
-    //    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    //    private String mParam1;
+    private static final String FRAGMENT_TAG = "Msg";
+    private static final String OPTS_KEY = "opts_o";
     private String UID;
     private HomeActivity context;
+    private String[] opts_o;
 
-    public static MessageFragment newInstance(String param2) {
+    public static MessageFragment newInstance(String tag, String[] opts_o) {
         MessageFragment fragment = new MessageFragment();
         Bundle args = new Bundle();
-//        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
+        args.putString(FRAGMENT_TAG, tag);
+        args.putStringArray(OPTS_KEY, opts_o);
         fragment.setArguments(args);
         return fragment;
     }
@@ -77,8 +65,8 @@ public class MessageFragment extends StatedFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-//            mParam1 = getArguments().getString(ARG_PARAM1);
-            UID = getArguments().getString(ARG_PARAM2);
+            opts_o = getArguments().getStringArray(OPTS_KEY);
+            UID = getArguments().getString(FRAGMENT_TAG);
         }
         context = (HomeActivity) getActivity();
         msgHandler = new Handler();
@@ -158,11 +146,6 @@ public class MessageFragment extends StatedFragment {
         });
     }
 
-    public void getNewMsg() {
-        refreshLayout.setRefreshing(true);
-        refresh();
-    }
-
     private void refresh() {
         if (!isRefreshing) {
             isRefreshing = true;
@@ -188,7 +171,7 @@ public class MessageFragment extends StatedFragment {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     msgHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> cmtList = dbP.msgCmtSelect(
@@ -257,13 +240,18 @@ public class MessageFragment extends StatedFragment {
         }).start();
     }
 
+    public void getNewMsg() {
+        refreshLayout.setRefreshing(true);
+        refresh();
+    }
+
     public void reply(int position) {
         Intent intent = new Intent(getActivity(), ReplyActivity.class);
         intent.putExtra("uid", uidpList.get(position));
         intent.putExtra("e_uid", UID);
         intent.putExtra("actid", actidList.get(position));
         intent.putExtra("cmtid", cmtidList.get(position));
-        intent.putExtra("nickname", nicknameList.get(position));
+        intent.putExtra("opts_o", opts_o);
         startActivity(intent);
     }
 
@@ -272,6 +260,7 @@ public class MessageFragment extends StatedFragment {
         intent.putExtra("uid", uidpList.get(position));
         intent.putExtra("e_uid", UID);
         intent.putExtra("actid", actidList.get(position));
+        intent.putExtra("opts_o", opts_o);
         startActivity(intent);
     }
 
@@ -281,6 +270,7 @@ public class MessageFragment extends StatedFragment {
         intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
         intent.putExtra("nickname", nicknameList.get(position));
         intent.putExtra("e_uid", UID);
+        intent.putExtra("opts_o", opts_o);
         startActivity(intent);
     }
 
@@ -356,16 +346,6 @@ public class MessageFragment extends StatedFragment {
 //        }
 //    }
 
-    @Override
-    protected void onSaveState(Bundle outState) {
-        super.onSaveState(outState);
-    }
-
-    @Override
-    protected void onRestoreState(Bundle savedInstanceState) {
-        super.onRestoreState(savedInstanceState);
-    }
-
     private Runnable timeOutRunnable = new Runnable() {
         @Override
         public void run() {
@@ -408,4 +388,14 @@ public class MessageFragment extends StatedFragment {
             context.setIsRead(1);
         }
     };
+
+    @Override
+    protected void onSaveState(Bundle outState) {
+        super.onSaveState(outState);
+    }
+
+    @Override
+    protected void onRestoreState(Bundle savedInstanceState) {
+        super.onRestoreState(savedInstanceState);
+    }
 }

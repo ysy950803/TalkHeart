@@ -29,20 +29,19 @@ public class RegisterActivity extends AppCompatActivity {
     private EditText nicknameEdt;
     private TextView setBirthTv;
     private Switch sexSwitch;
-
     private Handler registerHandler;
     private ProgressDialog waitDialog;
-
     private int SEX = 1;
     private int YEAR = 1995;
     private int MONTH = 8;
     private int DAY = 3;
+    private String[] opts_o;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
-
+        opts_o = getIntent().getExtras().getStringArray("opts_o");
         initView();
         clickListener();
         registerHandler = new Handler();
@@ -102,21 +101,6 @@ public class RegisterActivity extends AppCompatActivity {
         });
     }
 
-    private String formatDate(String date) {
-        String[] yMd = date.split("-");
-        String year = yMd[0];
-        String month = yMd[1];
-        String day = yMd[2];
-        YEAR = Integer.parseInt(year);
-        MONTH = Integer.parseInt(month);
-        DAY = Integer.parseInt(day);
-        if (MONTH < 10)
-            month = "0" + month;
-        if (DAY < 10)
-            day = "0" + day;
-        return yMd[0] + "-" + month + "-" + day;
-    }
-
     private boolean register(final String username, final String pw, String rePw, final String nickname, final String birthday, final int sex) {
         if (StringUtils.isHavingBlank(username)) {
             Toast.makeText(this, "用户名不能包含空格哦", Toast.LENGTH_SHORT).show();
@@ -150,7 +134,7 @@ public class RegisterActivity extends AppCompatActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     registerHandler.post(timeOutRunnable);
                 } else {
                     int res = dbP.insert(
@@ -171,6 +155,21 @@ public class RegisterActivity extends AppCompatActivity {
                 waitDialog.dismiss();
             }
         }).start();
+    }
+
+    private String formatDate(String date) {
+        String[] yMd = date.split("-");
+        String year = yMd[0];
+        String month = yMd[1];
+        String day = yMd[2];
+        YEAR = Integer.parseInt(year);
+        MONTH = Integer.parseInt(month);
+        DAY = Integer.parseInt(day);
+        if (MONTH < 10)
+            month = "0" + month;
+        if (DAY < 10)
+            day = "0" + day;
+        return yMd[0] + "-" + month + "-" + day;
     }
 
     private Runnable serverErrorRunnable = new Runnable() {

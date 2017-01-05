@@ -18,7 +18,6 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -31,6 +30,7 @@ import com.ysy.talkheart.fragments.MeFragment;
 import com.ysy.talkheart.fragments.MessageFragment;
 import com.ysy.talkheart.utils.ActivitiesDestroyer;
 import com.ysy.talkheart.utils.DBProcessor;
+import com.ysy.talkheart.utils.DataProcessor;
 import com.ysy.talkheart.utils.UpdateChecker;
 
 public class HomeActivity extends AppCompatActivity implements BottomNavigationBar.OnTabSelectedListener {
@@ -38,36 +38,24 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     private HomeFragment homeFragment;
     private MessageFragment messageFragment;
     private MeFragment meFragment;
-    int lastSelectedPosition = 0;
+    int curSelectedPosition = 0;
     private ActionBar actionBar;
     private MenuItem feedbackMenuItem;
     private MenuItem updateMenuItem;
     private MenuItem searchMenuItem;
-
     private Handler homeHandler;
     private String UPDATE_URL = "";
     private static final int MSG_REFRESH_TIME = 24 * 1024;
     private static final int UPDATE_CHECK_TIME = 2048;
     private BottomNavigationBar bottomNavigationBar;
-
     private FloatingActionButton addFab;
     private ImageView msgUnreadImg;
-
     private String UID;
     private boolean isSeen = false;
     private int isRead = 1;
-
-    public void setIsSeen(boolean isSeen) {
-        this.isSeen = isSeen;
-    }
-
-    public void setIsRead(int isRead) {
-        this.isRead = isRead;
-    }
-
-    public boolean getIsSeen() {
-        return isSeen;
-    }
+    private long backTime;
+    private String[] opts_o;
+    private String[] opts_t;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,39 +67,6 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         initView();
         homeHandler = new Handler();
         homeHandler.post(autoCheckUpdateRunnable);
-    }
-
-    private void initData() {
-        UID = getIntent().getExtras().getString("uid");
-        isSeen = false;
-    }
-
-    private void initView() {
-        msgUnreadImg = (ImageView) findViewById(R.id.msg_unread_img);
-        msgUnreadImg.setVisibility(View.GONE);
-
-        addFab = (FloatingActionButton) findViewById(R.id.home_add_fab);
-        addFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(HomeActivity.this, addFab, getString(R.string.trans_add));
-                    startActivity(new Intent(HomeActivity.this, WriteActivity.class).putExtra("uid", UID), tAO.toBundle());
-                } else
-                    startActivity(new Intent(HomeActivity.this, WriteActivity.class).putExtra("uid", UID));
-            }
-        });
-
-        bottomNavigationBar = (BottomNavigationBar) findViewById(R.id.home_bottom_navigation_bar);
-        bottomNavigationBar
-                .addItem(new BottomNavigationItem(R.drawable.ic_home_white_24dp, "首页"))
-                .addItem(new BottomNavigationItem(R.drawable.ic_message_white_24dp, "消息"))
-                .addItem(new BottomNavigationItem(R.drawable.ic_person_pin_white_24dp, "个人"))
-                .setFirstSelectedPosition(lastSelectedPosition)
-                .setActiveColor("#2196F3")
-                .initialise();
-        bottomNavigationBar.setTabSelectedListener(this);
-        setDefaultFragment();
     }
 
     @Override
@@ -126,27 +81,51 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         super.onStop();
     }
 
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        return super.onTouchEvent(event);
+    private void initData() {
+        UID = getIntent().getExtras().getString("uid");
+        opts_o = getIntent().getExtras().getStringArray("opts_o");
+        opts_t = getIntent().getExtras().getStringArray("opts_t");
+        isSeen = false;
     }
 
-    public BottomNavigationBar getBottomNavigationBar() {
-        return bottomNavigationBar;
+    private void initView() {
+        msgUnreadImg = (ImageView) findViewById(R.id.msg_unread_img);
+        msgUnreadImg.setVisibility(View.GONE);
+
+        addFab = (FloatingActionButton) findViewById(R.id.home_add_fab);
+        addFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(HomeActivity.this, WriteActivity.class);
+                intent.putExtra("opts_o", opts_o);
+                intent.putExtra("uid", UID);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(HomeActivity.this, addFab, getString(R.string.trans_add));
+                    startActivity(intent, tAO.toBundle());
+                } else
+                    startActivity(intent);
+            }
+        });
+
+        bottomNavigationBar = (BottomNavigationBar) findViewById(R.id.home_bottom_navigation_bar);
+        bottomNavigationBar
+                .addItem(new BottomNavigationItem(R.drawable.ic_home_white_24dp, "首页"))
+                .addItem(new BottomNavigationItem(R.drawable.ic_message_white_24dp, "消息"))
+                .addItem(new BottomNavigationItem(R.drawable.ic_person_pin_white_24dp, "个人"))
+                .setFirstSelectedPosition(curSelectedPosition)
+                .setActiveColor("#2196F3")
+                .initialise();
+        bottomNavigationBar.setTabSelectedListener(this);
+        setDefaultFragment();
     }
 
-    public ImageView getMsgUnreadImg() {
-        return msgUnreadImg;
-    }
-
-    public FloatingActionButton getAddFab() {
-        return addFab;
-    }
-
-    private void setMenuItemVisible(boolean feedback, boolean update, boolean search) {
-        feedbackMenuItem.setVisible(feedback);
-        updateMenuItem.setVisible(update);
-        searchMenuItem.setVisible(search);
+    private void hideAllFragments(FragmentTransaction transaction) {
+        if (homeFragment != null)
+            transaction.hide(homeFragment);
+        if (messageFragment != null)
+            transaction.hide(messageFragment);
+        if (meFragment != null)
+            transaction.hide(meFragment);
     }
 
     private void setDefaultFragment() {
@@ -157,7 +136,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         hideAllFragments(transaction);
         homeFragment = (HomeFragment) fm.findFragmentByTag("Home");
         if (homeFragment == null) {
-            homeFragment = HomeFragment.newInstance(UID);
+            homeFragment = HomeFragment.newInstance(UID, opts_o);
             transaction.add(R.id.content_table_layout, homeFragment, "Home");
         } else
             transaction.show(homeFragment);
@@ -174,11 +153,11 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
             case 0:
                 homeFragment = (HomeFragment) fm.findFragmentByTag("Home");
                 if (homeFragment == null) {
-                    homeFragment = HomeFragment.newInstance(UID);
+                    homeFragment = HomeFragment.newInstance(UID, opts_o);
                     transaction.add(R.id.content_table_layout, homeFragment, "Home");
                 } else
                     transaction.show(homeFragment);
-
+                curSelectedPosition = 0;
                 if (actionBar != null)
                     actionBar.setTitle("首页");
                 setMenuItemVisible(false, false, true);
@@ -187,14 +166,14 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
             case 1:
                 messageFragment = (MessageFragment) fm.findFragmentByTag("Msg");
                 if (messageFragment == null) {
-                    messageFragment = MessageFragment.newInstance(UID);
+                    messageFragment = MessageFragment.newInstance(UID, opts_o);
                     transaction.add(R.id.content_table_layout, messageFragment, "Msg");
                 } else {
                     transaction.show(messageFragment);
                     if (isRead == 0)
                         messageFragment.getNewMsg();
                 }
-
+                curSelectedPosition = 1;
                 if (actionBar != null)
                     actionBar.setTitle("消息");
                 setMenuItemVisible(false, false, false);
@@ -203,11 +182,11 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
             case 2:
                 meFragment = (MeFragment) fm.findFragmentByTag("Me");
                 if (meFragment == null) {
-                    meFragment = MeFragment.newInstance(UID);
+                    meFragment = MeFragment.newInstance(UID, opts_o);
                     transaction.add(R.id.content_table_layout, meFragment, "Me");
                 } else
                     transaction.show(meFragment);
-
+                curSelectedPosition = 2;
                 if (actionBar != null)
                     actionBar.setTitle("个人");
                 setMenuItemVisible(true, true, false);
@@ -220,15 +199,6 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         transaction.commit();
     }
 
-    private void hideAllFragments(FragmentTransaction transaction) {
-        if (homeFragment != null)
-            transaction.hide(homeFragment);
-        if (messageFragment != null)
-            transaction.hide(messageFragment);
-        if (meFragment != null)
-            transaction.hide(meFragment);
-    }
-
     @Override
     public void onTabUnselected(int position) {
 
@@ -239,48 +209,12 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
 
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_home, menu);
-        feedbackMenuItem = menu.findItem(R.id.action_feedback);
-        feedbackMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                startActivity(new Intent(HomeActivity.this, FeedbackActivity.class).putExtra("uid", UID));
-                return true;
-            }
-        });
-        feedbackMenuItem.setVisible(false);
-
-        updateMenuItem = menu.findItem(R.id.action_update);
-        updateMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                handCheckUpdate();
-                return true;
-            }
-        });
-        updateMenuItem.setVisible(false);
-
-        searchMenuItem = menu.findItem(R.id.action_search);
-        searchMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                startActivity(new Intent(HomeActivity.this, SearchActivity.class).putExtra("uid", UID));
-                return true;
-            }
-        });
-        searchMenuItem.setVisible(true);
-
-        return true;
-    }
-
     private void handCheckUpdate() {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 UpdateChecker dbP = new UpdateChecker();
-                if (dbP.getConn() != null) {
+                if (dbP.getConn(opts_t) != null) {
                     int code;
                     if ((code = dbP.codeSelect("select max(code) from app_version")) > getVersionCode(getApplicationContext())) {
                         UPDATE_URL = dbP.downloadUrlSelect("select url from download_url where code = " + code);
@@ -298,13 +232,32 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
             @Override
             public void run() {
                 UpdateChecker dbP = new UpdateChecker();
-                if (dbP.getConn() != null) {
+                if (dbP.getConn(opts_t) != null) {
                     UPDATE_URL = dbP.downloadUrlSelect("select url from download_url where code = " + getVersionCode(getApplicationContext()));
                     homeHandler.post(updateRunnable);
                 }
                 dbP.closeConn();
             }
         }).start();
+    }
+
+    private void updateDialog(final String url) {
+        android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
+        builder.setTitle("兴高采烈的提示框").setMessage("检测到有新版本哦（新功能、修复已知错误等），快快下载吧！").setCancelable(false)
+                .setPositiveButton("非常乐意", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        intent.setData(Uri.parse(url));
+                        startActivity(intent);
+                    }
+                }).setNegativeButton("再想想", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.cancel();
+            }
+        });
+        final android.support.v7.app.AlertDialog alert = builder.create();
+        alert.show();
     }
 
     private Runnable updateRunnable = new Runnable() {
@@ -327,7 +280,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 @Override
                 public void run() {
                     DBProcessor dbP = new DBProcessor();
-                    if (dbP.getConn() != null) {
+                    if (dbP.getConn(opts_o) != null) {
                         isRead = dbP.isReadSelect("select isread from user where uid = " + UID);
                         homeHandler.post(updateMsgIconRunnable);
                     }
@@ -346,7 +299,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 msgUnreadImg.setVisibility(View.GONE);
             else {
                 msgUnreadImg.setVisibility(View.VISIBLE);
-                if (lastSelectedPosition != 1)
+                if (curSelectedPosition == 1 && messageFragment != null)
                     messageFragment.getNewMsg();
             }
         }
@@ -359,7 +312,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 @Override
                 public void run() {
                     UpdateChecker dbP = new UpdateChecker();
-                    if (dbP.getConn() != null) {
+                    if (dbP.getConn(opts_t) != null) {
                         int code;
                         if ((code = dbP.codeSelect("select max(code) from app_version")) > getVersionCode(getApplicationContext())) {
                             UPDATE_URL = dbP.downloadUrlSelect("select url from download_url where code = " + code);
@@ -395,15 +348,49 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         }
     }
 
-    private void updateDialog(final String url) {
+    public boolean getIsSeen() {
+        return isSeen;
+    }
+
+    public BottomNavigationBar getBottomNavigationBar() {
+        return bottomNavigationBar;
+    }
+
+    public ImageView getMsgUnreadImg() {
+        return msgUnreadImg;
+    }
+
+    public FloatingActionButton getAddFab() {
+        return addFab;
+    }
+
+    public void setIsSeen(boolean isSeen) {
+        this.isSeen = isSeen;
+    }
+
+    public void setIsRead(int isRead) {
+        this.isRead = isRead;
+    }
+
+    private void setMenuItemVisible(boolean feedback, boolean update, boolean search) {
+        feedbackMenuItem.setVisible(feedback);
+        updateMenuItem.setVisible(update);
+        searchMenuItem.setVisible(search);
+    }
+
+    public void exitDialog() {
         android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
-        builder.setTitle("兴高采烈的提示框").setMessage("检测到有新版本哦（新功能、修复已知错误等），快快下载吧！").setCancelable(false)
-                .setPositiveButton("非常乐意", new DialogInterface.OnClickListener() {
+        builder.setTitle("可爱的提示框").setMessage("确定要退出登录切换用户吗亲？").setCancelable(false)
+                .setPositiveButton("好哒", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent(Intent.ACTION_VIEW);
-                        intent.setData(Uri.parse(url));
+                        DataProcessor dp = new DataProcessor(HomeActivity.this);
+                        dp.saveData("uid", "");
+                        Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
+                        intent.putExtra("opts_o", opts_o);
+                        intent.putExtra("opts_t", opts_t);
                         startActivity(intent);
+                        finish();
                     }
                 }).setNegativeButton("再想想", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
@@ -413,8 +400,6 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         final android.support.v7.app.AlertDialog alert = builder.create();
         alert.show();
     }
-
-    private long backTime;
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -434,4 +419,42 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         return super.onKeyDown(keyCode, event);
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_home, menu);
+        feedbackMenuItem = menu.findItem(R.id.action_feedback);
+        feedbackMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent intent = new Intent(HomeActivity.this, FeedbackActivity.class);
+                intent.putExtra("opts_o", opts_o);
+                intent.putExtra("uid", UID);
+                startActivity(intent);
+                return true;
+            }
+        });
+        feedbackMenuItem.setVisible(false);
+        updateMenuItem = menu.findItem(R.id.action_update);
+        updateMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                handCheckUpdate();
+                return true;
+            }
+        });
+        updateMenuItem.setVisible(false);
+        searchMenuItem = menu.findItem(R.id.action_search);
+        searchMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent intent = new Intent(HomeActivity.this, SearchActivity.class);
+                intent.putExtra("uid", UID);
+                intent.putExtra("opts_o", opts_o);
+                startActivity(intent);
+                return true;
+            }
+        });
+        searchMenuItem.setVisible(true);
+        return true;
+    }
 }

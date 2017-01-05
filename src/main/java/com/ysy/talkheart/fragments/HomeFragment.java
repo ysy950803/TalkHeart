@@ -10,9 +10,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -30,7 +28,6 @@ import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.adapters.HomeActiveListViewAdapter;
 import com.ysy.talkheart.utils.RecyclerViewScrollListener;
-import com.ysy.talkheart.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +39,6 @@ import java.util.List;
 public class HomeFragment extends StatedFragment {
 
     private SwipeRefreshLayout refreshLayout;
-
     private List<Integer> avatarList = new ArrayList<>();
     private List<String> nicknameList = new ArrayList<>();
     private List<String> timeList = new ArrayList<>();
@@ -51,24 +47,25 @@ public class HomeFragment extends StatedFragment {
     private List<String> goodNumList = new ArrayList<>();
     private List<String> actidList = new ArrayList<>();
     private List<String> uidList = new ArrayList<>();
-
     private HomeActiveListViewAdapter listViewAdapter;
-
-    private static final String ARG_PARAM2 = "param2";
-
+    private static final String FRAGMENT_TAG = "Home";
+    private static final String OPTS_KEY = "opts_o";
     private String UID;
-
     private boolean isRefreshing = false;
     private Handler homeActiveHandler;
-
     private HomeActivity context;
-
     public ImageView goodImg;
+    private String[] opts_o;
 
-    public static HomeFragment newInstance(String param2) {
+    public HomeFragment() {
+
+    }
+
+    public static HomeFragment newInstance(String tag, String[] opts_o) {
         HomeFragment fragment = new HomeFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM2, param2);
+        args.putString(FRAGMENT_TAG, tag);
+        args.putStringArray(OPTS_KEY, opts_o);
         fragment.setArguments(args);
         return fragment;
     }
@@ -77,14 +74,11 @@ public class HomeFragment extends StatedFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            UID = getArguments().getString(ARG_PARAM2);
+            UID = getArguments().getString(FRAGMENT_TAG);
+            opts_o = getArguments().getStringArray(OPTS_KEY);
         }
         context = (HomeActivity) getActivity();
         homeActiveHandler = new Handler();
-    }
-
-    public HomeFragment() {
-
     }
 
     @Nullable
@@ -168,35 +162,24 @@ public class HomeFragment extends StatedFragment {
         });
     }
 
-    private void showItemDialog(String[] items, final String uid, final String actid,
-                                final String modify_content) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setItems(items, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                switch (which) {
-                    case 0:
-                        connectToMark(uid, actid);
-                        break;
-                    case 1:
-                        openModify(uid, actid, modify_content);
-                        break;
-                    case 2:
-                        connectToDelete(uid, actid);
-                        break;
-                }
-                dialog.dismiss();
+    private void refresh() {
+        if (!isRefreshing) {
+            isRefreshing = true;
+            if (!refreshData()) {
+                refreshLayout.setRefreshing(false);
+                isRefreshing = false;
             }
-        });
-        builder.create().show();
+        }
     }
 
-    private void openModify(String uid, String actid, String modify_content) {
-        Intent intent = new Intent(getActivity(), WriteActivity.class);
-        intent.putExtra("uid", uid);
-        intent.putExtra("actid", actid);
-        intent.putExtra("modify_content", modify_content);
-        startActivity(intent);
+    private boolean refreshData() {
+        ConnectionDetector cd = new ConnectionDetector(getActivity());
+        if (!cd.isConnectingToInternet() && HomeFragment.this.isAdded()) {
+            Toast.makeText(getActivity(), "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        connectToGetActive(UID);
+        return true;
     }
 
     private void connectToDelete(final String uid, final String actid) {
@@ -209,7 +192,7 @@ public class HomeFragment extends StatedFragment {
                             @Override
                             public void run() {
                                 DBProcessor dbP = new DBProcessor();
-                                if (dbP.getConn() == null) {
+                                if (dbP.getConn(opts_o) == null) {
                                     homeActiveHandler.post(timeOutRunnable);
                                 } else {
                                     int res = dbP.delete(
@@ -238,7 +221,7 @@ public class HomeFragment extends StatedFragment {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     homeActiveHandler.post(timeOutRunnable);
                 } else {
                     int res = dbP.insert(
@@ -255,32 +238,12 @@ public class HomeFragment extends StatedFragment {
         }).start();
     }
 
-    private void refresh() {
-        if (!isRefreshing) {
-            isRefreshing = true;
-            if (!refreshData()) {
-                refreshLayout.setRefreshing(false);
-                isRefreshing = false;
-            }
-        }
-    }
-
-    private boolean refreshData() {
-        ConnectionDetector cd = new ConnectionDetector(getActivity());
-        if (!cd.isConnectingToInternet() && HomeFragment.this.isAdded()) {
-            Toast.makeText(getActivity(), "请检查网络连接哦", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        connectToGetActive(UID);
-        return true;
-    }
-
     private void connectToGetActive(final String uid) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     homeActiveHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.homeActiveSelect(
@@ -314,47 +277,12 @@ public class HomeFragment extends StatedFragment {
         }).start();
     }
 
-    private void clearAllLists() {
-        avatarList.clear();
-        nicknameList.clear();
-        goodStatusList.clear();
-        timeList.clear();
-        goodNumList.clear();
-        textList.clear();
-        actidList.clear();
-        uidList.clear();
-//        fav_actid_index = 0;
-    }
-
-//    private int getGoodStatus(int pos, List<String> actidList, List<List<String>> statusList) {
-//        int isfav = -1;
-//        if (statusList.get(0).size() == 0)
-//            isfav = -1;
-//        else {
-//            if (fav_actid_index >= statusList.get(0).size())
-//                isfav = -1;
-//            else {
-//                if (!actidList.get(pos).equals(statusList.get(0).get(fav_actid_index)))
-//                    isfav = -1;
-//                else if (actidList.get(pos).equals(statusList.get(0).get(fav_actid_index))) {
-//                    isfav = Integer.parseInt(statusList.get(1).get(fav_actid_index)); // 0 or 1
-//                    ++fav_actid_index;
-//                }
-//            }
-//        }
-//        return isfav;
-//    }
-
-    public void updateGood(int position) {
-        connectToUpdateGood(UID, position);
-    }
-
     private void connectToUpdateGood(final String e_uid, final int position) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     homeActiveHandler.post(timeOutRunnable);
                 } else {
                     String actid = actidList.get(position);
@@ -400,11 +328,56 @@ public class HomeFragment extends StatedFragment {
         }).start();
     }
 
+    private void clearAllLists() {
+        avatarList.clear();
+        nicknameList.clear();
+        goodStatusList.clear();
+        timeList.clear();
+        goodNumList.clear();
+        textList.clear();
+        actidList.clear();
+        uidList.clear();
+//        fav_actid_index = 0;
+    }
+
+//    private int getGoodStatus(int pos, List<String> actidList, List<List<String>> statusList) {
+//        int isfav = -1;
+//        if (statusList.get(0).size() == 0)
+//            isfav = -1;
+//        else {
+//            if (fav_actid_index >= statusList.get(0).size())
+//                isfav = -1;
+//            else {
+//                if (!actidList.get(pos).equals(statusList.get(0).get(fav_actid_index)))
+//                    isfav = -1;
+//                else if (actidList.get(pos).equals(statusList.get(0).get(fav_actid_index))) {
+//                    isfav = Integer.parseInt(statusList.get(1).get(fav_actid_index)); // 0 or 1
+//                    ++fav_actid_index;
+//                }
+//            }
+//        }
+//        return isfav;
+//    }
+
+    public void updateGood(int position) {
+        connectToUpdateGood(UID, position);
+    }
+
+    private void openContentModify(String uid, String actid, String modify_content) {
+        Intent intent = new Intent(getActivity(), WriteActivity.class);
+        intent.putExtra("uid", uid);
+        intent.putExtra("actid", actid);
+        intent.putExtra("modify_content", modify_content);
+        intent.putExtra("opts_o", opts_o);
+        startActivity(intent);
+    }
+
     public void openComment(int position) {
         Intent intent = new Intent(getActivity(), CommentActivity.class);
         intent.putExtra("uid", uidList.get(position));
         intent.putExtra("e_uid", UID);
         intent.putExtra("actid", actidList.get(position));
+        intent.putExtra("opts_o", opts_o);
         startActivity(intent);
     }
 
@@ -414,7 +387,31 @@ public class HomeFragment extends StatedFragment {
         intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
         intent.putExtra("nickname", nicknameList.get(position));
         intent.putExtra("e_uid", UID);
+        intent.putExtra("opts_o", opts_o);
         startActivity(intent);
+    }
+
+    private void showItemDialog(String[] items, final String uid, final String actid,
+                                final String modify_content) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which) {
+                    case 0:
+                        connectToMark(uid, actid);
+                        break;
+                    case 1:
+                        openContentModify(uid, actid, modify_content);
+                        break;
+                    case 2:
+                        connectToDelete(uid, actid);
+                        break;
+                }
+                dialog.dismiss();
+            }
+        });
+        builder.create().show();
     }
 
     private Runnable markRunnable = new Runnable() {
@@ -473,7 +470,7 @@ public class HomeFragment extends StatedFragment {
         public void run() {
             listViewAdapter.notifyDataSetChanged();
             if (HomeFragment.this.isAdded())
-                Toast.makeText(getActivity(), "还没有关注任何动态哦", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), "还没有任何动态哦", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
         }

@@ -28,7 +28,6 @@ import com.ysy.talkheart.activities.LoginActivity;
 import com.ysy.talkheart.activities.MarkActivity;
 import com.ysy.talkheart.activities.PersonActivity;
 import com.ysy.talkheart.activities.WatchActivity;
-import com.ysy.talkheart.utils.ActivitiesDestroyer;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.DataCleanManager;
@@ -59,27 +58,31 @@ public class MeFragment extends StatedFragment {
     private LinearLayout introInputLayout;
     private EditText introEdt;
     private ImageView introDoneImg;
-
     private String NICKNAME = "加载中…";
     private String INTRODUCTION = "加载中…";
     private String SEX = "1";
     private String ACTIVE_NUM = "0";
     private String WATCH_NUM = "0";
     private String FANS_NUM = "0";
-
-    private static final String ARG_PARAM2 = "param2";
-
+    private static final String FRAGMENT_TAG = "Me";
+    private static final String OPTS_KEY = "opts_o";
     private String UID;
     private HomeActivity context;
     private Handler meFragmentHandler;
     private SwipeRefreshLayout refreshLayout;
     private boolean isRefreshing = false;
     private boolean isSeen = false;
+    private String[] opts_o;
 
-    public static MeFragment newInstance(String param2) {
+    public MeFragment() {
+        meFragmentHandler = new Handler();
+    }
+
+    public static MeFragment newInstance(String tag, String[] opts_o) {
         MeFragment fragment = new MeFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM2, param2);
+        args.putString(FRAGMENT_TAG, tag);
+        args.putStringArray(OPTS_KEY, opts_o);
         fragment.setArguments(args);
         return fragment;
     }
@@ -88,13 +91,10 @@ public class MeFragment extends StatedFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            UID = getArguments().getString(ARG_PARAM2);
+            opts_o = getArguments().getStringArray(OPTS_KEY);
+            UID = getArguments().getString(FRAGMENT_TAG);
             context = (HomeActivity) getActivity();
         }
-    }
-
-    public MeFragment() {
-        meFragmentHandler = new Handler();
     }
 
     @Nullable
@@ -154,8 +154,7 @@ public class MeFragment extends StatedFragment {
                 Intent intent = new Intent(getActivity(), PersonActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", UID);
-                intent.putExtra("sex", SEX);
-                intent.putExtra("nickname", NICKNAME);
+                intent.putExtra("opts_o", opts_o);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), avatarImg, getString(R.string.trans_me_avatar));
                     startActivity(intent, tAO.toBundle());
@@ -171,8 +170,7 @@ public class MeFragment extends StatedFragment {
                 Intent intent = new Intent(getActivity(), PersonActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", UID);
-                intent.putExtra("sex", SEX);
-                intent.putExtra("nickname", NICKNAME);
+                intent.putExtra("opts_o", opts_o);
                 startActivity(intent);
             }
         });
@@ -185,6 +183,7 @@ public class MeFragment extends StatedFragment {
                 intent.putExtra("e_uid", UID);
                 intent.putExtra("sex", SEX);
                 intent.putExtra("nickname", NICKNAME);
+                intent.putExtra("opts_o", opts_o);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), activeNumTv, getString(R.string.trans_active));
                     startActivity(intent, tAO.toBundle());
@@ -200,6 +199,7 @@ public class MeFragment extends StatedFragment {
                 Intent intent = new Intent(getActivity(), WatchActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", UID);
+                intent.putExtra("opts_o", opts_o);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), watchNumTv, getString(R.string.trans_watch));
                     startActivity(intent, tAO.toBundle());
@@ -215,6 +215,7 @@ public class MeFragment extends StatedFragment {
                 Intent intent = new Intent(getActivity(), FansActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", UID);
+                intent.putExtra("opts_o", opts_o);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), fansNumTv, getString(R.string.trans_fans));
                     startActivity(intent, tAO.toBundle());
@@ -249,6 +250,7 @@ public class MeFragment extends StatedFragment {
             public void onClick(View v) {
                 Intent intent = new Intent(getActivity(), MarkActivity.class);
                 intent.putExtra("uid", UID);
+                intent.putExtra("opts_o", opts_o);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), markLayout, getString(R.string.trans_mark));
                     startActivity(intent, tAO.toBundle());
@@ -263,6 +265,7 @@ public class MeFragment extends StatedFragment {
             public void onClick(View v) {
                 Intent intent = new Intent(getActivity(), DraftActivity.class);
                 intent.putExtra("uid", UID);
+                intent.putExtra("opts_o", opts_o);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), draftLayout, getString(R.string.trans_draft));
                     startActivity(intent, tAO.toBundle());
@@ -293,7 +296,7 @@ public class MeFragment extends StatedFragment {
                             Toast.makeText(getActivity(), "强制更新已开启", Toast.LENGTH_SHORT).show();
                             context.forceCheckUpdate();
                         } else {
-                            exitDialog();
+                            context.exitDialog();
                         }
                         break;
                 }
@@ -328,7 +331,7 @@ public class MeFragment extends StatedFragment {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     meFragmentHandler.post(timeOutRunnable);
                 } else {
                     String[] res = dbP.meInfoSelect(
@@ -356,7 +359,7 @@ public class MeFragment extends StatedFragment {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     meFragmentHandler.post(timeOutRunnable);
                 } else {
                     int res = dbP.update(
@@ -395,26 +398,6 @@ public class MeFragment extends StatedFragment {
             e.printStackTrace();
         }
         Toast.makeText(getActivity(), cache_str, Toast.LENGTH_SHORT).show();
-    }
-
-    private void exitDialog() {
-        android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(getActivity());
-        builder.setTitle("可爱的提示框").setMessage("确定要退出登录切换用户吗亲？").setCancelable(false)
-                .setPositiveButton("好哒", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        DataProcessor dp = new DataProcessor(getActivity());
-                        dp.saveData("uid", "");
-                        startActivity(new Intent(getActivity(), LoginActivity.class));
-                        getActivity().finish();
-                    }
-                }).setNegativeButton("再想想", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                dialog.cancel();
-            }
-        });
-        final android.support.v7.app.AlertDialog alert = builder.create();
-        alert.show();
     }
 
     private Runnable successRunnable = new Runnable() {
@@ -501,5 +484,4 @@ public class MeFragment extends StatedFragment {
                 Toast.makeText(context, "内存君打瞌睡了，下拉刷新一下吧", Toast.LENGTH_SHORT).show();
         }
     }
-
 }

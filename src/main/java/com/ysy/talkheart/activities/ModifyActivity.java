@@ -32,7 +32,6 @@ public class ModifyActivity extends AppCompatActivity {
     private EditText nicknameEdt;
     private TextView setBirthTv;
     private Switch sexSwitch;
-
     private String SCHOOL;
     private String NICKNAME;
     private String BIRTHDAY;
@@ -41,9 +40,9 @@ public class ModifyActivity extends AppCompatActivity {
     private int DAY = 3;
     private int SEX;
     private String UID;
-
     private Handler modifyHandler;
     private ProgressDialog waitDialog;
+    private String[] opts_o;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +55,7 @@ public class ModifyActivity extends AppCompatActivity {
     }
 
     private void initData() {
+        opts_o = getIntent().getExtras().getStringArray("opts_o");
         UID = getIntent().getExtras().getString("uid");
         SCHOOL = getIntent().getExtras().getString("school");
         NICKNAME = getIntent().getExtras().getString("nickname");
@@ -155,27 +155,18 @@ public class ModifyActivity extends AppCompatActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn() == null) {
+                if (dbP.getConn(opts_o) == null) {
                     modifyHandler.post(timeOutRunnable);
                 } else {
                     String pw = dbP.pwSelect("select pw from user where uid = " + UID);
                     if (pw != null) {
                         if (pw.equals(oldPw)) {
-                            if (school.equals("")) {
-                                int res = dbP.update("update user set pw = '" + (newPw.equals("") ? oldPw : newPw) + "', nickname = '" +
-                                        nickname + "', birthday = '" + birthday + "', sex = " + sex + " where uid = " + UID);
-                                if (res == 1)
-                                    modifyHandler.post(successRunnable);
-                                else
-                                    modifyHandler.post(serverErrorRunnable);
-                            } else {
-                                int res1 = dbP.update("update user set school = '" + school + "', pw = '" + (newPw.equals("") ? oldPw : newPw) + "', nickname = '" +
-                                        nickname + "', birthday = '" + birthday + "', sex = " + sex + " where uid = " + UID);
-                                if (res1 == 1)
-                                    modifyHandler.post(successRunnable);
-                                else
-                                    modifyHandler.post(serverErrorRunnable);
-                            }
+                            int res1 = dbP.update("update user set school = '" + (school.equals("") ? "未设置院校" : school) + "', pw = '" + (newPw.equals("") ? oldPw : newPw) + "', nickname = '" +
+                                    nickname + "', birthday = '" + birthday + "', sex = " + sex + " where uid = " + UID);
+                            if (res1 == 1)
+                                modifyHandler.post(successRunnable);
+                            else
+                                modifyHandler.post(serverErrorRunnable);
                         } else
                             modifyHandler.post(pwErrorRunnable);
                     } else
