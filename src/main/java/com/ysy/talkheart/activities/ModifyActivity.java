@@ -18,7 +18,7 @@ import android.widget.Toast;
 
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.utils.DBProcessor;
-import com.ysy.talkheart.utils.NoDoubleClickListener;
+import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 
 public class ModifyActivity extends AppCompatActivity {
@@ -84,14 +84,14 @@ public class ModifyActivity extends AppCompatActivity {
     }
 
     private void clickListener() {
-        backImg.setOnClickListener(new View.OnClickListener() {
+        backImg.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 onBackPressed();
             }
         });
 
-        doneImg.setOnClickListener(new NoDoubleClickListener() {
+        doneImg.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
             protected void onNoDoubleClick(View v) {
                 String school = schoolEdt.getText().toString();
@@ -142,6 +142,19 @@ public class ModifyActivity extends AppCompatActivity {
             return false;
         } else if (StringUtils.replaceBlank(oldPw).equals("")) {
             Toast.makeText(this, "旧密码不能为空哦", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (newPw.length() > 24 || reNewPw.length() > 24) {
+            Toast.makeText(this, "新密码不能超过24个字符哦", Toast.LENGTH_SHORT).show();
+            return false;
+        } else if (nickname.length() > 24) {
+            Toast.makeText(this, "昵称不能超过24个字符哦", Toast.LENGTH_SHORT).show();
+            return false;
+        } else if (nickname.length() > 24 && StringUtils.getChineseCount(nickname) > 12) {
+            Toast.makeText(this, "昵称不能包含超过12个汉字哦", Toast.LENGTH_SHORT).show();
+            return false;
+        } else if (school.length() > 16) {
+            Toast.makeText(this, "学校不能超过16个字符哦", Toast.LENGTH_SHORT).show();
             return false;
         }
         waitDialog = ProgressDialog.show(ModifyActivity.this, "请稍后", "服务器君正在开空调……");

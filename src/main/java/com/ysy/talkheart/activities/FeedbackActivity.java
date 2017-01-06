@@ -150,6 +150,7 @@ public class FeedbackActivity extends AppCompatActivity {
             protected void onNoDoubleClick(MenuItem item) {
 //                String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
                 String writeContent = writeEdt.getText().toString();
+                writeContent = StringUtils.zipBlank(writeContent);
                 if (!StringUtils.replaceBlank(writeContent).equals(""))
                     send(Integer.parseInt(UID), writeContent);
                 else

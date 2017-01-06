@@ -11,6 +11,8 @@ import android.widget.Toast;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.CommentActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
+import com.ysy.talkheart.utils.ListOnItemClickListener;
+import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
 import java.util.List;
@@ -26,6 +28,11 @@ public class CommentListViewAdapter extends RecyclerView.Adapter<CommentListView
     private List<String> timeList;
     private List<String> textList;
     private CommentActivity context;
+    private ListOnItemClickListener mOnItemClickListener;
+
+    public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
+        this.mOnItemClickListener = mOnItemClickListener;
+    }
 
     public CommentListViewAdapter(CommentActivity context, List<Integer> avatarList, List<String> nicknameList, List<String> timeList, List<String> textList) {
         this.avatarList = avatarList;
@@ -89,6 +96,25 @@ public class CommentListViewAdapter extends RecyclerView.Adapter<CommentListView
                     context.openPerson(pos);
             }
         });
+
+        if (mOnItemClickListener != null) {
+            holder.itemView.setOnClickListener(new NoDoubleViewClickListener() {
+                @Override
+                protected void onNoDoubleClick(View v) {
+                    int pos = holder.getLayoutPosition();
+                    mOnItemClickListener.onItemClick(holder.itemView, pos);
+                }
+            });
+
+            holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    int pos = holder.getLayoutPosition();
+                    mOnItemClickListener.onItemLongClick(holder.itemView, pos);
+                    return false;
+                }
+            });
+        }
     }
 
     @Override

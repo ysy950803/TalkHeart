@@ -27,6 +27,7 @@ import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.adapters.HomeActiveListViewAdapter;
+import com.ysy.talkheart.utils.NoDouleDialogClickListener;
 import com.ysy.talkheart.utils.RecyclerViewScrollListener;
 
 import java.util.ArrayList;
@@ -184,7 +185,7 @@ public class HomeFragment extends StatedFragment {
 
     private void connectToDelete(final String uid, final String actid) {
         android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(getActivity());
-        builder.setTitle("紧张的提示框").setMessage("确定要删除这条动态吗亲？（与之相关联信息都会删除哦）").setCancelable(false)
+        builder.setTitle("紧张的提示框").setMessage("确定要删除这条动态吗亲？（与之相关联信息都会删除哦）").setCancelable(true)
                 .setPositiveButton("我意已决", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -394,9 +395,9 @@ public class HomeFragment extends StatedFragment {
     private void showItemDialog(String[] items, final String uid, final String actid,
                                 final String modify_content) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setItems(items, new DialogInterface.OnClickListener() {
+        builder.setItems(items, new NoDouleDialogClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
+            protected void onNoDoubleClick(DialogInterface dialog, int which) {
                 switch (which) {
                     case 0:
                         connectToMark(uid, actid);

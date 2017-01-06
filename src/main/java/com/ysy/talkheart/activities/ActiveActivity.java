@@ -20,6 +20,7 @@ import com.ysy.talkheart.adapters.MeActiveListViewAdapter;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
+import com.ysy.talkheart.utils.NoDouleDialogClickListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -134,9 +135,9 @@ public class ActiveActivity extends AppCompatActivity {
 
     private void showItemDialog(String[] items, final String e_uid, final String actid, final String modify_content) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setItems(items, new DialogInterface.OnClickListener() {
+        builder.setItems(items, new NoDouleDialogClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
+            protected void onNoDoubleClick(DialogInterface dialog, int which) {
                 switch (which) {
                     case 0:
                         connectToMark(e_uid, actid);
@@ -160,10 +161,10 @@ public class ActiveActivity extends AppCompatActivity {
 
     private void connectToDelete(final String e_uid, final String actid) {
         android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
-        builder.setTitle("紧张的提示框").setMessage("确定要删除这条动态吗亲？（与之相关联信息都会删除哦）").setCancelable(false)
-                .setPositiveButton("我意已决", new DialogInterface.OnClickListener() {
+        builder.setTitle("紧张的提示框").setMessage("确定要删除这条动态吗亲？（与之相关联信息都会删除哦）").setCancelable(true)
+                .setPositiveButton("我意已决", new NoDouleDialogClickListener() {
                     @Override
-                    public void onClick(DialogInterface dialog, int which) {
+                    protected void onNoDoubleClick(DialogInterface dialog, int which) {
                         new Thread(new Runnable() {
                             @Override
                             public void run() {

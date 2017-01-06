@@ -19,6 +19,7 @@ import com.ysy.talkheart.utils.ActivitiesDestroyer;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.DataProcessor;
+import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -53,9 +54,9 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void clickListener() {
-        loginImg.setOnClickListener(new View.OnClickListener() {
+        loginImg.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 String username = userEdt.getText().toString();
                 String pw = pwEdt.getText().toString();
                 ConnectionDetector cd = new ConnectionDetector(LoginActivity.this);
@@ -65,9 +66,9 @@ public class LoginActivity extends AppCompatActivity {
                     Toast.makeText(LoginActivity.this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
             }
         });
-        registerLayout.setOnClickListener(new View.OnClickListener() {
+        registerLayout.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(LoginActivity.this, registerLayout, getString(R.string.trans_register));
                     startActivity(new Intent(LoginActivity.this, RegisterActivity.class).putExtra("opts_o", opts_o), tAO.toBundle());

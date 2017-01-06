@@ -20,6 +20,7 @@ import com.ysy.talkheart.adapters.SearchUserListViewAdapter;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
+import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 
 import java.util.ArrayList;
@@ -50,7 +51,6 @@ public class SearchActivity extends AppCompatActivity {
         initView();
         setSearchContent();
         clickListener();
-
         searchHandler = new Handler();
     }
 
@@ -59,12 +59,18 @@ public class SearchActivity extends AppCompatActivity {
         searchImg = (ImageView) findViewById(R.id.search_img);
         refreshLayout = (SwipeRefreshLayout) findViewById(R.id.search_user_refresh_layout);
         refreshLayout.setColorSchemeResources(R.color.colorAccent);
+        refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refresh();
+            }
+        });
     }
 
     private void clickListener() {
-        searchImg.setOnClickListener(new View.OnClickListener() {
+        searchImg.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 searchUser(searchEdt.getText().toString());
             }
         });
@@ -84,6 +90,10 @@ public class SearchActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    private void refresh() {
+        searchUser(searchEdt.getText().toString());
     }
 
     private void setSearchContent() {
@@ -110,8 +120,8 @@ public class SearchActivity extends AppCompatActivity {
         } else {
             if (StringUtils.replaceBlank(nicknameLike).equals("")) {
                 Toast.makeText(this, "Ta叫什么名字呢？", Toast.LENGTH_SHORT).show();
+                refreshLayout.setRefreshing(false);
             } else {
-                refreshLayout.setRefreshing(true);
                 connectToSearchUser(nicknameLike);
             }
         }

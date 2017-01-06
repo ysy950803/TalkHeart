@@ -32,6 +32,7 @@ import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.DataCleanManager;
 import com.ysy.talkheart.utils.DataProcessor;
+import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 import com.ysy.talkheart.utils.ViewTurnAnimation;
 import com.ysy.talkheart.views.CircularImageView;
@@ -148,14 +149,15 @@ public class MeFragment extends StatedFragment {
     }
 
     private void clickListener() {
-        avatarImg.setOnClickListener(new View.OnClickListener() {
+        avatarImg.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 Intent intent = new Intent(getActivity(), PersonActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", UID);
                 intent.putExtra("opts_o", opts_o);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    intent.putExtra("sex", SEX);
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), avatarImg, getString(R.string.trans_me_avatar));
                     startActivity(intent, tAO.toBundle());
                 } else {
@@ -164,9 +166,9 @@ public class MeFragment extends StatedFragment {
             }
         });
 
-        nicknameTv.setOnClickListener(new View.OnClickListener() {
+        nicknameTv.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 Intent intent = new Intent(getActivity(), PersonActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", UID);
@@ -175,9 +177,9 @@ public class MeFragment extends StatedFragment {
             }
         });
 
-        activeNumLayout.setOnClickListener(new View.OnClickListener() {
+        activeNumLayout.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 Intent intent = new Intent(getActivity(), ActiveActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", UID);
@@ -193,9 +195,9 @@ public class MeFragment extends StatedFragment {
             }
         });
 
-        watchNumLayout.setOnClickListener(new View.OnClickListener() {
+        watchNumLayout.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 Intent intent = new Intent(getActivity(), WatchActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", UID);
@@ -209,9 +211,9 @@ public class MeFragment extends StatedFragment {
             }
         });
 
-        fansNumLayout.setOnClickListener(new View.OnClickListener() {
+        fansNumLayout.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 Intent intent = new Intent(getActivity(), FansActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", UID);
@@ -226,28 +228,32 @@ public class MeFragment extends StatedFragment {
         });
 
         final ViewTurnAnimation animation = new ViewTurnAnimation(introductionTv, introInputLayout);
-        introductionTv.setOnClickListener(new View.OnClickListener() {
+        introductionTv.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 introductionTv.startAnimation(animation.getSATo(0));
                 introEdt.setText(introductionTv.getText().toString().equals("点击设置签名") ? "" : introductionTv.getText().toString());
                 introEdt.requestFocus();
             }
         });
 
-        introDoneImg.setOnClickListener(new View.OnClickListener() {
+        introDoneImg.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 introInputLayout.startAnimation(animation.getSATo(0));
                 String intro = introEdt.getText().toString();
-                if (!intro.equals(introductionTv.getText().toString()) && !StringUtils.replaceBlank(introEdt.getText().toString()).equals(""))
-                    connectToUpdateIntro(intro);
+                if (intro.length() > 24) {
+                    Toast.makeText(context, "签名不能超过24个字符哦", Toast.LENGTH_SHORT).show();
+                } else {
+                    if (!intro.equals(introductionTv.getText().toString()) && !StringUtils.replaceBlank(introEdt.getText().toString()).equals(""))
+                        connectToUpdateIntro(intro);
+                }
             }
         });
 
-        markLayout.setOnClickListener(new View.OnClickListener() {
+        markLayout.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 Intent intent = new Intent(getActivity(), MarkActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("opts_o", opts_o);
@@ -260,9 +266,9 @@ public class MeFragment extends StatedFragment {
             }
         });
 
-        draftLayout.setOnClickListener(new View.OnClickListener() {
+        draftLayout.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 Intent intent = new Intent(getActivity(), DraftActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("opts_o", opts_o);
@@ -275,9 +281,9 @@ public class MeFragment extends StatedFragment {
             }
         });
 
-        clearLayout.setOnClickListener(new View.OnClickListener() {
+        clearLayout.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 clearCache();
             }
         });
@@ -304,6 +310,11 @@ public class MeFragment extends StatedFragment {
             }
         });
         setClickable(false);
+    }
+
+    public void getMeInfo() {
+        refreshLayout.setRefreshing(true);
+        refresh();
     }
 
     private void refresh() {
@@ -404,7 +415,7 @@ public class MeFragment extends StatedFragment {
         @Override
         public void run() {
             avatarImg.setImageResource(Integer.parseInt(SEX) == 1 ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
-            nicknameTv.setText(NICKNAME);
+            nicknameTv.setText(new StringUtils().shortNickname(NICKNAME));
             introductionTv.setText(INTRODUCTION);
             activeNumTv.setText(ACTIVE_NUM);
             watchNumTv.setText(WATCH_NUM);

@@ -18,6 +18,7 @@ import com.ysy.talkheart.R;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
+import com.ysy.talkheart.utils.StringUtils;
 
 public class ReplyActivity extends AppCompatActivity {
 
@@ -30,8 +31,9 @@ public class ReplyActivity extends AppCompatActivity {
     private String CMT_ID;
     private Handler replyHandler;
     private ProgressDialog waitDialog;
-    private int SEND_MODE; // 0:error 1:comment 2:reply
+    private int SEND_MODE; // 0:error 1:comment 2:reply 3:modify
     private String[] opts_o;
+    private String CONTENT, NICKNAME_P;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +51,12 @@ public class ReplyActivity extends AppCompatActivity {
         E_UID = getIntent().getExtras().getString("e_uid");
         ACT_ID = getIntent().getExtras().getString("actid");
         CMT_ID = getIntent().getExtras().getString("cmtid");
+        CONTENT = getIntent().getExtras().getString("modify_content");
+        NICKNAME_P = getIntent().getExtras().getString("nickname_p");
+        if (CONTENT != null) {
+            SEND_MODE = 3;
+            return true;
+        }
         if (UID == null || E_UID == null || ACT_ID == null) {
             SEND_MODE = 0;
             return false;
@@ -59,19 +67,21 @@ public class ReplyActivity extends AppCompatActivity {
                 SEND_MODE = 2;
             }
         }
-
         return true;
     }
 
     private void initView() {
         writeEdt = (EditText) findViewById(R.id.reply_write_edt);
         restWordTv = (TextView) findViewById(R.id.reply_write_word_tv);
-
         writeEdt.addTextChangedListener(tw);
+        if (CONTENT != null)
+            writeEdt.setText(CONTENT);
+        writeEdt.setHint("正在吐槽 " + NICKNAME_P + " ……");
     }
 
-    private boolean send(int send_mode, int e_uid, final int uid, final String content) {
-        if (content.equals("")) {
+    private boolean send(int send_mode, int e_uid, final int uid, String content) {
+        content = StringUtils.zipBlank(content);
+        if (StringUtils.replaceBlank(content).equals("")) {
             Toast.makeText(this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
             return false;
         }
@@ -86,9 +96,10 @@ public class ReplyActivity extends AppCompatActivity {
     }
 
     private void connectToSend(final int send_mode, final int e_uid, final int uid, final String content) {
-        if (send_mode == 0)
+        if (send_mode == 0) {
             Toast.makeText(this, "出现未知错误，请返回重试", Toast.LENGTH_SHORT).show();
-        else if (send_mode == 1) { // comment
+            waitDialog.dismiss();
+        } else if (send_mode == 1) { // comment
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -134,6 +145,26 @@ public class ReplyActivity extends AppCompatActivity {
                     waitDialog.dismiss();
                 }
             }).start();
+        } else if (send_mode == 3) { // modify
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    DBProcessor dbP = new DBProcessor();
+                    if (dbP.getConn(opts_o) == null) {
+                        replyHandler.post(timeOutRunnable);
+                    } else {
+                        int res = dbP.update(
+                                "update comment set content = '" + content + "' where cmtid = " + CMT_ID
+                        );
+                        if (res == 1)
+                            replyHandler.post(modifyRunnable);
+                        else
+                            replyHandler.post(serverErrorRunnable);
+                    }
+                    dbP.closeConn();
+                    waitDialog.dismiss();
+                }
+            }).start();
         }
     }
 
@@ -172,6 +203,14 @@ public class ReplyActivity extends AppCompatActivity {
         @Override
         public void run() {
             Toast.makeText(ReplyActivity.this, "发送成功", Toast.LENGTH_SHORT).show();
+            onBackPressed();
+        }
+    };
+
+    private Runnable modifyRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(ReplyActivity.this, "修改成功", Toast.LENGTH_SHORT).show();
             onBackPressed();
         }
     };

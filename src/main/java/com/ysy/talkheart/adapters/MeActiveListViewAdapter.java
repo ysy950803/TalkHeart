@@ -12,6 +12,7 @@ import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.ActiveActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
+import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
 import java.util.List;
@@ -146,9 +147,9 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
 
         // 如果设置了回调，则设置点击事件
         if (mOnItemClickListener != null) {
-            viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
+            viewHolder.itemView.setOnClickListener(new NoDoubleViewClickListener() {
                 @Override
-                public void onClick(View v) {
+                protected void onNoDoubleClick(View v) {
                     int pos = viewHolder.getLayoutPosition();
                     mOnItemClickListener.onItemClick(viewHolder.itemView, pos);
                 }

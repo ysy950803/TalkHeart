@@ -12,6 +12,7 @@ import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.WatchActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
+import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
 import java.util.List;
@@ -86,29 +87,7 @@ public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListView
                         Toast.makeText(context, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
                     } else {
                         context.eachOtherImg = eachOther;
-                        context.eachOtherImg.setClickable(false);
-                        switch (relationList.get(pos)) {
-                            case 2:
-                                eachOther.setImageResource(R.mipmap.ic_fans_pink_blue_36dp);
-                                relationList.set(pos, -1);
-                                context.updateRelation(pos, -1);
-                                break;
-                            case 1:
-                                eachOther.setImageResource(R.mipmap.ic_nothing_blue_36dp);
-                                relationList.set(pos, 0);
-                                context.updateRelation(pos, 0);
-                                break;
-                            case -1:
-                                eachOther.setImageResource(R.mipmap.ic_each_other_pink_36dp);
-                                relationList.set(pos, 2);
-                                context.updateRelation(pos, 2);
-                                break;
-                            case 0:
-                                eachOther.setImageResource(R.mipmap.ic_watch_blue_pink_36dp);
-                                relationList.set(pos, 1);
-                                context.updateRelation(pos, 1);
-                                break;
-                        }
+                        context.updateRelation(pos);
                     }
                 }
             });
@@ -116,9 +95,9 @@ public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListView
 
         // 如果设置了回调，则设置点击事件
         if (mOnItemClickListener != null) {
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
+            holder.itemView.setOnClickListener(new NoDoubleViewClickListener() {
                 @Override
-                public void onClick(View v) {
+                protected void onNoDoubleClick(View v) {
                     int pos = holder.getLayoutPosition();
                     mOnItemClickListener.onItemClick(holder.itemView, pos);
                 }

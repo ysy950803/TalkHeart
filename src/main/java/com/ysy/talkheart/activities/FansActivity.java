@@ -38,6 +38,7 @@ public class FansActivity extends AppCompatActivity {
     public ImageView eachOtherImg;
     private boolean isSelf;
     private String[] opts_o;
+    private RecyclerView fansRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,8 +49,13 @@ public class FansActivity extends AppCompatActivity {
         initData();
         initView();
         clickListener();
+    }
+
+    @Override
+    protected void onResume() {
         refreshLayout.setRefreshing(true);
         refresh();
+        super.onResume();
     }
 
     private void initData() {
@@ -61,7 +67,7 @@ public class FansActivity extends AppCompatActivity {
 
     private void initView() {
         refreshLayout = (SwipeRefreshLayout) findViewById(R.id.me_fans_refresh_layout);
-        RecyclerView fansRecyclerView = (RecyclerView) findViewById(R.id.me_fans_listView);
+        fansRecyclerView = (RecyclerView) findViewById(R.id.me_fans_listView);
         fansRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         listViewAdapter = new MeFansListViewAdapter(this, avatarList, nicknameList, introList, relationList, !isSelf);
@@ -121,13 +127,16 @@ public class FansActivity extends AppCompatActivity {
         return true;
     }
 
-    public void updateRelation(int position, int relation) {
-        String UID_L = Integer.parseInt(UID) < Integer.parseInt(fansUIDList.get(position)) ? UID : fansUIDList.get(position);
-        String UID_H = Integer.parseInt(UID) > Integer.parseInt(fansUIDList.get(position)) ? UID : fansUIDList.get(position);
-        connectToUpdateRelation(UID, fansUIDList.get(position), UID_L, UID_H, relation);
+    public void updateRelation(int position) {
+        if (fansUIDList != null && fansUIDList.size() > position) {
+            String UID_L = Integer.parseInt(UID) < Integer.parseInt(fansUIDList.get(position)) ? UID : fansUIDList.get(position);
+            String UID_H = Integer.parseInt(UID) > Integer.parseInt(fansUIDList.get(position)) ? UID : fansUIDList.get(position);
+            connectToUpdateRelation(UID, fansUIDList.get(position), UID_L, UID_H);
+        }
     }
 
     private void connectToGetFans(final String uid) {
+        fansRecyclerView.setClickable(false);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -157,12 +166,15 @@ public class FansActivity extends AppCompatActivity {
                         fansHandler.post(successRunnable);
                     }
                 }
+                fansRecyclerView.setClickable(false);
                 dbP.closeConn();
             }
         }).start();
     }
 
-    private void connectToUpdateRelation(final String uid, final String fans_uid, final String uid_l, final String uid_h, final int relation) {
+    private void connectToUpdateRelation(final String uid, final String fans_uid, final String uid_l, final String uid_h) {
+        if (eachOtherImg != null)
+            eachOtherImg.setClickable(false);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -170,33 +182,107 @@ public class FansActivity extends AppCompatActivity {
                 if (dbP.getConn(opts_o) == null) {
                     fansHandler.post(timeOutRunnable);
                 } else {
-                    switch (relation) {
-                        case -1: // 2 to -1
-                            int res = dbP.update("update user_relation set " +
-                                    "relation = " + (uid.equals(uid_l) ? -1 : 1) + " where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                            if (res == 1) {
-                                dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid);
-                                dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + fans_uid);
-                                fansHandler.post(unWatchRunnable);
-                            } else
-                                fansHandler.post(serverErrorRunnable);
-                            break;
-                        case 2: // -1 to 2
-                            int res2 = dbP.update("update user_relation set " +
-                                    "relation = " + 2 + " where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                            if (res2 == 1) {
-                                dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid);
-                                dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + fans_uid);
-                                fansHandler.post(eachRunnable);
-                            } else
-                                fansHandler.post(serverErrorRunnable);
-                            break;
+                    String[] RELATION = dbP.relationSelect(
+                            "select uid_a, uid_b, relation from user_relation where uid_a = " + uid_l + " and uid_b = " + uid_h
+                    );
+                    if (RELATION[0] != null && RELATION[0].equals("-2"))
+                        fansHandler.post(serverErrorRunnable);
+                    else {
+                        if (RELATION[0] == null) // impossible event
+                            fansHandler.post(serverErrorRunnable);
+                        else {
+                            if (uid_l.equals(uid)) { // me in low
+                                switch (RELATION[2]) {
+                                    case "2": // 2 to -1
+                                        int res = dbP.update("update user_relation set " +
+                                                "relation = -1 where uid_a = " + uid_l + " and uid_b = " + uid_h);
+                                        if (res == 1) {
+                                            dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid);
+                                            dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + fans_uid);
+                                            fansHandler.post(unWatchRunnable);
+                                        } else
+                                            fansHandler.post(serverErrorRunnable);
+                                        break;
+                                    case "-1": // -1 to 2
+                                        int res1 = dbP.update("update user_relation set " +
+                                                "relation = 2 where uid_a = " + uid_l + " and uid_b = " + uid_h);
+                                        if (res1 == 1) {
+                                            dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid);
+                                            dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + fans_uid);
+                                            fansHandler.post(eachRunnable);
+                                        } else
+                                            fansHandler.post(serverErrorRunnable);
+                                        break;
+                                    case "1": // 1 to 0
+                                        int res2 = dbP.update("update user_relation set " +
+                                                "relation = 0 where uid_a = " + uid_l + " and uid_b = " + uid_h);
+                                        if (res2 == 1) {
+                                            dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid);
+                                            dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + fans_uid);
+                                            fansHandler.post(nothingRunnable);
+                                        } else
+                                            fansHandler.post(serverErrorRunnable);
+                                        break;
+                                    case "0": // 0 to 1
+                                        int res3 = dbP.update("update user_relation set " +
+                                                "relation = 1 where uid_a = " + uid_l + " and uid_b = " + uid_h);
+                                        if (res3 == 1) {
+                                            dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid);
+                                            dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + fans_uid);
+                                            fansHandler.post(watchRunnable);
+                                        } else
+                                            fansHandler.post(serverErrorRunnable);
+                                        break;
+                                }
+                            } else { // me in high
+                                switch (RELATION[2]) {
+                                    case "2": // 2 to 1
+                                        int res = dbP.update("update user_relation set " +
+                                                "relation = 1 where uid_a = " + uid_l + " and uid_b = " + uid_h);
+                                        if (res == 1) {
+                                            dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid);
+                                            dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + fans_uid);
+                                            fansHandler.post(unWatchRunnable);
+                                        } else
+                                            fansHandler.post(serverErrorRunnable);
+                                        break;
+                                    case "-1": // -1 to 0
+                                        int res1 = dbP.update("update user_relation set " +
+                                                "relation = 0 where uid_a = " + uid_l + " and uid_b = " + uid_h);
+                                        if (res1 == 1) {
+                                            dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid);
+                                            dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + fans_uid);
+                                            fansHandler.post(nothingRunnable);
+                                        } else
+                                            fansHandler.post(serverErrorRunnable);
+                                        break;
+                                    case "1": // 1 to 2
+                                        int res2 = dbP.update("update user_relation set " +
+                                                "relation = 2 where uid_a = " + uid_l + " and uid_b = " + uid_h);
+                                        if (res2 == 1) {
+                                            dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid);
+                                            dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + fans_uid);
+                                            fansHandler.post(eachRunnable);
+                                        } else
+                                            fansHandler.post(serverErrorRunnable);
+                                        break;
+                                    case "0": // 0 to -1
+                                        int res3 = dbP.update("update user_relation set " +
+                                                "relation = -1 where uid_a = " + uid_l + " and uid_b = " + uid_h);
+                                        if (res3 == 1) {
+                                            dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid);
+                                            dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + fans_uid);
+                                            fansHandler.post(watchRunnable);
+                                        } else
+                                            fansHandler.post(serverErrorRunnable);
+                                        break;
+                                }
+                            }
+                        }
                     }
                 }
-                if (eachOtherImg != null) {
+                if (eachOtherImg != null)
                     eachOtherImg.setClickable(true);
-                    eachOtherImg = null;
-                }
                 dbP.closeConn();
             }
         }).start();
@@ -247,10 +333,27 @@ public class FansActivity extends AppCompatActivity {
         }
     };
 
+    private Runnable watchRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(FansActivity.this, "成功关注Ta", Toast.LENGTH_SHORT).show();
+            eachOtherImg.setImageResource(R.mipmap.ic_watch_blue_pink_36dp);
+        }
+    };
+
+    private Runnable nothingRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(FansActivity.this, "你们俩不再有关系啦", Toast.LENGTH_SHORT).show();
+            eachOtherImg.setImageResource(R.mipmap.ic_nothing_blue_36dp);
+        }
+    };
+
     private Runnable unWatchRunnable = new Runnable() {
         @Override
         public void run() {
             Toast.makeText(FansActivity.this, "成功取消关注", Toast.LENGTH_SHORT).show();
+            eachOtherImg.setImageResource(R.mipmap.ic_fans_pink_blue_36dp);
         }
     };
 
@@ -258,6 +361,7 @@ public class FansActivity extends AppCompatActivity {
         @Override
         public void run() {
             Toast.makeText(FansActivity.this, "你们俩互相关注啦", Toast.LENGTH_SHORT).show();
+            eachOtherImg.setImageResource(R.mipmap.ic_each_other_pink_36dp);
         }
     };
 

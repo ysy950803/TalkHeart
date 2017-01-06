@@ -16,7 +16,7 @@ import android.widget.Toast;
 
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.utils.DBProcessor;
-import com.ysy.talkheart.utils.NoDoubleClickListener;
+import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 
 public class RegisterActivity extends AppCompatActivity {
@@ -59,14 +59,14 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void clickListener() {
-        backImg.setOnClickListener(new View.OnClickListener() {
+        backImg.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 onBackPressed();
             }
         });
 
-        doneImg.setOnClickListener(new NoDoubleClickListener() {
+        doneImg.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
             protected void onNoDoubleClick(View v) {
                 String user = userEdt.getText().toString();
@@ -122,6 +122,19 @@ public class RegisterActivity extends AppCompatActivity {
             return false;
         } else if (!birthday.contains("-")) {
             Toast.makeText(this, "设置一下生日吧", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (username.length() > 24) {
+            Toast.makeText(this, "用户名不能超过24个字符哦", Toast.LENGTH_SHORT).show();
+            return false;
+        } else if (pw.length() > 24 || rePw.length() > 24) {
+            Toast.makeText(this, "密码不能超过24个字符哦", Toast.LENGTH_SHORT).show();
+            return false;
+        } else if (nickname.length() > 24) {
+            Toast.makeText(this, "昵称不能超过24个字符哦", Toast.LENGTH_SHORT).show();
+            return false;
+        } else if (nickname.length() > 24 && StringUtils.getChineseCount(nickname) > 12) {
+            Toast.makeText(this, "昵称不能包含超过12个汉字哦", Toast.LENGTH_SHORT).show();
             return false;
         }
         waitDialog = ProgressDialog.show(RegisterActivity.this, "请稍后", "服务器君正在开空调……");

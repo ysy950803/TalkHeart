@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.Selection;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
@@ -239,6 +240,7 @@ public class WriteActivity extends AppCompatActivity {
             @Override
             protected void onNoDoubleClick(MenuItem item) {
                 String writeContent = writeEdt.getText().toString();
+                writeContent = StringUtils.zipBlank(writeContent);
                 if (!StringUtils.replaceBlank(writeContent).equals(""))
                     send(Integer.parseInt(UID), writeContent);
                 else
@@ -250,6 +252,7 @@ public class WriteActivity extends AppCompatActivity {
             @Override
             protected void onNoDoubleClick(MenuItem item) {
                 String writeContent = writeEdt.getText().toString();
+                writeContent = StringUtils.zipBlank(writeContent);
                 if (!StringUtils.replaceBlank(writeContent).equals(""))
                     save(Integer.parseInt(UID), writeContent);
                 else

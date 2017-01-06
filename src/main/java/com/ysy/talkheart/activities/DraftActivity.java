@@ -19,6 +19,7 @@ import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.adapters.MeDraftListViewAdapter;
+import com.ysy.talkheart.utils.NoDouleDialogClickListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,8 +45,13 @@ public class DraftActivity extends AppCompatActivity {
         initData();
         initView();
         clickListener();
+    }
+
+    @Override
+    protected void onResume() {
         refreshLayout.setRefreshing(true);
         refresh();
+        super.onResume();
     }
 
     private void initData() {
@@ -112,9 +118,9 @@ public class DraftActivity extends AppCompatActivity {
     private void showItemDialog(final String dftid, final int position) {
         final String items[] = {"删除"};
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setItems(items, new DialogInterface.OnClickListener() {
+        builder.setItems(items, new NoDouleDialogClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
+            protected void onNoDoubleClick(DialogInterface dialog, int which) {
                 connectToDelete(dftid, position);
                 dialog.dismiss();
             }

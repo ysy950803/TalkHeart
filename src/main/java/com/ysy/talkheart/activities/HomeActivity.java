@@ -31,6 +31,9 @@ import com.ysy.talkheart.fragments.MessageFragment;
 import com.ysy.talkheart.utils.ActivitiesDestroyer;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.DataProcessor;
+import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
+import com.ysy.talkheart.utils.NoDoubleViewClickListener;
+import com.ysy.talkheart.utils.NoDouleDialogClickListener;
 import com.ysy.talkheart.utils.UpdateChecker;
 
 public class HomeActivity extends AppCompatActivity implements BottomNavigationBar.OnTabSelectedListener {
@@ -56,6 +59,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     private long backTime;
     private String[] opts_o;
     private String[] opts_t;
+    private String UPDATE_DETAIL = "检测到有新版本哦，快快下载吧！";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +67,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         setContentView(R.layout.activity_home);
         actionBar = getSupportActionBar();
         ActivitiesDestroyer.getInstance().killAll();
+        ActivitiesDestroyer.getInstance().addActivity(this);
         initData();
         initView();
         homeHandler = new Handler();
@@ -72,6 +77,9 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     @Override
     protected void onResume() {
         homeHandler.post(msgRefreshRunnable);
+        if (meFragment != null && meFragment.isAdded() && !meFragment.isHidden()) {
+            meFragment.getMeInfo();
+        }
         super.onResume();
     }
 
@@ -93,9 +101,9 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         msgUnreadImg.setVisibility(View.GONE);
 
         addFab = (FloatingActionButton) findViewById(R.id.home_add_fab);
-        addFab.setOnClickListener(new View.OnClickListener() {
+        addFab.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 Intent intent = new Intent(HomeActivity.this, WriteActivity.class);
                 intent.putExtra("opts_o", opts_o);
                 intent.putExtra("uid", UID);
@@ -217,10 +225,20 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 if (dbP.getConn(opts_t) != null) {
                     int code;
                     if ((code = dbP.codeSelect("select max(code) from app_version")) > getVersionCode(getApplicationContext())) {
-                        UPDATE_URL = dbP.downloadUrlSelect("select url from download_url where code = " + code);
+                        String res[] = dbP.urlAndDetailSelect("select url, detail from download_url u, details d " +
+                                "where d.code = u.code and d.code = " + code);
+                        UPDATE_URL = res[0];
+                        if (res[1] == null)
+                            res[1] = "";
+                        UPDATE_DETAIL = "检测到有新版本哦，快快下载吧！\n" + res[1];
                         homeHandler.post(updateRunnable);
-                    } else
+                    } else {
+                        String res = dbP.detailSelect("select detail from details d where code = " + getVersionCode(getApplicationContext()));
+                        if (res == null)
+                            res = "";
+                        UPDATE_DETAIL = "谢谢关注哦！本版已更新内容：\n" + res;
                         homeHandler.post(noUpdateRunnable);
+                    }
                 }
                 dbP.closeConn();
             }
@@ -233,7 +251,12 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
             public void run() {
                 UpdateChecker dbP = new UpdateChecker();
                 if (dbP.getConn(opts_t) != null) {
-                    UPDATE_URL = dbP.downloadUrlSelect("select url from download_url where code = " + getVersionCode(getApplicationContext()));
+                    String res[] = dbP.urlAndDetailSelect("select url, detail from download_url u, details d " +
+                            "where d.code = u.code and d.code = " + getVersionCode(getApplicationContext()));
+                    UPDATE_URL = res[0];
+                    if (res[1] == null)
+                        res[1] = "";
+                    UPDATE_DETAIL = "检测到有新版本哦，快快下载吧！\n" + res[1];
                     homeHandler.post(updateRunnable);
                 }
                 dbP.closeConn();
@@ -243,10 +266,10 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
 
     private void updateDialog(final String url) {
         android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
-        builder.setTitle("兴高采烈的提示框").setMessage("检测到有新版本哦（新功能、修复已知错误等），快快下载吧！").setCancelable(false)
-                .setPositiveButton("非常乐意", new DialogInterface.OnClickListener() {
+        builder.setTitle("兴高采烈的提示框").setMessage(UPDATE_DETAIL).setCancelable(false)
+                .setPositiveButton("非常乐意", new NoDouleDialogClickListener() {
                     @Override
-                    public void onClick(DialogInterface dialog, int which) {
+                    protected void onNoDoubleClick(DialogInterface dialog, int which) {
                         Intent intent = new Intent(Intent.ACTION_VIEW);
                         intent.setData(Uri.parse(url));
                         startActivity(intent);
@@ -260,6 +283,18 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         alert.show();
     }
 
+    private void noUpdateDialog() {
+        android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
+        builder.setTitle("已经是最新版啦").setMessage(UPDATE_DETAIL).setCancelable(true)
+                .setNegativeButton("下次再来", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+        final android.support.v7.app.AlertDialog alert = builder.create();
+        alert.show();
+    }
+
     private Runnable updateRunnable = new Runnable() {
         @Override
         public void run() {
@@ -267,10 +302,38 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         }
     };
 
+    private Runnable autoCheckUpdateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    UpdateChecker dbP = new UpdateChecker();
+                    if (dbP.getConn(opts_t) != null) {
+                        int code;
+                        if ((code = dbP.codeSelect("select max(code) from app_version")) > getVersionCode(getApplicationContext())) {
+                            String res[] = dbP.urlAndDetailSelect("select url, detail from download_url u, details d " +
+                                    "where d.code = u.code and d.code = " + code);
+                            UPDATE_URL = res[0];
+                            if (res[1] == null)
+                                res[1] = "";
+                            UPDATE_DETAIL = "检测到有新版本哦，快快下载吧！\n" + res[1];
+                            homeHandler.removeCallbacks(autoCheckUpdateRunnable);
+                            homeHandler.post(updateRunnable);
+                        } else
+                            homeHandler.removeCallbacks(autoCheckUpdateRunnable);
+                    }
+                    dbP.closeConn();
+                }
+            }).start();
+            homeHandler.postDelayed(this, UPDATE_CHECK_TIME);
+        }
+    };
+
     private Runnable noUpdateRunnable = new Runnable() {
         @Override
         public void run() {
-            Toast.makeText(HomeActivity.this, "已经是最新版啦" + getVersionName(HomeActivity.this) + "，谢谢关注哦", Toast.LENGTH_SHORT).show();
+            noUpdateDialog();
         }
     };
 
@@ -305,29 +368,6 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         }
     };
 
-    private Runnable autoCheckUpdateRunnable = new Runnable() {
-        @Override
-        public void run() {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    UpdateChecker dbP = new UpdateChecker();
-                    if (dbP.getConn(opts_t) != null) {
-                        int code;
-                        if ((code = dbP.codeSelect("select max(code) from app_version")) > getVersionCode(getApplicationContext())) {
-                            UPDATE_URL = dbP.downloadUrlSelect("select url from download_url where code = " + code);
-                            homeHandler.removeCallbacks(autoCheckUpdateRunnable);
-                            homeHandler.post(updateRunnable);
-                        } else
-                            homeHandler.removeCallbacks(autoCheckUpdateRunnable);
-                    }
-                    dbP.closeConn();
-                }
-            }).start();
-            homeHandler.postDelayed(this, UPDATE_CHECK_TIME);
-        }
-    };
-
     public static int getVersionCode(Context context) {
         try {
             PackageInfo pi = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
@@ -335,16 +375,6 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
             return 0;
-        }
-    }
-
-    public static String getVersionName(Context context) {
-        try {
-            PackageInfo pi = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-            return "(v" + pi.versionName + ")";
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-            return "";
         }
     }
 
@@ -381,16 +411,16 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     public void exitDialog() {
         android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
         builder.setTitle("可爱的提示框").setMessage("确定要退出登录切换用户吗亲？").setCancelable(false)
-                .setPositiveButton("好哒", new DialogInterface.OnClickListener() {
+                .setPositiveButton("好哒", new NoDouleDialogClickListener() {
                     @Override
-                    public void onClick(DialogInterface dialog, int which) {
+                    protected void onNoDoubleClick(DialogInterface dialog, int which) {
                         DataProcessor dp = new DataProcessor(HomeActivity.this);
                         dp.saveData("uid", "");
                         Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
                         intent.putExtra("opts_o", opts_o);
                         intent.putExtra("opts_t", opts_t);
                         startActivity(intent);
-                        finish();
+                        HomeActivity.this.finish();
                     }
                 }).setNegativeButton("再想想", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
@@ -423,35 +453,32 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_home, menu);
         feedbackMenuItem = menu.findItem(R.id.action_feedback);
-        feedbackMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+        feedbackMenuItem.setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
             @Override
-            public boolean onMenuItemClick(MenuItem item) {
+            protected void onNoDoubleClick(MenuItem item) {
                 Intent intent = new Intent(HomeActivity.this, FeedbackActivity.class);
                 intent.putExtra("opts_o", opts_o);
                 intent.putExtra("uid", UID);
                 startActivity(intent);
-                return true;
             }
         });
         feedbackMenuItem.setVisible(false);
         updateMenuItem = menu.findItem(R.id.action_update);
-        updateMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+        updateMenuItem.setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
             @Override
-            public boolean onMenuItemClick(MenuItem item) {
+            protected void onNoDoubleClick(MenuItem item) {
                 handCheckUpdate();
-                return true;
             }
         });
         updateMenuItem.setVisible(false);
         searchMenuItem = menu.findItem(R.id.action_search);
-        searchMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+        searchMenuItem.setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
             @Override
-            public boolean onMenuItemClick(MenuItem item) {
+            protected void onNoDoubleClick(MenuItem item) {
                 Intent intent = new Intent(HomeActivity.this, SearchActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("opts_o", opts_o);
                 startActivity(intent);
-                return true;
             }
         });
         searchMenuItem.setVisible(true);

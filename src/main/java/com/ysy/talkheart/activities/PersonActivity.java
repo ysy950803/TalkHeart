@@ -21,6 +21,8 @@ import android.widget.Toast;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
+import com.ysy.talkheart.utils.NoDoubleViewClickListener;
+import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
 
 public class PersonActivity extends AppCompatActivity {
 
@@ -53,6 +55,7 @@ public class PersonActivity extends AppCompatActivity {
     private String UID_L = "0";
     private String UID_H = "0";
     private String[] opts_o;
+    private boolean isCanClick = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,9 +79,11 @@ public class PersonActivity extends AppCompatActivity {
         opts_o = getIntent().getExtras().getStringArray("opts_o");
         E_UID = getIntent().getExtras().getString("e_uid");
         UID = getIntent().getExtras().getString("uid");
+        SEX = getIntent().getExtras().getString("sex", "1");
         UID_L = Integer.parseInt(E_UID) < Integer.parseInt(UID) ? E_UID : UID;
         UID_H = Integer.parseInt(E_UID) > Integer.parseInt(UID) ? E_UID : UID;
         isSelf = E_UID.equals(UID);
+        isEmptyRelation = true;
     }
 
     private void initView() {
@@ -95,19 +100,20 @@ public class PersonActivity extends AppCompatActivity {
         schoolTv = (TextView) findViewById(R.id.person_school_tv);
         birthdayTv = (TextView) findViewById(R.id.person_birthday_tv);
         watchFab.setVisibility(isSelf ? View.GONE : View.VISIBLE);
+        avatarImg.setImageResource(SEX.equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
     }
 
     private void clickListener() {
-        watchFab.setOnClickListener(new View.OnClickListener() {
+        watchFab.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 watchHimOrHer();
             }
         });
 
-        activeNumLayout.setOnClickListener(new View.OnClickListener() {
+        activeNumLayout.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 Intent intent = new Intent(PersonActivity.this, ActiveActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", E_UID);
@@ -122,9 +128,9 @@ public class PersonActivity extends AppCompatActivity {
             }
         });
 
-        watchNumLayout.setOnClickListener(new View.OnClickListener() {
+        watchNumLayout.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 Intent intent = new Intent(PersonActivity.this, WatchActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", E_UID);
@@ -138,9 +144,9 @@ public class PersonActivity extends AppCompatActivity {
             }
         });
 
-        fansNumLayout.setOnClickListener(new View.OnClickListener() {
+        fansNumLayout.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
-            public void onClick(View v) {
+            protected void onNoDoubleClick(View v) {
                 Intent intent = new Intent(PersonActivity.this, FansActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", E_UID);
@@ -153,8 +159,6 @@ public class PersonActivity extends AppCompatActivity {
                 }
             }
         });
-
-        setClickable(false);
     }
 
     private boolean watchHimOrHer() {
@@ -168,129 +172,143 @@ public class PersonActivity extends AppCompatActivity {
     }
 
     private void connectToWatch(final String uid_l, final String uid_h) {
+        watchFab.setClickable(false);
         new Thread(new Runnable() {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
                 if (dbP.getConn(opts_o) == null) {
-                    personHandler.post(timeOutRunnable);
+                    personHandler.post(timeOutFabRunnable);
                 } else {
-                    if (!isEmptyRelation) {
-                        switch (RELATION) {
-                            case "1":
-                                if (uid_l.equals(E_UID)) {
-                                    RELATION = "0";
-                                    int res = dbP.update("update user_relation set relation = " + RELATION +
-                                            " where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                    if (res == 1) {
-                                        dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid_l);
-                                        dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + uid_h);
-                                        personHandler.post(nothingRunnable);
-                                    } else
-                                        personHandler.post(serverErrorRunnable);
-                                } else {
-                                    RELATION = "2";
-                                    int res = dbP.update("update user_relation set relation = " + RELATION +
-                                            " where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                    if (res == 1) {
-                                        dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_h);
-                                        dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_l);
-                                        personHandler.post(eachRunnable);
-                                    } else
-                                        personHandler.post(serverErrorRunnable);
-                                }
-                                break;
-                            case "-1":
-                                if (uid_l.equals(E_UID)) {
-                                    RELATION = "2";
-                                    int res1 = dbP.update("update user_relation set relation = " + RELATION +
-                                            " where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                    if (res1 == 1) {
-                                        dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_l);
-                                        dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_h);
-                                        personHandler.post(eachRunnable);
-                                    } else
-                                        personHandler.post(serverErrorRunnable);
-                                } else {
-                                    RELATION = "0";
-                                    int res1 = dbP.update("update user_relation set relation = " + RELATION +
-                                            " where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                    if (res1 == 1) {
-                                        dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid_h);
-                                        dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + uid_l);
-                                        personHandler.post(nothingRunnable);
-                                    } else
-                                        personHandler.post(serverErrorRunnable);
-                                }
-                                break;
-                            case "2":
-                                if (uid_l.equals(E_UID)) {
-                                    RELATION = "-1";
-                                    int res2 = dbP.update("update user_relation set relation = " + RELATION +
-                                            " where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                    if (res2 == 1) {
-                                        dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid_l);
-                                        dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + uid_h);
-                                        personHandler.post(unWatchRunnable);
-                                    } else
-                                        personHandler.post(serverErrorRunnable);
-                                } else {
-                                    RELATION = "1";
-                                    int res2 = dbP.update("update user_relation set relation = " + RELATION +
-                                            " where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                    if (res2 == 1) {
-                                        dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid_h);
-                                        dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + uid_l);
-                                        personHandler.post(unWatchRunnable);
-                                    } else
-                                        personHandler.post(serverErrorRunnable);
-                                }
-                                break;
-                            case "0":
-                                if (uid_l.equals(E_UID)) {
-                                    RELATION = "1";
-                                    int res3 = dbP.update("update user_relation set relation = " + RELATION +
-                                            " where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                    if (res3 == 1) {
-                                        dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_l);
-                                        dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_h);
-                                        personHandler.post(watchRunnable);
-                                    } else
-                                        personHandler.post(serverErrorRunnable);
-                                } else {
-                                    RELATION = "-1";
-                                    int res3 = dbP.update("update user_relation set relation = " + RELATION +
-                                            " where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                    if (res3 == 1) {
-                                        dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_h);
-                                        dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_l);
-                                        personHandler.post(watchRunnable);
-                                    } else
-                                        personHandler.post(serverErrorRunnable);
-                                }
-                                break;
+                    String[] relation = dbP.relationSelect(
+                            "select uid_a, uid_b, relation from user_relation where uid_a = " + UID_L + " and uid_b = " + UID_H
+                    );
+                    if (relation[0] != null && relation[0].equals("-2"))
+                        personHandler.post(serverErrorRunnable);
+                    else {
+                        if (relation[0] == null)
+                            isEmptyRelation = true;
+                        else {
+                            isEmptyRelation = false;
+                            RELATION = relation[2];
                         }
-                    } else {
-                        if (uid_l.equals(E_UID)) {
-                            int res = dbP.insert("insert into user_relation values(" + uid_l + ", " + uid_h + ", 1)");
-                            if (res == 1) {
-                                isEmptyRelation = false;
-                                RELATION = "1";
-                                dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_l);
-                                dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_h);
-                                personHandler.post(watchRunnable);
-                            } else
-                                personHandler.post(serverErrorRunnable);
+                        if (!isEmptyRelation) {
+                            switch (RELATION) {
+                                case "1":
+                                    if (uid_l.equals(E_UID)) {
+                                        RELATION = "0";
+                                        int res = dbP.update("update user_relation set relation = " + RELATION +
+                                                " where uid_a = " + uid_l + " and uid_b = " + uid_h);
+                                        if (res == 1) {
+                                            dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid_l);
+                                            dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + uid_h);
+                                            personHandler.post(nothingRunnable);
+                                        } else
+                                            personHandler.post(serverErrorFabRunnable);
+                                    } else {
+                                        RELATION = "2";
+                                        int res = dbP.update("update user_relation set relation = " + RELATION +
+                                                " where uid_a = " + uid_l + " and uid_b = " + uid_h);
+                                        if (res == 1) {
+                                            dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_h);
+                                            dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_l);
+                                            personHandler.post(eachRunnable);
+                                        } else
+                                            personHandler.post(serverErrorFabRunnable);
+                                    }
+                                    break;
+                                case "-1":
+                                    if (uid_l.equals(E_UID)) {
+                                        RELATION = "2";
+                                        int res1 = dbP.update("update user_relation set relation = " + RELATION +
+                                                " where uid_a = " + uid_l + " and uid_b = " + uid_h);
+                                        if (res1 == 1) {
+                                            dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_l);
+                                            dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_h);
+                                            personHandler.post(eachRunnable);
+                                        } else
+                                            personHandler.post(serverErrorFabRunnable);
+                                    } else {
+                                        RELATION = "0";
+                                        int res1 = dbP.update("update user_relation set relation = " + RELATION +
+                                                " where uid_a = " + uid_l + " and uid_b = " + uid_h);
+                                        if (res1 == 1) {
+                                            dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid_h);
+                                            dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + uid_l);
+                                            personHandler.post(nothingRunnable);
+                                        } else
+                                            personHandler.post(serverErrorFabRunnable);
+                                    }
+                                    break;
+                                case "2":
+                                    if (uid_l.equals(E_UID)) {
+                                        RELATION = "-1";
+                                        int res2 = dbP.update("update user_relation set relation = " + RELATION +
+                                                " where uid_a = " + uid_l + " and uid_b = " + uid_h);
+                                        if (res2 == 1) {
+                                            dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid_l);
+                                            dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + uid_h);
+                                            personHandler.post(unWatchRunnable);
+                                        } else
+                                            personHandler.post(serverErrorFabRunnable);
+                                    } else {
+                                        RELATION = "1";
+                                        int res2 = dbP.update("update user_relation set relation = " + RELATION +
+                                                " where uid_a = " + uid_l + " and uid_b = " + uid_h);
+                                        if (res2 == 1) {
+                                            dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid_h);
+                                            dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + uid_l);
+                                            personHandler.post(unWatchRunnable);
+                                        } else
+                                            personHandler.post(serverErrorRunnable);
+                                    }
+                                    break;
+                                case "0":
+                                    if (uid_l.equals(E_UID)) {
+                                        RELATION = "1";
+                                        int res3 = dbP.update("update user_relation set relation = " + RELATION +
+                                                " where uid_a = " + uid_l + " and uid_b = " + uid_h);
+                                        if (res3 == 1) {
+                                            dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_l);
+                                            dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_h);
+                                            personHandler.post(watchRunnable);
+                                        } else
+                                            personHandler.post(serverErrorFabRunnable);
+                                    } else {
+                                        RELATION = "-1";
+                                        int res3 = dbP.update("update user_relation set relation = " + RELATION +
+                                                " where uid_a = " + uid_l + " and uid_b = " + uid_h);
+                                        if (res3 == 1) {
+                                            dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_h);
+                                            dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_l);
+                                            personHandler.post(watchRunnable);
+                                        } else
+                                            personHandler.post(serverErrorFabRunnable);
+                                    }
+                                    break;
+                            }
                         } else {
-                            int res = dbP.insert("insert into user_relation values(" + uid_l + ", " + uid_h + ", -1)");
-                            if (res == 1) {
-                                isEmptyRelation = false;
-                                RELATION = "1";
-                                dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_h);
-                                dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_l);
-                                personHandler.post(watchRunnable);
-                            } else
-                                personHandler.post(serverErrorRunnable);
+                            if (uid_l.equals(E_UID)) {
+                                int res = dbP.insert("insert into user_relation values(" + uid_l + ", " + uid_h + ", 1)");
+                                if (res == 1) {
+                                    isEmptyRelation = false;
+                                    RELATION = "1";
+                                    dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_l);
+                                    dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_h);
+                                    personHandler.post(watchRunnable);
+                                } else
+                                    personHandler.post(serverErrorFabRunnable);
+                            } else {
+                                int res = dbP.insert("insert into user_relation values(" + uid_l + ", " + uid_h + ", -1)");
+                                if (res == 1) {
+                                    isEmptyRelation = false;
+                                    RELATION = "-1";
+                                    dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_h);
+                                    dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_l);
+                                    personHandler.post(watchRunnable);
+                                } else
+                                    personHandler.post(serverErrorFabRunnable);
+                            }
                         }
                     }
                 }
@@ -300,6 +318,7 @@ public class PersonActivity extends AppCompatActivity {
     }
 
     private void connectToGetPersonInfo() {
+        setClickable(false);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -366,6 +385,7 @@ public class PersonActivity extends AppCompatActivity {
         public void run() {
             watchFab.setImageResource(R.mipmap.ic_watch_blue_pink_36dp);
             Toast.makeText(PersonActivity.this, "成功关注Ta", Toast.LENGTH_SHORT).show();
+            connectToGetPersonInfo();
         }
     };
 
@@ -374,6 +394,7 @@ public class PersonActivity extends AppCompatActivity {
         public void run() {
             watchFab.setImageResource(R.mipmap.ic_fans_pink_blue_36dp);
             Toast.makeText(PersonActivity.this, "成功取消关注", Toast.LENGTH_SHORT).show();
+            connectToGetPersonInfo();
         }
     };
 
@@ -382,6 +403,7 @@ public class PersonActivity extends AppCompatActivity {
         public void run() {
             watchFab.setImageResource(R.mipmap.ic_nothing_blue_36dp);
             Toast.makeText(PersonActivity.this, "你们俩不再有关系啦", Toast.LENGTH_SHORT).show();
+            connectToGetPersonInfo();
         }
     };
 
@@ -390,6 +412,7 @@ public class PersonActivity extends AppCompatActivity {
         public void run() {
             watchFab.setImageResource(R.mipmap.ic_each_other_pink_36dp);
             Toast.makeText(PersonActivity.this, "你们俩互相关注啦", Toast.LENGTH_SHORT).show();
+            connectToGetPersonInfo();
         }
     };
 
@@ -439,10 +462,26 @@ public class PersonActivity extends AppCompatActivity {
         }
     };
 
+    private Runnable serverErrorFabRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(PersonActivity.this, "服务器君生病了，请重试", Toast.LENGTH_SHORT).show();
+            watchFab.setClickable(true);
+        }
+    };
+
     private Runnable timeOutRunnable = new Runnable() {
         @Override
         public void run() {
             Toast.makeText(PersonActivity.this, "连接超时啦，返回重试吧", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    private Runnable timeOutFabRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Toast.makeText(PersonActivity.this, "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
+            watchFab.setClickable(true);
         }
     };
 
@@ -459,6 +498,9 @@ public class PersonActivity extends AppCompatActivity {
     }
 
     private void setClickable(boolean isAble) {
+        isCanClick = isAble;
+        if (watchFab.getVisibility() == View.VISIBLE)
+            watchFab.setClickable(isAble);
         activeNumLayout.setClickable(isAble);
         watchNumLayout.setClickable(isAble);
         fansNumLayout.setClickable(isAble);
@@ -468,18 +510,20 @@ public class PersonActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_person, menu);
         MenuItem modifyMenuItem = menu.findItem(R.id.action_modify);
-        modifyMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+        modifyMenuItem.setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
             @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                Intent intent = new Intent(PersonActivity.this, ModifyActivity.class);
-                intent.putExtra("uid", E_UID);
-                intent.putExtra("school", SCHOOL.equals("未设置院校") ? "" : SCHOOL);
-                intent.putExtra("nickname", NICKNAME);
-                intent.putExtra("sex", Integer.parseInt(SEX));
-                intent.putExtra("birthday", BIRTHDAY);
-                intent.putExtra("opts_o", opts_o);
-                startActivity(intent);
-                return true;
+            protected void onNoDoubleClick(MenuItem item) {
+                if (isCanClick) {
+                    Intent intent = new Intent(PersonActivity.this, ModifyActivity.class);
+                    intent.putExtra("uid", E_UID);
+                    intent.putExtra("school", SCHOOL.equals("未设置院校") ? "" : SCHOOL);
+                    intent.putExtra("nickname", NICKNAME);
+                    intent.putExtra("sex", Integer.parseInt(SEX));
+                    intent.putExtra("birthday", BIRTHDAY);
+                    intent.putExtra("opts_o", opts_o);
+                    startActivity(intent);
+                } else
+                    Toast.makeText(PersonActivity.this, "请稍等，正在加载哦", Toast.LENGTH_SHORT).show();
             }
         });
         modifyMenuItem.setVisible(isSelf);

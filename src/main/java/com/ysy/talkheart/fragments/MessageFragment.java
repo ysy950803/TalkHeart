@@ -42,7 +42,7 @@ public class MessageFragment extends StatedFragment {
     private List<String> quoteList = new ArrayList<>();
     private List<String> actidList = new ArrayList<>();
     private List<String> cmtidList = new ArrayList<>();
-    private List<String> uidpList = new ArrayList<>();
+    private List<String> uidPList = new ArrayList<>();
     private MessageListViewAdapter listViewAdapter;
     private boolean isRefreshing = false;
     private Handler msgHandler;
@@ -199,7 +199,7 @@ public class MessageFragment extends StatedFragment {
                                 nicknameList.add(cmtList.get(2).get(i));
                                 timeList.add(cmtList.get(3).get(i).substring(0, 19));
                                 actidList.add(cmtList.get(6).get(i));
-                                uidpList.add(cmtList.get(7).get(i));
+                                uidPList.add(cmtList.get(7).get(i));
 
                                 String flag = cmtList.get(0).get(i);
                                 switch (flag) {
@@ -247,17 +247,18 @@ public class MessageFragment extends StatedFragment {
 
     public void reply(int position) {
         Intent intent = new Intent(getActivity(), ReplyActivity.class);
-        intent.putExtra("uid", uidpList.get(position));
+        intent.putExtra("uid", uidPList.get(position));
         intent.putExtra("e_uid", UID);
         intent.putExtra("actid", actidList.get(position));
         intent.putExtra("cmtid", cmtidList.get(position));
         intent.putExtra("opts_o", opts_o);
+        intent.putExtra("nickname_p", nicknameList.get(position));
         startActivity(intent);
     }
 
     public void openComment(int position) {
         Intent intent = new Intent(getActivity(), CommentActivity.class);
-        intent.putExtra("uid", uidpList.get(position));
+        intent.putExtra("uid", uidPList.get(position));
         intent.putExtra("e_uid", UID);
         intent.putExtra("actid", actidList.get(position));
         intent.putExtra("opts_o", opts_o);
@@ -266,7 +267,7 @@ public class MessageFragment extends StatedFragment {
 
     public void openPerson(int position) {
         Intent intent = new Intent(getActivity(), PersonActivity.class);
-        intent.putExtra("uid", uidpList.get(position));
+        intent.putExtra("uid", uidPList.get(position));
         intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
         intent.putExtra("nickname", nicknameList.get(position));
         intent.putExtra("e_uid", UID);
@@ -282,7 +283,7 @@ public class MessageFragment extends StatedFragment {
         cmtidList.clear();
         actidList.clear();
         quoteList.clear();
-        uidpList.clear();
+        uidPList.clear();
         nicknameList.clear();
     }
 
@@ -298,7 +299,7 @@ public class MessageFragment extends StatedFragment {
 //        String cmtid_temp = cmtidList.get(low);
 //        String actid_temp = actidList.get(low);
 //        String quote_temp = quoteList.get(low);
-//        String uidp_temp = uidpList.get(low);
+//        String uidp_temp = uidPList.get(low);
 //        String nickname_temp = nicknameList.get(low);
 //
 //        while (low < high) {
@@ -311,7 +312,7 @@ public class MessageFragment extends StatedFragment {
 //            cmtidList.set(low, cmtidList.get(high));
 //            actidList.set(low, actidList.get(high));
 //            quoteList.set(low, quoteList.get(high));
-//            uidpList.set(low, uidpList.get(high));
+//            uidPList.set(low, uidPList.get(high));
 //            nicknameList.set(low, nicknameList.get(high));
 //
 //            while (low < high && timeList.get(low).compareTo(time_temp) > 0)
@@ -323,7 +324,7 @@ public class MessageFragment extends StatedFragment {
 //            cmtidList.set(high, cmtidList.get(low));
 //            actidList.set(high, actidList.get(low));
 //            quoteList.set(high, quoteList.get(low));
-//            uidpList.set(high, uidpList.get(low));
+//            uidPList.set(high, uidPList.get(low));
 //            nicknameList.set(high, nicknameList.get(low));
 //        }
 //        timeList.set(low, time_temp);
@@ -333,7 +334,7 @@ public class MessageFragment extends StatedFragment {
 //        cmtidList.set(low, cmtid_temp);
 //        actidList.set(low, actid_temp);
 //        quoteList.set(low, quote_temp);
-//        uidpList.set(low, uidp_temp);
+//        uidPList.set(low, uidp_temp);
 //        nicknameList.set(low, nickname_temp);
 //        return low;
 //    }
