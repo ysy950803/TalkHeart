@@ -1,13 +1,18 @@
 package com.ysy.talkheart.fragments;
 
 import android.app.ActivityOptions;
-import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AppCompatDelegate;
+import android.support.v7.widget.AppCompatEditText;
+import android.support.v7.widget.CardView;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -15,6 +20,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,24 +30,30 @@ import com.ysy.talkheart.activities.ActiveActivity;
 import com.ysy.talkheart.activities.DraftActivity;
 import com.ysy.talkheart.activities.FansActivity;
 import com.ysy.talkheart.activities.HomeActivity;
-import com.ysy.talkheart.activities.LoginActivity;
 import com.ysy.talkheart.activities.MarkActivity;
 import com.ysy.talkheart.activities.PersonActivity;
 import com.ysy.talkheart.activities.WatchActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
-import com.ysy.talkheart.utils.DataCleanManager;
 import com.ysy.talkheart.utils.DataProcessor;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 import com.ysy.talkheart.utils.ViewTurnAnimation;
 import com.ysy.talkheart.views.CircularImageView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Shengyu Yao on 2016/11/22.
  */
 
 public class MeFragment extends StatedFragment {
+
+    private List<TextView> tvList = new ArrayList<>();
+    private List<TextView> tipTvList = new ArrayList<>();
+    private List<CardView> cardList = new ArrayList<>();
+    private List<View> viewList = new ArrayList<>();
 
     private CircularImageView avatarImg;
     private TextView nicknameTv;
@@ -54,11 +66,13 @@ public class MeFragment extends StatedFragment {
     private TextView introductionTv;
     private LinearLayout markLayout;
     private LinearLayout draftLayout;
-    private LinearLayout clearLayout;
+    private LinearLayout dayNightLayout;
     private LinearLayout exitLayout;
     private LinearLayout introInputLayout;
-    private EditText introEdt;
+    private AppCompatEditText introEdt;
     private ImageView introDoneImg;
+    private TextView nightTv;
+    private TextView dayTv;
     private String NICKNAME = "加载中…";
     private String INTRODUCTION = "加载中…";
     private String SEX = "1";
@@ -118,6 +132,15 @@ public class MeFragment extends StatedFragment {
     }
 
     private void initView(View view) {
+        CardView mainInfoCard = (CardView) view.findViewById(R.id.me_main_info_card);
+        CardView introCard = (CardView) view.findViewById(R.id.me_introduction_card);
+        CardView othersCard = (CardView) view.findViewById(R.id.me_others_card);
+        CardView lastCard = (CardView) view.findViewById(R.id.me_last_card);
+        TextView activeTv = (TextView) view.findViewById(R.id.me_active_tv);
+        TextView watchTv = (TextView) view.findViewById(R.id.me_watch_tv);
+        TextView fansTv = (TextView) view.findViewById(R.id.me_fans_tv);
+        TextView markTv = (TextView) view.findViewById(R.id.me_mark_tv);
+        TextView draftTv = (TextView) view.findViewById(R.id.me_draft_tv);
         refreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.me_refresh_layout);
         avatarImg = (CircularImageView) view.findViewById(R.id.me_avatar_img);
         nicknameTv = (TextView) view.findViewById(R.id.me_nickname_tv);
@@ -130,11 +153,37 @@ public class MeFragment extends StatedFragment {
         introductionTv = (TextView) view.findViewById(R.id.me_introduction_tv);
         markLayout = (LinearLayout) view.findViewById(R.id.me_mark_layout);
         draftLayout = (LinearLayout) view.findViewById(R.id.me_draft_layout);
-        clearLayout = (LinearLayout) view.findViewById(R.id.me_clear_layout);
+        dayNightLayout = (LinearLayout) view.findViewById(R.id.me_day_night_layout);
         exitLayout = (LinearLayout) view.findViewById(R.id.me_exit_layout);
         introInputLayout = (LinearLayout) view.findViewById(R.id.me_intro_input_layout);
-        introEdt = (EditText) view.findViewById(R.id.me_intro_edt);
+        introEdt = (AppCompatEditText) view.findViewById(R.id.me_intro_edt);
         introDoneImg = (ImageView) view.findViewById(R.id.me_intro_done_img);
+        nightTv = (TextView) view.findViewById(R.id.me_night_tv);
+        dayTv = (TextView) view.findViewById(R.id.me_day_tv);
+        View divOthers = view.findViewById(R.id.me_div_others);
+        View divLast = view.findViewById(R.id.me_div_last);
+
+        tvList.add(nicknameTv);
+        tvList.add(introductionTv);
+        tvList.add(activeNumTv);
+        tvList.add(watchNumTv);
+        tvList.add(fansNumTv);
+        tvList.add(markTv);
+        tvList.add(draftTv);
+        tvList.add(nightTv);
+        tvList.add(dayTv);
+
+        tipTvList.add(activeTv);
+        tipTvList.add(watchTv);
+        tipTvList.add(fansTv);
+
+        cardList.add(mainInfoCard);
+        cardList.add(introCard);
+        cardList.add(othersCard);
+        cardList.add(lastCard);
+
+        viewList.add(divOthers);
+        viewList.add(divLast);
 
         introInputLayout.setVisibility(View.GONE);
         introductionTv.setVisibility(View.VISIBLE);
@@ -227,11 +276,11 @@ public class MeFragment extends StatedFragment {
             }
         });
 
-        final ViewTurnAnimation animation = new ViewTurnAnimation(introductionTv, introInputLayout);
+        final ViewTurnAnimation anim_intro = new ViewTurnAnimation(introductionTv, introInputLayout);
         introductionTv.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
             protected void onNoDoubleClick(View v) {
-                introductionTv.startAnimation(animation.getSATo(0));
+                introductionTv.startAnimation(anim_intro.getSATo(0));
                 introEdt.setText(introductionTv.getText().toString().equals("点击设置签名") ? "" : introductionTv.getText().toString());
                 introEdt.requestFocus();
             }
@@ -240,7 +289,7 @@ public class MeFragment extends StatedFragment {
         introDoneImg.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
             protected void onNoDoubleClick(View v) {
-                introInputLayout.startAnimation(animation.getSATo(0));
+                introInputLayout.startAnimation(anim_intro.getSATo(0));
                 String intro = introEdt.getText().toString();
                 if (intro.length() > 24) {
                     Toast.makeText(context, "签名不能超过24个字符哦", Toast.LENGTH_SHORT).show();
@@ -281,10 +330,22 @@ public class MeFragment extends StatedFragment {
             }
         });
 
-        clearLayout.setOnClickListener(new NoDoubleViewClickListener() {
+        final ViewTurnAnimation anim_day_night;
+        DataProcessor dP = new DataProcessor(context);
+        if (dP.readIntData("day_night") == 1)
+            anim_day_night = new ViewTurnAnimation(dayTv, nightTv);
+        else
+            anim_day_night = new ViewTurnAnimation(nightTv, dayTv);
+        dayNightLayout.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
             protected void onNoDoubleClick(View v) {
-                clearCache();
+                if (nightTv.getVisibility() == View.VISIBLE) {
+                    nightTv.startAnimation(anim_day_night.getSATo(0));
+                    context.toggleDayNightMode();
+                } else {
+                    dayTv.startAnimation(anim_day_night.getSATo(0));
+                    context.toggleDayNightMode();
+                }
             }
         });
 
@@ -398,19 +459,6 @@ public class MeFragment extends StatedFragment {
         avatarImg.setClickable(isAble);
     }
 
-    private void clearCache() {
-        String cache_str = getString(R.string.me_draft_clear_cache);
-        try {
-            if (!cache_str.equals(DataCleanManager.getTotalCacheSize(getActivity()))) {
-                cache_str = "成功清理" + DataCleanManager.getTotalCacheSize(getActivity()) + "缓存";
-                DataCleanManager.clearAllCache(getContext());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Toast.makeText(getActivity(), cache_str, Toast.LENGTH_SHORT).show();
-    }
-
     private Runnable successRunnable = new Runnable() {
         @Override
         public void run() {
@@ -451,6 +499,35 @@ public class MeFragment extends StatedFragment {
                 Toast.makeText(getActivity(), "连接超时啦，重试一下吧", Toast.LENGTH_SHORT).show();
         }
     };
+
+    public void refreshFragmentUI() {
+        TypedValue typedValue = new TypedValue();
+        Resources.Theme theme = context.getTheme();
+        Resources res = getResources();
+
+        theme.resolveAttribute(R.attr.colorDivider, typedValue, true);
+        for (View view : viewList)
+            view.setBackgroundResource(typedValue.resourceId);
+
+        theme.resolveAttribute(R.attr.colorEdtText, typedValue, true);
+        introEdt.setTextColor(res.getColor(typedValue.resourceId));
+        theme.resolveAttribute(R.attr.colorHint, typedValue, true);
+        introEdt.setHintTextColor(res.getColor(typedValue.resourceId));
+        theme.resolveAttribute(R.attr.colorAccent, typedValue, true);
+        introEdt.setSupportBackgroundTintList(ColorStateList.valueOf(res.getColor(typedValue.resourceId)));
+
+        theme.resolveAttribute(R.attr.colorPlainText, typedValue, true);
+        for (TextView textView : tvList)
+            textView.setTextColor(res.getColor(typedValue.resourceId));
+
+        theme.resolveAttribute(R.attr.colorTipText, typedValue, true);
+        for (TextView textView : tipTvList)
+            textView.setTextColor(res.getColor(typedValue.resourceId));
+
+        theme.resolveAttribute(R.attr.colorPlaintViewBG, typedValue, true);
+        for (CardView cardView : cardList)
+            cardView.setCardBackgroundColor(res.getColor(typedValue.resourceId));
+    }
 
     @Override
     protected void onSaveState(Bundle outState) {

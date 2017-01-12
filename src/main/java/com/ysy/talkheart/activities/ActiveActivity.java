@@ -6,7 +6,6 @@ import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -16,6 +15,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.bases.DayNightActivity;
 import com.ysy.talkheart.adapters.MeActiveListViewAdapter;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.utils.ConnectionDetector;
@@ -25,7 +25,7 @@ import com.ysy.talkheart.utils.NoDouleDialogClickListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ActiveActivity extends AppCompatActivity {
+public class ActiveActivity extends DayNightActivity {
 
     private List<Integer> avatarList = new ArrayList<>();
     private List<String> nicknameList = new ArrayList<>();

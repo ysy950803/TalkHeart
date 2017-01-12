@@ -9,7 +9,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -18,6 +17,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.bases.DayNightActivity;
 import com.ysy.talkheart.adapters.CommentListViewAdapter;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
@@ -29,7 +29,7 @@ import com.ysy.talkheart.utils.RecyclerViewScrollListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CommentActivity extends AppCompatActivity {
+public class CommentActivity extends DayNightActivity {
 
     private String ACT_ID;
     private String UID;

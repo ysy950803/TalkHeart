@@ -3,7 +3,6 @@ package com.ysy.talkheart.activities;
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
 import android.os.Handler;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.CompoundButton;
@@ -15,11 +14,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.bases.DayNightFullScreenActivity;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 
-public class RegisterActivity extends AppCompatActivity {
+public class RegisterActivity extends DayNightFullScreenActivity {
 
     private ImageView backImg;
     private ImageView doneImg;

@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -16,6 +15,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.bases.DayNightNoActionBarActivity;
 import com.ysy.talkheart.adapters.SearchUserListViewAdapter;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
@@ -26,7 +26,7 @@ import com.ysy.talkheart.utils.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SearchActivity extends AppCompatActivity {
+public class SearchActivity extends DayNightNoActionBarActivity {
 
     private EditText searchEdt;
     private ImageView searchImg;

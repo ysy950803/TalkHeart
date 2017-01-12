@@ -5,7 +5,6 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
@@ -15,13 +14,14 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.bases.DayNightFullScreenActivity;
 import com.ysy.talkheart.utils.ActivitiesDestroyer;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.DataProcessor;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends DayNightFullScreenActivity {
 
     private ImageView loginImg;
     private EditText userEdt;

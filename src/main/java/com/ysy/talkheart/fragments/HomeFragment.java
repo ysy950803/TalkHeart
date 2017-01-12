@@ -2,18 +2,22 @@ package com.ysy.talkheart.fragments;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
@@ -30,6 +34,9 @@ import com.ysy.talkheart.adapters.HomeActiveListViewAdapter;
 import com.ysy.talkheart.utils.NoDouleDialogClickListener;
 import com.ysy.talkheart.utils.RecyclerViewScrollListener;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +46,7 @@ import java.util.List;
 
 public class HomeFragment extends StatedFragment {
 
+    private RecyclerView activeRecyclerView;
     private SwipeRefreshLayout refreshLayout;
     private List<Integer> avatarList = new ArrayList<>();
     private List<String> nicknameList = new ArrayList<>();
@@ -103,13 +111,13 @@ public class HomeFragment extends StatedFragment {
         final FloatingActionButton addFab = context.getAddFab();
         final BottomNavigationBar navigationBar = context.getBottomNavigationBar();
 
-        RecyclerView activeRecyclerView = (RecyclerView) view.findViewById(R.id.home_active_listView);
+        activeRecyclerView = (RecyclerView) view.findViewById(R.id.home_active_listView);
         activeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         RecyclerViewScrollListener scrollListener = new RecyclerViewScrollListener() {
             @Override
             public void onScrollUp() {
                 addFab.hide();
-                navigationBar.hide();
+                navigationBar.hide(false);
             }
 
             @Override
@@ -490,6 +498,43 @@ public class HomeFragment extends StatedFragment {
             Toast.makeText(getActivity(), "心连心不易断，请刷新重试", Toast.LENGTH_SHORT).show();
         }
     };
+
+    public void refreshFragmentUI() {
+        TypedValue typedValue = new TypedValue();
+        Resources.Theme theme = context.getTheme();
+        Resources res = getResources();
+        int childCount = activeRecyclerView.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            theme.resolveAttribute(R.attr.colorPlaintViewBG, typedValue, true);
+            CardView childView = (CardView) activeRecyclerView.getChildAt(i);
+            childView.setCardBackgroundColor(res.getColor(typedValue.resourceId));
+
+            theme.resolveAttribute(R.attr.colorName, typedValue, true);
+            TextView tv = (TextView) childView.findViewById(R.id.home_active_nickname_tv);
+            tv.setTextColor(res.getColor(typedValue.resourceId));
+
+            theme.resolveAttribute(R.attr.colorPlainText, typedValue, true);
+            tv = (TextView) childView.findViewById(R.id.home_active_time_tv);
+            tv.setTextColor(res.getColor(typedValue.resourceId));
+            tv = (TextView) childView.findViewById(R.id.home_active_text_tv);
+            tv.setTextColor(res.getColor(typedValue.resourceId));
+            tv = (TextView) childView.findViewById(R.id.home_active_good_num_tv);
+            tv.setTextColor(res.getColor(typedValue.resourceId));
+        }
+
+        Class<RecyclerView> recyclerViewClass = RecyclerView.class;
+        try {
+            Field declaredField = recyclerViewClass.getDeclaredField("mRecycler");
+            declaredField.setAccessible(true);
+            Method declaredMethod = Class.forName(RecyclerView.Recycler.class.getName()).getDeclaredMethod("a"); // "clear"
+            declaredMethod.setAccessible(true);
+            declaredMethod.invoke(declaredField.get(activeRecyclerView));
+            RecyclerView.RecycledViewPool recycledViewPool = activeRecyclerView.getRecycledViewPool();
+            recycledViewPool.clear();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     protected void onSaveState(Bundle outState) {

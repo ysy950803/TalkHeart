@@ -6,6 +6,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
+import android.content.res.Resources;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
@@ -13,31 +16,36 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.ashokvarma.bottomnavigation.BottomNavigationItem;
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.bases.DayNightActivity;
+import com.ysy.talkheart.bases.GlobalApp;
 import com.ysy.talkheart.fragments.HomeFragment;
 import com.ysy.talkheart.fragments.MeFragment;
 import com.ysy.talkheart.fragments.MessageFragment;
 import com.ysy.talkheart.utils.ActivitiesDestroyer;
 import com.ysy.talkheart.utils.DBProcessor;
+import com.ysy.talkheart.utils.DataCleanManager;
 import com.ysy.talkheart.utils.DataProcessor;
 import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.utils.NoDouleDialogClickListener;
 import com.ysy.talkheart.utils.UpdateChecker;
 
-public class HomeActivity extends AppCompatActivity implements BottomNavigationBar.OnTabSelectedListener {
+public class HomeActivity extends DayNightActivity implements BottomNavigationBar.OnTabSelectedListener {
 
+    private RelativeLayout homeLayout;
     private HomeFragment homeFragment;
     private MessageFragment messageFragment;
     private MeFragment meFragment;
@@ -46,6 +54,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     private MenuItem feedbackMenuItem;
     private MenuItem updateMenuItem;
     private MenuItem searchMenuItem;
+    private MenuItem clearMenuItem;
     private Handler homeHandler;
     private String UPDATE_URL = "";
     private static final int MSG_REFRESH_TIME = 24 * 1024;
@@ -55,6 +64,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     private ImageView msgUnreadImg;
     private String UID;
     private boolean isSeen = false;
+    private Resources.Theme theme;
     private int isRead = 1;
     private long backTime;
     private String[] opts_o;
@@ -65,9 +75,8 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-        actionBar = getSupportActionBar();
         ActivitiesDestroyer.getInstance().killAll();
-        ActivitiesDestroyer.getInstance().addActivity(this);
+        actionBar = getSupportActionBar();
         initData();
         initView();
         homeHandler = new Handler();
@@ -77,9 +86,10 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     @Override
     protected void onResume() {
         homeHandler.post(msgRefreshRunnable);
-        if (meFragment != null && meFragment.isAdded() && !meFragment.isHidden()) {
-            meFragment.getMeInfo();
-        }
+        if (new GlobalApp().getMeInfoUpdated())
+            if (meFragment != null && meFragment.isAdded() && !meFragment.isHidden()) {
+                meFragment.getMeInfo();
+            }
         super.onResume();
     }
 
@@ -87,6 +97,12 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     protected void onStop() {
         homeHandler.removeCallbacks(msgRefreshRunnable);
         super.onStop();
+    }
+
+    @Override
+    protected void initTheme() {
+        super.initTheme();
+        theme = getTheme();
     }
 
     private void initData() {
@@ -97,6 +113,8 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
     }
 
     private void initView() {
+        homeLayout = (RelativeLayout) findViewById(R.id.activity_home);
+
         msgUnreadImg = (ImageView) findViewById(R.id.msg_unread_img);
         msgUnreadImg.setVisibility(View.GONE);
 
@@ -115,16 +133,25 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
             }
         });
 
+        TypedValue bg = new TypedValue();
+        theme.resolveAttribute(R.attr.colorNavBG, bg, true);
         bottomNavigationBar = (BottomNavigationBar) findViewById(R.id.home_bottom_navigation_bar);
-        bottomNavigationBar
-                .addItem(new BottomNavigationItem(R.drawable.ic_home_white_24dp, "首页"))
-                .addItem(new BottomNavigationItem(R.drawable.ic_message_white_24dp, "消息"))
-                .addItem(new BottomNavigationItem(R.drawable.ic_person_pin_white_24dp, "个人"))
-                .setFirstSelectedPosition(curSelectedPosition)
-                .setActiveColor("#2196F3")
-                .initialise();
-        bottomNavigationBar.setTabSelectedListener(this);
+        reInitNavBar(bg);
         setDefaultFragment();
+    }
+
+    private void reInitNavBar(TypedValue bg) {
+        if (bottomNavigationBar != null) {
+            bottomNavigationBar
+                    .addItem(new BottomNavigationItem(R.drawable.ic_home_white_24dp, "首页"))
+                    .addItem(new BottomNavigationItem(R.drawable.ic_message_white_24dp, "消息"))
+                    .addItem(new BottomNavigationItem(R.drawable.ic_person_pin_white_24dp, "个人"))
+                    .setFirstSelectedPosition(curSelectedPosition)
+                    .setBarBackgroundColor(bg.resourceId)
+                    .setActiveColor("#2196F3")
+                    .initialise();
+            bottomNavigationBar.setTabSelectedListener(this);
+        }
     }
 
     private void hideAllFragments(FragmentTransaction transaction) {
@@ -168,7 +195,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 curSelectedPosition = 0;
                 if (actionBar != null)
                     actionBar.setTitle("首页");
-                setMenuItemVisible(false, false, true);
+                setMenuItemVisible(false, false, true, false);
                 addFab.setVisibility(View.VISIBLE);
                 break;
             case 1:
@@ -184,8 +211,10 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 curSelectedPosition = 1;
                 if (actionBar != null)
                     actionBar.setTitle("消息");
-                setMenuItemVisible(false, false, false);
+                setMenuItemVisible(false, false, false, false);
                 addFab.setVisibility(View.GONE);
+                if (bottomNavigationBar != null && bottomNavigationBar.isHidden())
+                    bottomNavigationBar.show();
                 break;
             case 2:
                 meFragment = (MeFragment) fm.findFragmentByTag("Me");
@@ -197,8 +226,10 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                 curSelectedPosition = 2;
                 if (actionBar != null)
                     actionBar.setTitle("个人");
-                setMenuItemVisible(true, true, false);
+                setMenuItemVisible(true, true, false, true);
                 addFab.setVisibility(View.GONE);
+                if (bottomNavigationBar != null && bottomNavigationBar.isHidden())
+                    bottomNavigationBar.show();
                 break;
             default:
                 break;
@@ -234,9 +265,10 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                         homeHandler.post(updateRunnable);
                     } else {
                         String res = dbP.detailSelect("select detail from details d where code = " + getVersionCode(getApplicationContext()));
-                        if (res == null)
-                            res = "";
-                        UPDATE_DETAIL = "谢谢关注哦！本版已更新内容：\n" + res;
+                        if (res != null)
+                            UPDATE_DETAIL = "谢谢关注哦！本版已更新内容：\n" + res;
+                        else
+                            UPDATE_DETAIL = "谢谢关注哦！开发君会努力更新的！";
                         homeHandler.post(noUpdateRunnable);
                     }
                 }
@@ -337,6 +369,19 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         }
     };
 
+    private Runnable updateMsgIconRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (isRead == 1)
+                msgUnreadImg.setVisibility(View.GONE);
+            else {
+                msgUnreadImg.setVisibility(View.VISIBLE);
+                if (curSelectedPosition == 1 && messageFragment != null)
+                    messageFragment.getNewMsg();
+            }
+        }
+    };
+
     private Runnable msgRefreshRunnable = new Runnable() {
         public void run() {
             new Thread(new Runnable() {
@@ -352,19 +397,6 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
             }).start();
             // loop
             homeHandler.postDelayed(this, MSG_REFRESH_TIME);
-        }
-    };
-
-    private Runnable updateMsgIconRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (isRead == 1)
-                msgUnreadImg.setVisibility(View.GONE);
-            else {
-                msgUnreadImg.setVisibility(View.VISIBLE);
-                if (curSelectedPosition == 1 && messageFragment != null)
-                    messageFragment.getNewMsg();
-            }
         }
     };
 
@@ -402,10 +434,24 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         this.isRead = isRead;
     }
 
-    private void setMenuItemVisible(boolean feedback, boolean update, boolean search) {
+    private void setMenuItemVisible(boolean feedback, boolean update, boolean search, boolean clear) {
         feedbackMenuItem.setVisible(feedback);
         updateMenuItem.setVisible(update);
         searchMenuItem.setVisible(search);
+        clearMenuItem.setVisible(clear);
+    }
+
+    private void clearCache() {
+        String cache_str = getString(R.string.me_draft_clear_cache);
+        try {
+            if (!cache_str.equals(DataCleanManager.getTotalCacheSize(getApplicationContext()))) {
+                cache_str = "成功清理" + DataCleanManager.getTotalCacheSize(getApplicationContext()) + "缓存";
+                DataCleanManager.clearAllCache(getApplicationContext());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Toast.makeText(this, cache_str, Toast.LENGTH_SHORT).show();
     }
 
     public void exitDialog() {
@@ -420,6 +466,7 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
                         intent.putExtra("opts_o", opts_o);
                         intent.putExtra("opts_t", opts_t);
                         startActivity(intent);
+                        ActivitiesDestroyer.getInstance().addActivity(HomeActivity.this);
                         HomeActivity.this.finish();
                     }
                 }).setNegativeButton("再想想", new DialogInterface.OnClickListener() {
@@ -429,6 +476,55 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
         });
         final android.support.v7.app.AlertDialog alert = builder.create();
         alert.show();
+    }
+
+    public void toggleDayNightMode() {
+        DataProcessor dP = new DataProcessor(this);
+        int day_night = dP.readIntData("day_night");
+        if (day_night == 1) { // night to day
+            setTheme(R.style.AppTheme);
+            theme = getTheme();
+            dP.saveData("day_night", 0);
+        } else { // day to night
+            setTheme(R.style.AppThemeNight);
+            theme = getTheme();
+            dP.saveData("day_night", 1);
+        }
+        refreshUI();
+    }
+
+    private void refreshBar() {
+        TypedValue bg = new TypedValue();
+        Resources resources = getResources();
+
+        theme.resolveAttribute(R.attr.colorPrimary, bg, true);
+        actionBar.setBackgroundDrawable(new ColorDrawable(resources.getColor(bg.resourceId)));
+
+        if (Build.VERSION.SDK_INT >= 21) {
+            theme.resolveAttribute(R.attr.colorPrimaryDark, bg, true);
+            getWindow().setStatusBarColor(resources.getColor(bg.resourceId));
+        }
+
+        theme.resolveAttribute(R.attr.colorNavBG, bg, true);
+        bottomNavigationBar.clearAll();
+        reInitNavBar(bg);
+    }
+
+    private void refreshUI() {
+        TypedValue bg = new TypedValue();
+        theme.resolveAttribute(R.attr.colorBG, bg, true);
+        homeLayout.setBackgroundResource(bg.resourceId);
+
+        theme.resolveAttribute(R.attr.colorAccent, bg, true);
+        addFab.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(bg.resourceId)));
+
+        refreshBar();
+        if (meFragment != null)
+            meFragment.refreshFragmentUI();
+        if (homeFragment != null)
+            homeFragment.refreshFragmentUI();
+        if (messageFragment != null)
+            messageFragment.refreshFragmentUI();
     }
 
     @Override
@@ -482,6 +578,14 @@ public class HomeActivity extends AppCompatActivity implements BottomNavigationB
             }
         });
         searchMenuItem.setVisible(true);
+        clearMenuItem = menu.findItem(R.id.action_clear);
+        clearMenuItem.setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
+            @Override
+            protected void onNoDoubleClick(MenuItem item) {
+                clearCache();
+            }
+        });
+        clearMenuItem.setVisible(false);
         return true;
     }
 }

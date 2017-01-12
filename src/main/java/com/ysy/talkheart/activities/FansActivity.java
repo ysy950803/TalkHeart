@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -14,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.bases.DayNightActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
@@ -22,7 +22,7 @@ import com.ysy.talkheart.adapters.MeFansListViewAdapter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FansActivity extends AppCompatActivity {
+public class FansActivity extends DayNightActivity {
 
     private MeFansListViewAdapter listViewAdapter;
     private SwipeRefreshLayout refreshLayout;

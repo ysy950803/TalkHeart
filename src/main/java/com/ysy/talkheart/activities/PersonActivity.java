@@ -7,7 +7,6 @@ import android.os.Handler;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -19,12 +18,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.bases.DayNightNoActionBarActivity;
+import com.ysy.talkheart.bases.GlobalApp;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
 
-public class PersonActivity extends AppCompatActivity {
+public class PersonActivity extends DayNightNoActionBarActivity {
 
     private CollapsingToolbarLayout toolbarLayout;
     private FloatingActionButton watchFab;
@@ -67,11 +68,13 @@ public class PersonActivity extends AppCompatActivity {
         initData();
         initView();
         clickListener();
+        connectToGetPersonInfo();
     }
 
     @Override
     protected void onResume() {
-        connectToGetPersonInfo();
+        if (new GlobalApp().getMeInfoUpdated())
+            connectToGetPersonInfo();
         super.onResume();
     }
 

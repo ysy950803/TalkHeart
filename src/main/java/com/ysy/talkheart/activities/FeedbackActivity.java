@@ -3,7 +3,6 @@ package com.ysy.talkheart.activities;
 import android.app.ProgressDialog;
 import android.os.Handler;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.Selection;
@@ -15,12 +14,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.bases.DayNightActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 
-public class FeedbackActivity extends AppCompatActivity {
+public class FeedbackActivity extends DayNightActivity {
 
     private static final int WORD_LIMIT = 144;
     private TextView restWordTv;
