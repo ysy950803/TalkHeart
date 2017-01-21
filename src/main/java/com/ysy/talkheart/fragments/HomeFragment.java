@@ -37,8 +37,12 @@ import com.ysy.talkheart.utils.RecyclerViewScrollListener;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by Shengyu Yao on 2016/11/22.
@@ -65,6 +69,7 @@ public class HomeFragment extends StatedFragment {
     private HomeActivity context;
     public ImageView goodImg;
     private String[] opts_o;
+    private long timeNode;
 
     public HomeFragment() {
 
@@ -125,16 +130,17 @@ public class HomeFragment extends StatedFragment {
                 addFab.show();
                 navigationBar.show();
             }
-
-            @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-
-            }
         };
         scrollListener.setScrollThreshold(4);
         activeRecyclerView.setOnScrollListener(scrollListener);
 
-        listViewAdapter = new HomeActiveListViewAdapter(this, avatarList, nicknameList, timeList, textList, goodStatusList, goodNumList);
+        listViewAdapter = new HomeActiveListViewAdapter(this, uidList, avatarList, nicknameList, timeList, textList, goodStatusList, goodNumList);
+        listViewAdapter.setFootLoadCallBack(new HomeActiveListViewAdapter.FootLoadCallBack() {
+            @Override
+            public void onLoad() {
+                refreshData(false);
+            }
+        });
         activeRecyclerView.setAdapter(listViewAdapter);
 
         refreshLayout.setColorSchemeResources(R.color.colorAccent);
@@ -174,20 +180,27 @@ public class HomeFragment extends StatedFragment {
     private void refresh() {
         if (!isRefreshing) {
             isRefreshing = true;
-            if (!refreshData()) {
+            if (!refreshData(true)) {
                 refreshLayout.setRefreshing(false);
                 isRefreshing = false;
             }
         }
     }
 
-    private boolean refreshData() {
+    private boolean refreshData(boolean isHeadRefresh) {
         ConnectionDetector cd = new ConnectionDetector(getActivity());
         if (!cd.isConnectingToInternet() && HomeFragment.this.isAdded()) {
             Toast.makeText(getActivity(), "请检查网络连接哦", Toast.LENGTH_SHORT).show();
             return false;
         }
-        connectToGetActive(UID);
+        if (isHeadRefresh) {
+            DateFormat df = new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault());
+            String time = df.format(new Date());
+            timeNode = Long.parseLong(time);
+            listViewAdapter.setMaxExistCount(9);
+            connectToGetActive(UID, 0);
+        } else
+            connectToGetActive(UID, listViewAdapter.getItemCount() - 1);
         return true;
     }
 
@@ -247,7 +260,7 @@ public class HomeFragment extends StatedFragment {
         }).start();
     }
 
-    private void connectToGetActive(final String uid) {
+    private void connectToGetActive(final String uid, final int loadPosition) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -257,16 +270,22 @@ public class HomeFragment extends StatedFragment {
                 } else {
                     List<List<String>> resList = dbP.homeActiveSelect(
                             "select a.actid, sex, nickname, sendtime, content, goodnum, u.uid, ifnull(isfav, -1) as isfav from " +
-                                    "user u, active a left join favorite f on a.actid = f.actid and f.uid = " + uid + " where a.uid = u.uid and u.uid in (" +
+                                    "user u, active a left join favorite f on a.actid = f.actid and f.uid = " + uid +
+                                    " where (sendtime + 0) < " + timeNode +
+                                    " and a.uid = u.uid and u.uid in (" +
                                     "select uid_a from user_relation where uid_b = " + uid + " and relation in (-1, 2) " +
                                     "union select uid_b from user_relation where uid_a = " + uid + " and relation in (1, 2) " +
-                                    "union select uid from user where uid = " + uid + ") order by actid desc"
+                                    "union select uid from user where uid = " + uid + ")  order by actid desc limit " + loadPosition + ", 10"
                     );
-                    clearAllLists();
-                    if (resList == null) {
+                    if (loadPosition == 0)
+                        clearAllLists();
+                    if (resList == null)
                         homeActiveHandler.post(serverErrorRunnable);
-                    } else if (resList.get(0).size() == 0) {
-                        homeActiveHandler.post(nothingListRunnable);
+                    else if (resList.get(0).size() == 0) {
+                        if (loadPosition == 0)
+                            homeActiveHandler.post(headNothingListRunnable);
+                        else
+                            homeActiveHandler.post(footNothingListRunnable);
                     } else if (resList.get(0).size() > 0) {
                         for (int i = 0; i < resList.get(0).size(); i++) {
                             actidList.add(resList.get(0).get(i));
@@ -278,6 +297,7 @@ public class HomeFragment extends StatedFragment {
                             uidList.add(resList.get(6).get(i));
                             goodStatusList.add(Integer.parseInt(resList.get(7).get(i)));
                         }
+                        resList.clear();
                         homeActiveHandler.post(successRunnable);
                     }
                 }
@@ -457,6 +477,8 @@ public class HomeFragment extends StatedFragment {
     private Runnable timeOutRunnable = new Runnable() {
         @Override
         public void run() {
+            listViewAdapter.setIsLoading(false);
+            listViewAdapter.notifyDataSetChanged();
             if (HomeFragment.this.isAdded())
                 Toast.makeText(getActivity(), "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
@@ -467,6 +489,8 @@ public class HomeFragment extends StatedFragment {
     private Runnable serverErrorRunnable = new Runnable() {
         @Override
         public void run() {
+            listViewAdapter.setIsLoading(false);
+            listViewAdapter.notifyDataSetChanged();
             if (HomeFragment.this.isAdded())
                 Toast.makeText(getActivity(), "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
@@ -474,12 +498,24 @@ public class HomeFragment extends StatedFragment {
         }
     };
 
-    private Runnable nothingListRunnable = new Runnable() {
+    private Runnable headNothingListRunnable = new Runnable() {
         @Override
         public void run() {
             listViewAdapter.notifyDataSetChanged();
             if (HomeFragment.this.isAdded())
                 Toast.makeText(getActivity(), "还没有任何动态哦", Toast.LENGTH_SHORT).show();
+            refreshLayout.setRefreshing(false);
+            isRefreshing = false;
+        }
+    };
+
+    private Runnable footNothingListRunnable = new Runnable() {
+        @Override
+        public void run() {
+            listViewAdapter.setMaxExistCount(listViewAdapter.getItemCount() - 1);
+            listViewAdapter.notifyDataSetChanged();
+            if (HomeFragment.this.isAdded())
+                Toast.makeText(getActivity(), "没有更多动态哦", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
         }
@@ -534,6 +570,10 @@ public class HomeFragment extends StatedFragment {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public RecyclerView getActiveRecyclerView() {
+        return activeRecyclerView;
     }
 
     @Override

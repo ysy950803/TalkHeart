@@ -4,6 +4,8 @@ import android.app.ActivityOptions;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -25,6 +27,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.inthecheesefactory.thecheeselibrary.fragment.support.v4.app.StatedFragment;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.ActiveActivity;
 import com.ysy.talkheart.activities.DraftActivity;
@@ -33,6 +37,7 @@ import com.ysy.talkheart.activities.HomeActivity;
 import com.ysy.talkheart.activities.MarkActivity;
 import com.ysy.talkheart.activities.PersonActivity;
 import com.ysy.talkheart.activities.WatchActivity;
+import com.ysy.talkheart.bases.GlobalApp;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.DataProcessor;
@@ -43,6 +48,8 @@ import com.ysy.talkheart.views.CircularImageView;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import cz.msebera.android.httpclient.Header;
 
 /**
  * Created by Shengyu Yao on 2016/11/22.
@@ -86,8 +93,8 @@ public class MeFragment extends StatedFragment {
     private Handler meFragmentHandler;
     private SwipeRefreshLayout refreshLayout;
     private boolean isRefreshing = false;
-    private boolean isSeen = false;
     private String[] opts_o;
+    private byte[] avatarBytes;
 
     public MeFragment() {
         meFragmentHandler = new Handler();
@@ -119,15 +126,12 @@ public class MeFragment extends StatedFragment {
         initData();
         initView(view);
         clickListener();
-        if (!isSeen) {
-            refreshLayout.setRefreshing(true);
-            refresh();
-        }
+        refreshLayout.setRefreshing(true);
+        refresh();
         return view;
     }
 
     private void initData() {
-        isSeen = context.getIsSeen();
         isRefreshing = false;
     }
 
@@ -202,11 +206,15 @@ public class MeFragment extends StatedFragment {
             @Override
             protected void onNoDoubleClick(View v) {
                 Intent intent = new Intent(getActivity(), PersonActivity.class);
+                if (avatarBytes != null) {
+                    intent.putExtra("avatar", avatarBytes);
+                }
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", UID);
                 intent.putExtra("opts_o", opts_o);
+                intent.putExtra("sex", SEX);
+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    intent.putExtra("sex", SEX);
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(getActivity(), avatarImg, getString(R.string.trans_me_avatar));
                     startActivity(intent, tAO.toBundle());
                 } else {
@@ -230,6 +238,9 @@ public class MeFragment extends StatedFragment {
             @Override
             protected void onNoDoubleClick(View v) {
                 Intent intent = new Intent(getActivity(), ActiveActivity.class);
+                if (avatarBytes != null) {
+                    intent.putExtra("avatar", avatarBytes);
+                }
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", UID);
                 intent.putExtra("sex", SEX);
@@ -370,7 +381,6 @@ public class MeFragment extends StatedFragment {
                 return true;
             }
         });
-        setClickable(false);
     }
 
     public void getMeInfo() {
@@ -394,11 +404,13 @@ public class MeFragment extends StatedFragment {
             Toast.makeText(getActivity(), "请检查网络连接哦", Toast.LENGTH_SHORT).show();
             return false;
         }
+        downloadAvatar();
         connectToGetMeInfo(UID);
         return true;
     }
 
     private void connectToGetMeInfo(final String uid) {
+        setClickable(false);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -456,13 +468,17 @@ public class MeFragment extends StatedFragment {
         introductionTv.setClickable(isAble);
         markLayout.setClickable(isAble);
         draftLayout.setClickable(isAble);
+    }
+
+    private void setAvatarClickable(boolean isAble) {
         avatarImg.setClickable(isAble);
     }
 
     private Runnable successRunnable = new Runnable() {
         @Override
         public void run() {
-            avatarImg.setImageResource(Integer.parseInt(SEX) == 1 ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
+            if (avatarBytes == null)
+                avatarImg.setImageResource(SEX.equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
             nicknameTv.setText(new StringUtils().shortNickname(NICKNAME));
             introductionTv.setText(INTRODUCTION);
             activeNumTv.setText(ACTIVE_NUM);
@@ -471,8 +487,6 @@ public class MeFragment extends StatedFragment {
             setClickable(true);
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
-            isSeen = true;
-            context.setIsSeen(true);
         }
     };
 
@@ -531,45 +545,36 @@ public class MeFragment extends StatedFragment {
 
     @Override
     protected void onSaveState(Bundle outState) {
-        saveMeInfoState(outState);
         super.onSaveState(outState);
     }
 
     @Override
     protected void onRestoreState(Bundle savedInstanceState) {
         super.onRestoreState(savedInstanceState);
-        readMeInfoState(savedInstanceState);
     }
 
-    private void saveMeInfoState(Bundle outState) {
-        if (isSeen) {
-            outState.putString("me_sex", SEX);
-            outState.putString("me_nickname", NICKNAME);
-            outState.putString("me_act_num", ACTIVE_NUM);
-            outState.putString("me_watch_num", WATCH_NUM);
-            outState.putString("me_fans_num", FANS_NUM);
-            outState.putString("me_intro", INTRODUCTION);
-        }
-    }
+    private void downloadAvatar() {
+        setAvatarClickable(false);
+        new AsyncHttpClient().get(getResources().getString(R.string.url_avatar_upload) + "/" + UID + "_avatar_img.jpg",
+                new AsyncHttpResponseHandler() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                        Bitmap picBmp = BitmapFactory.decodeByteArray(responseBody, 0, responseBody.length);
+                        if (picBmp != null) {
+                            avatarBytes = responseBody;
+                            avatarImg.setImageBitmap(picBmp);
+                            ((GlobalApp) getActivity().getApplication()).setMeInfoUpdated(false);
+                        } else {
+                            avatarBytes = null;
+                        }
+                        setAvatarClickable(true);
+                    }
 
-    private void readMeInfoState(Bundle savedInstanceState) {
-        if (isSeen) {
-            if (savedInstanceState.getString("me_nickname", null) != null) {
-                SEX = savedInstanceState.getString("me_sex");
-                NICKNAME = savedInstanceState.getString("me_nickname");
-                ACTIVE_NUM = savedInstanceState.getString("me_act_num");
-                WATCH_NUM = savedInstanceState.getString("me_watch_num");
-                FANS_NUM = savedInstanceState.getString("me_fans_num");
-                INTRODUCTION = savedInstanceState.getString("me_intro");
-                avatarImg.setImageResource(Integer.parseInt(SEX) == 1 ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
-                nicknameTv.setText(NICKNAME);
-                introductionTv.setText(INTRODUCTION);
-                activeNumTv.setText(ACTIVE_NUM);
-                watchNumTv.setText(WATCH_NUM);
-                fansNumTv.setText(FANS_NUM);
-                setClickable(true);
-            } else
-                Toast.makeText(context, "内存君打瞌睡了，下拉刷新一下吧", Toast.LENGTH_SHORT).show();
-        }
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                        avatarBytes = null;
+                        setAvatarClickable(true);
+                    }
+                });
     }
 }

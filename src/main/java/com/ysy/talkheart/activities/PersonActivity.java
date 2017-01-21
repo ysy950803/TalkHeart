@@ -1,13 +1,26 @@
 package com.ysy.talkheart.activities;
 
+import android.Manifest;
 import android.app.ActivityOptions;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
+import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,6 +30,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.RequestParams;
+import com.loopj.android.http.TextHttpResponseHandler;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.bases.DayNightNoActionBarActivity;
 import com.ysy.talkheart.bases.GlobalApp;
@@ -24,8 +41,22 @@ import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
+import com.ysy.talkheart.utils.NoDouleDialogClickListener;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+
+import cz.msebera.android.httpclient.Header;
 
 public class PersonActivity extends DayNightNoActionBarActivity {
+
+    private static final String IMAGE_UNSPECIFIED = "image/*";
+    private static final int ALBUM_REQUEST_CODE = 1;
+    private static final int CAMERA_REQUEST_CODE = 2;
+    private static final int CROP_REQUEST_CODE = 4;
+    private static final int READ_EXTERNAL_STORAGE_REQUEST_CODE = 3;
 
     private CollapsingToolbarLayout toolbarLayout;
     private FloatingActionButton watchFab;
@@ -57,6 +88,8 @@ public class PersonActivity extends DayNightNoActionBarActivity {
     private String UID_H = "0";
     private String[] opts_o;
     private boolean isCanClick = false;
+    private ProgressDialog waitDialog;
+    private byte[] avatarBytes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,17 +101,20 @@ public class PersonActivity extends DayNightNoActionBarActivity {
         initData();
         initView();
         clickListener();
+        if (avatarBytes == null)
+            downloadAvatar();
         connectToGetPersonInfo();
     }
 
     @Override
     protected void onResume() {
-        if (new GlobalApp().getMeInfoUpdated())
+        if (((GlobalApp) getApplication()).getMeInfoUpdated())
             connectToGetPersonInfo();
         super.onResume();
     }
 
     private void initData() {
+        avatarBytes = getIntent().getExtras().getByteArray("avatar");
         opts_o = getIntent().getExtras().getStringArray("opts_o");
         E_UID = getIntent().getExtras().getString("e_uid");
         UID = getIntent().getExtras().getString("uid");
@@ -103,10 +139,22 @@ public class PersonActivity extends DayNightNoActionBarActivity {
         schoolTv = (TextView) findViewById(R.id.person_school_tv);
         birthdayTv = (TextView) findViewById(R.id.person_birthday_tv);
         watchFab.setVisibility(isSelf ? View.GONE : View.VISIBLE);
-        avatarImg.setImageResource(SEX.equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
+
+        if (avatarBytes != null)
+            avatarImg.setImageBitmap(BitmapFactory.decodeByteArray(avatarBytes, 0, avatarBytes.length));
     }
 
     private void clickListener() {
+        avatarImg.setOnClickListener(new NoDoubleViewClickListener() {
+            @Override
+            protected void onNoDoubleClick(View v) {
+                if (isSelf) {
+                    String items[] = {"选张美图", "来拍个照"};
+                    showItemDialog(items);
+                }
+            }
+        });
+
         watchFab.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
             protected void onNoDoubleClick(View v) {
@@ -118,6 +166,9 @@ public class PersonActivity extends DayNightNoActionBarActivity {
             @Override
             protected void onNoDoubleClick(View v) {
                 Intent intent = new Intent(PersonActivity.this, ActiveActivity.class);
+                if (avatarBytes != null) {
+                    intent.putExtra("avatar", avatarBytes);
+                }
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", E_UID);
                 intent.putExtra("sex", SEX);
@@ -489,7 +540,8 @@ public class PersonActivity extends DayNightNoActionBarActivity {
     };
 
     private void refreshView() {
-        avatarImg.setImageResource(SEX.equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
+        if (avatarBytes == null)
+            avatarImg.setImageResource(SEX.equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
         toolbarLayout.setTitle(NICKNAME);
         schoolTv.setText(SCHOOL);
         birthdayTv.setText(BIRTHDAY);
@@ -507,6 +559,10 @@ public class PersonActivity extends DayNightNoActionBarActivity {
         activeNumLayout.setClickable(isAble);
         watchNumLayout.setClickable(isAble);
         fansNumLayout.setClickable(isAble);
+    }
+
+    private void setAvatarClickable(boolean isAble) {
+        avatarImg.setClickable(isAble);
     }
 
     @Override
@@ -549,5 +605,197 @@ public class PersonActivity extends DayNightNoActionBarActivity {
             // Show the Up button in the action bar.
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+    }
+
+    private void downloadAvatar() {
+        setAvatarClickable(false);
+        new AsyncHttpClient().get(getResources().getString(R.string.url_avatar_upload) + "/" + UID + "_avatar_img.jpg",
+                new AsyncHttpResponseHandler() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                        Bitmap picBmp = BitmapFactory.decodeByteArray(responseBody, 0, responseBody.length);
+                        if (picBmp != null) {
+                            avatarBytes = responseBody;
+                            avatarImg.setImageBitmap(picBmp);
+                        } else
+                            avatarBytes = null;
+                        setAvatarClickable(true);
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                        avatarBytes = null;
+                        setAvatarClickable(true);
+                    }
+                });
+    }
+
+    private void uploadAvatar(final Bitmap picBmp, byte[] avatarBytes, byte[] avatarBytesThumb) {
+        if (avatarBytes == null)
+            Toast.makeText(this, "头像未更改哦", Toast.LENGTH_SHORT).show();
+        else {
+            RequestParams params = new RequestParams();
+            params.put("avatar_img", new ByteArrayInputStream(avatarBytes), UID + "_avatar_img.jpg", "multipart/form-data");
+            params.put("avatar_img_thumb", new ByteArrayInputStream(avatarBytesThumb), UID + "_avatar_img_thumb.jpg", "multipart/form-data");
+            new AsyncHttpClient().post(getResources().getString(R.string.url_avatar_upload), params, new TextHttpResponseHandler() {
+                @Override
+                public void onStart() {
+                    waitDialog = ProgressDialog.show(PersonActivity.this, "正在上传头像", "请稍等…");
+                    super.onStart();
+                }
+
+                @Override
+                public void onFailure(int i, Header[] headers, String s, Throwable throwable) {
+                    waitDialog.dismiss();
+                    Toast.makeText(PersonActivity.this, "上传头像失败，稍后重试吧", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onSuccess(int i, Header[] headers, String s) {
+                    waitDialog.dismiss();
+                    avatarImg.setImageBitmap(picBmp);
+                    ((GlobalApp) getApplication()).setMeInfoUpdated(true);
+                    Toast.makeText(PersonActivity.this, "上传头像成功咯", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+
+    boolean isFolderExists(String strFolder) {
+        File dir = new File(strFolder);
+        return dir.exists() || dir.mkdirs();
+    }
+
+    private void selectImg() {
+        Intent intent = new Intent(Intent.ACTION_PICK, null);
+        intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, IMAGE_UNSPECIFIED);
+        startActivityForResult(intent, ALBUM_REQUEST_CODE);
+    }
+
+    private void takePhoto() {
+        if (isFolderExists(Environment.getExternalStorageDirectory() + "/talk_heart/")) {
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(new File(Environment.getExternalStorageDirectory()
+                    + "/talk_heart/" + UID + "_avatar_img_tmp.jpg")));
+            startActivityForResult(intent, CAMERA_REQUEST_CODE);
+        }
+    }
+
+    private void startCrop(Uri uri) {
+        Intent intent = new Intent("com.android.camera.action.CROP"); // 调用Android系统自带的一个图片剪裁页面
+        intent.setDataAndType(uri, IMAGE_UNSPECIFIED);
+        intent.putExtra("crop", "true"); // 进行修剪
+        // aspectX aspectY 是宽高的比例
+        intent.putExtra("aspectX", 1);
+        intent.putExtra("aspectY", 1);
+        // outputX outputY 是裁剪图片宽高
+        intent.putExtra("outputX", 96);
+        intent.putExtra("outputY", 96);
+        intent.putExtra("return-data", true);
+        startActivityForResult(intent, CROP_REQUEST_CODE);
+    }
+
+    private void requestAndTakePhoto() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                Toast.makeText(this, "请赐予我权限吧", Toast.LENGTH_SHORT).show();
+            } else {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        READ_EXTERNAL_STORAGE_REQUEST_CODE);
+            }
+        } else {
+            takePhoto();
+        }
+    }
+
+    private void showItemDialog(String[] items) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setItems(items, new NoDouleDialogClickListener() {
+            @Override
+            protected void onNoDoubleClick(DialogInterface dialog, int which) {
+                switch (which) {
+                    case 0:
+                        selectImg();
+                        break;
+                    case 1:
+                        requestAndTakePhoto();
+                        break;
+                }
+                dialog.dismiss();
+            }
+        });
+        builder.create().show();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == READ_EXTERNAL_STORAGE_REQUEST_CODE) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                takePhoto();
+            } else {
+                Toast.makeText(this, "请赐予我权限吧", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == 0) {
+            return;
+        }
+        switch (requestCode) {
+            case ALBUM_REQUEST_CODE:
+                if (data == null) {
+                    return;
+                }
+                startCrop(data.getData());
+                break;
+            case CAMERA_REQUEST_CODE:
+                File tempPic = new File(Environment.getExternalStorageDirectory()
+                        + "/talk_heart/" + UID + "_avatar_img_tmp.jpg");
+                startCrop(Uri.fromFile(tempPic));
+                break;
+            case CROP_REQUEST_CODE:
+                if (data == null) {
+                    // 如果有则显示之前设置的图片，否则显示默认的图片
+                    return;
+                }
+                Bundle extras = data.getExtras();
+                if (extras != null) {
+                    Bitmap picBmp = extras.getParcelable("data");
+                    if (picBmp != null) {
+                        ByteArrayOutputStream bAOS = new ByteArrayOutputStream();
+                        picBmp.compress(Bitmap.CompressFormat.JPEG, 100, bAOS); // 百分比（0-100）压缩文件
+                        byte[] avatarBytes = bAOS.toByteArray();
+
+                        bAOS = new ByteArrayOutputStream();
+                        picBmp.compress(Bitmap.CompressFormat.JPEG, 75, bAOS); // 百分比（0-100）压缩文件
+                        byte[] avatarBytesThumb = bAOS.toByteArray();
+
+                        bAOS = new ByteArrayOutputStream();
+                        BitmapFactory.Options options = new BitmapFactory.Options();
+                        options.inSampleSize = 2;
+                        BitmapFactory.decodeByteArray(avatarBytesThumb,
+                                0, avatarBytesThumb.length, options).compress(Bitmap.CompressFormat.JPEG, 50, bAOS);
+                        avatarBytesThumb = bAOS.toByteArray();
+
+                        try {
+                            bAOS.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        uploadAvatar(picBmp, avatarBytes, avatarBytesThumb);
+                    } else {
+                        Toast.makeText(this, "出现未知错误啦，请重试", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 }

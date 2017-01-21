@@ -67,7 +67,7 @@ public class MarkActivity extends DayNightActivity {
         RecyclerView markRecyclerView = (RecyclerView) findViewById(R.id.me_mark_listView);
 
         markRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        listViewAdapter = new MeMarkListViewAdapter(this, avatarList, nicknameList, timeList, textList);
+        listViewAdapter = new MeMarkListViewAdapter(this, uidList, avatarList, nicknameList, timeList, textList);
         markRecyclerView.setAdapter(listViewAdapter);
 
         refreshLayout.setColorSchemeResources(R.color.colorAccent);

@@ -1,5 +1,7 @@
 package com.ysy.talkheart.adapters;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,6 +10,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.WatchActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
@@ -17,12 +21,15 @@ import com.ysy.talkheart.views.CircularImageView;
 
 import java.util.List;
 
+import cz.msebera.android.httpclient.Header;
+
 /**
  * Created by Shengyu Yao on 2016/11/25.
  */
 
 public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListViewAdapter.RecyclerViewHolder> {
 
+    private List<String> uidList;
     private List<Integer> avatarList;
     private List<String> nicknameList;
     private List<String> introList;
@@ -35,9 +42,11 @@ public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListView
         this.mOnItemClickListener = mOnItemClickListener;
     }
 
-    public MeWatchListViewAdapter(WatchActivity context, List<Integer> avatarList, List<String> nicknameList,
+    public MeWatchListViewAdapter(WatchActivity context, List<String> uidList,
+                                  List<Integer> avatarList, List<String> nicknameList,
                                   List<String> introList, List<Integer> relationList, boolean isObserver) {
         this.context = context;
+        this.uidList = uidList;
         this.avatarList = avatarList;
         this.nicknameList = nicknameList;
         this.introList = introList;
@@ -69,6 +78,7 @@ public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListView
 
     @Override
     public void onBindViewHolder(final MeWatchListViewAdapter.RecyclerViewHolder holder, int position) {
+        downloadAvatar(holder.avatarImg, uidList.get(position), avatarList.get(position));
         holder.avatarImg.setImageResource(avatarList.get(position));
         holder.nicknameTv.setText(nicknameList.get(position));
         holder.infoTv.setText(introList.get(position));
@@ -117,5 +127,24 @@ public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListView
     @Override
     public int getItemCount() {
         return nicknameList.size();
+    }
+
+    private void downloadAvatar(final CircularImageView avatarImg, String uid, final int defaultResId) {
+        new AsyncHttpClient().get(context.getResources().getString(R.string.url_avatar_upload) + "/" + uid + "_avatar_img_thumb.jpg",
+                new AsyncHttpResponseHandler() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                        Bitmap picBmp = BitmapFactory.decodeByteArray(responseBody, 0, responseBody.length);
+                        if (picBmp != null) {
+                            avatarImg.setImageBitmap(picBmp);
+                        } else
+                            avatarImg.setImageResource(defaultResId);
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                        avatarImg.setImageResource(defaultResId);
+                    }
+                });
     }
 }

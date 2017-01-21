@@ -17,7 +17,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.inthecheesefactory.thecheeselibrary.fragment.support.v4.app.StatedFragment;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.CommentActivity;
@@ -31,8 +30,12 @@ import com.ysy.talkheart.adapters.MessageListViewAdapter;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by Shengyu Yao on 2016/11/22.
@@ -59,6 +62,7 @@ public class MessageFragment extends StatedFragment {
     private String UID;
     private HomeActivity context;
     private String[] opts_o;
+    private long timeNode;
 
     public static MessageFragment newInstance(String tag, String[] opts_o) {
         MessageFragment fragment = new MessageFragment();
@@ -98,7 +102,6 @@ public class MessageFragment extends StatedFragment {
 
     private void initData() {
         isRefreshing = false;
-//        clearAllLists();
     }
 
     private void initView(View view) {
@@ -124,7 +127,13 @@ public class MessageFragment extends StatedFragment {
 //        scrollListener.setScrollThreshold(4);
 //        msgRecyclerView.setOnScrollListener(scrollListener);
 
-        listViewAdapter = new MessageListViewAdapter(this, avatarList, nameActList, timeList, contentList, quoteList);
+        listViewAdapter = new MessageListViewAdapter(this, uidPList, avatarList, nameActList, timeList, contentList, quoteList);
+        listViewAdapter.setFootLoadCallBack(new MessageListViewAdapter.FootLoadCallBack() {
+            @Override
+            public void onLoad() {
+                refreshData(false);
+            }
+        });
         msgRecyclerView.setAdapter(listViewAdapter);
 
         refreshLayout.setColorSchemeResources(R.color.colorAccent);
@@ -153,24 +162,31 @@ public class MessageFragment extends StatedFragment {
     private void refresh() {
         if (!isRefreshing) {
             isRefreshing = true;
-            if (!refreshData()) {
+            if (!refreshData(true)) {
                 refreshLayout.setRefreshing(false);
                 isRefreshing = false;
             }
         }
     }
 
-    private boolean refreshData() {
+    private boolean refreshData(boolean isHeadRefresh) {
         ConnectionDetector cd = new ConnectionDetector(getActivity());
         if (!cd.isConnectingToInternet() && MessageFragment.this.isAdded()) {
             Toast.makeText(getActivity(), "请检查网络连接哦", Toast.LENGTH_SHORT).show();
             return false;
         }
-        connectToGetMsg(UID);
+        if (isHeadRefresh) {
+            DateFormat df = new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault());
+            String time = df.format(new Date());
+            timeNode = Long.parseLong(time);
+            listViewAdapter.setMaxExistCount(9);
+            connectToGetMsg(UID, 0);
+        } else
+            connectToGetMsg(UID, listViewAdapter.getItemCount() - 1);
         return true;
     }
 
-    private void connectToGetMsg(final String e_uid) {
+    private void connectToGetMsg(final String e_uid, final int loadPosition) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -179,63 +195,69 @@ public class MessageFragment extends StatedFragment {
                     msgHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> cmtList = dbP.msgCmtSelect(
-                            "(select flag_cmt, sex, nickname, c.sendtime, c.content, a.content, a.actid, u.uid, cmtid from comment_flag, user u, active a, comment c where " +
-                                    "a.uid = " + e_uid + " and c.uid_p = " + e_uid + " and u.uid != " + e_uid + " and c.actid = a.actid and c.uid = u.uid and c.cmtid_p is null) " +
+                            "(select flag_cmt, sex, nickname, c.sendtime, c.content, a.content, a.actid, u.uid, cmtid from comment_flag, user u, active a, comment c " +
+                                    "where (c.sendtime + 0) < " + timeNode +
+                                    " and a.uid = " + e_uid + " and c.uid_p = " + e_uid + " and u.uid != " + e_uid + " and c.actid = a.actid and c.uid = u.uid and c.cmtid_p is null) " +
                                     "union " +
-                                    "(select flag_reply, sex, nickname, c1.sendtime, c1.content, c2.content, c1.actid, c1.uid, c1.cmtid from comment_flag, user u, comment c1, comment c2 where " +
-                                    "u.uid = c1.uid and c2.uid = " + e_uid + " and c1.cmtid_p = c2.cmtid) " +
+                                    "(select flag_reply, sex, nickname, c1.sendtime, c1.content, c2.content, c1.actid, c1.uid, c1.cmtid from comment_flag, user u, comment c1, comment c2 " +
+                                    "where (c1.sendtime + 0) < " + timeNode +
+                                    " and u.uid = c1.uid and c2.uid = " + e_uid + " and c1.cmtid_p = c2.cmtid) " +
                                     "union " +
-                                    "(select flag_replyfav, sex, nickname, c.sendtime, c.content, a.content, c.actid, u.uid, cmtid from comment_flag, user u, comment c, active a where " +
-                                    "c.uid = u.uid and c.uid != " + e_uid + " and c.uid_p = " + e_uid + " and cmtid_p = -1 and a.actid = c.actid) " +
+                                    "(select flag_replyfav, sex, nickname, c.sendtime, c.content, a.content, c.actid, u.uid, cmtid from comment_flag, user u, comment c, active a " +
+                                    "where (c.sendtime + 0) < " + timeNode +
+                                    " and c.uid = u.uid and c.uid != " + e_uid + " and c.uid_p = " + e_uid + " and cmtid_p = -1 and a.actid = c.actid) " +
                                     "union " +
-                                    "(select flag_fav, sex, nickname, favtime, flag_content, content, a.actid, u.uid, flag_cmtid from comment_flag, user u, favorite f, active a where " +
-                                    "u.uid != " + e_uid + " and u.uid = f.uid and f.actid = a.actid and f.isfav = 1 and a.uid = " + e_uid + ") order by sendtime desc"
+                                    "(select flag_fav, sex, nickname, favtime, flag_content, content, a.actid, u.uid, flag_cmtid from comment_flag, user u, favorite f, active a " +
+                                    "where (favtime + 0) < " + timeNode +
+                                    " and u.uid != " + e_uid + " and u.uid = f.uid and f.actid = a.actid and f.isfav = 1 and a.uid = " + e_uid + ") order by sendtime desc limit " + loadPosition + ", 10"
                     );
-                    clearAllLists();
+                    if (loadPosition == 0)
+                        clearAllLists();
                     if (cmtList == null)
                         msgHandler.post(serverErrorRunnable);
                     else if (cmtList.get(0).size() == 0) {
-                        msgHandler.post(nothingListRunnable);
-                    } else {
-                        if (cmtList.get(0).size() > 0) {
-                            for (int i = 0; i < cmtList.get(0).size(); i++) {
-                                avatarList.add(cmtList.get(1).get(i).equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
-                                nicknameList.add(cmtList.get(2).get(i));
-                                timeList.add(cmtList.get(3).get(i).substring(0, 19));
-                                actidList.add(cmtList.get(6).get(i));
-                                uidPList.add(cmtList.get(7).get(i));
-
-                                String flag = cmtList.get(0).get(i);
-                                switch (flag) {
-                                    case "1": // comment
-                                        nameActList.add(cmtList.get(2).get(i) + " 评论了你");
-                                        contentList.add(cmtList.get(4).get(i));
-                                        quoteList.add(cmtList.get(5).get(i));
-                                        cmtidList.add(cmtList.get(8).get(i));
-                                        break;
-                                    case "2": // reply
-                                        nameActList.add(cmtList.get(2).get(i) + " 回复了你");
-                                        contentList.add(cmtList.get(4).get(i));
-                                        quoteList.add(cmtList.get(5).get(i));
-                                        cmtidList.add(cmtList.get(8).get(i));
-                                        break;
-                                    case "3": // fav
-                                        nameActList.add(cmtList.get(2).get(i) + " 与你连心");
-                                        contentList.add("");
-                                        quoteList.add(cmtList.get(5).get(i));
-                                        cmtidList.add("");
-                                        break;
-                                    case "4": // replyfav
-                                        nameActList.add(cmtList.get(2).get(i) + " 感谢了你");
-                                        contentList.add(cmtList.get(4).get(i));
-                                        quoteList.add(cmtList.get(5).get(i));
-                                        cmtidList.add(cmtList.get(8).get(i));
-                                        break;
-                                }
+                        if (loadPosition == 0)
+                            msgHandler.post(headNothingListRunnable);
+                        else
+                            msgHandler.post(footNothingListRunnable);
+                    } else if (cmtList.get(0).size() > 0) {
+                        for (int i = 0; i < cmtList.get(0).size(); i++) {
+                            avatarList.add(cmtList.get(1).get(i).equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
+                            nicknameList.add(cmtList.get(2).get(i));
+                            timeList.add(cmtList.get(3).get(i).substring(0, 19));
+                            actidList.add(cmtList.get(6).get(i));
+                            uidPList.add(cmtList.get(7).get(i));
+                            String flag = cmtList.get(0).get(i);
+                            switch (flag) {
+                                case "1": // comment
+                                    nameActList.add(cmtList.get(2).get(i) + " 评论了你");
+                                    contentList.add(cmtList.get(4).get(i));
+                                    quoteList.add(cmtList.get(5).get(i));
+                                    cmtidList.add(cmtList.get(8).get(i));
+                                    break;
+                                case "2": // reply
+                                    nameActList.add(cmtList.get(2).get(i) + " 回复了你");
+                                    contentList.add(cmtList.get(4).get(i));
+                                    quoteList.add(cmtList.get(5).get(i));
+                                    cmtidList.add(cmtList.get(8).get(i));
+                                    break;
+                                case "3": // fav
+                                    nameActList.add(cmtList.get(2).get(i) + " 与你连心");
+                                    contentList.add("");
+                                    quoteList.add(cmtList.get(5).get(i));
+                                    cmtidList.add("");
+                                    break;
+                                case "4": // replyfav
+                                    nameActList.add(cmtList.get(2).get(i) + " 感谢了你");
+                                    contentList.add(cmtList.get(4).get(i));
+                                    quoteList.add(cmtList.get(5).get(i));
+                                    cmtidList.add(cmtList.get(8).get(i));
+                                    break;
                             }
-                            cmtList.clear();
                         }
-                        dbP.update("update user set isread = 1 where uid = " + e_uid);
+                        cmtList.clear();
+                        if (loadPosition == 0 && context.getIsRead() == 0)
+                            dbP.update("update user set isread = 1 where uid = " + e_uid);
                         msgHandler.post(successRunnable);
                     }
                 }
@@ -354,6 +376,8 @@ public class MessageFragment extends StatedFragment {
     private Runnable timeOutRunnable = new Runnable() {
         @Override
         public void run() {
+            listViewAdapter.setIsLoading(false);
+            listViewAdapter.notifyDataSetChanged();
             if (MessageFragment.this.isAdded())
                 Toast.makeText(getActivity(), "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
@@ -364,6 +388,8 @@ public class MessageFragment extends StatedFragment {
     private Runnable serverErrorRunnable = new Runnable() {
         @Override
         public void run() {
+            listViewAdapter.setIsLoading(false);
+            listViewAdapter.notifyDataSetChanged();
             if (MessageFragment.this.isAdded())
                 Toast.makeText(getActivity(), "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
@@ -371,12 +397,25 @@ public class MessageFragment extends StatedFragment {
         }
     };
 
-    private Runnable nothingListRunnable = new Runnable() {
+    private Runnable headNothingListRunnable = new Runnable() {
         @Override
         public void run() {
             listViewAdapter.notifyDataSetChanged();
             if (MessageFragment.this.isAdded())
                 Toast.makeText(getActivity(), "还没有消息哦", Toast.LENGTH_SHORT).show();
+            refreshLayout.setRefreshing(false);
+            isRefreshing = false;
+            context.getMsgUnreadImg().setVisibility(View.GONE);
+        }
+    };
+
+    private Runnable footNothingListRunnable = new Runnable() {
+        @Override
+        public void run() {
+            listViewAdapter.setMaxExistCount(listViewAdapter.getItemCount() - 1);
+            listViewAdapter.notifyDataSetChanged();
+            if (MessageFragment.this.isAdded())
+                Toast.makeText(getActivity(), "没有更多消息哦", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
             context.getMsgUnreadImg().setVisibility(View.GONE);
@@ -435,6 +474,10 @@ public class MessageFragment extends StatedFragment {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public RecyclerView getMsgRecyclerView() {
+        return msgRecyclerView;
     }
 
     @Override

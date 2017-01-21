@@ -69,7 +69,6 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
     private FloatingActionButton addFab;
     private ImageView msgUnreadImg;
     private String UID;
-    private boolean isSeen = false;
     private Resources.Theme theme;
     private int isRead = 1;
     private long backTime;
@@ -92,7 +91,7 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
     @Override
     protected void onResume() {
         homeHandler.post(msgRefreshRunnable);
-        if (new GlobalApp().getMeInfoUpdated())
+        if (((GlobalApp) getApplication()).getMeInfoUpdated())
             if (meFragment != null && meFragment.isAdded() && !meFragment.isHidden()) {
                 meFragment.getMeInfo();
             }
@@ -115,7 +114,6 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
         UID = getIntent().getExtras().getString("uid");
         opts_o = getIntent().getExtras().getStringArray("opts_o");
         opts_t = getIntent().getExtras().getStringArray("opts_t");
-        isSeen = false;
     }
 
     private void initView() {
@@ -251,7 +249,18 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
 
     @Override
     public void onTabReselected(int position) {
-
+        switch (position) {
+            case 0:
+                if (homeFragment != null && homeFragment.getActiveRecyclerView() != null)
+                    homeFragment.getActiveRecyclerView().scrollToPosition(0);
+                break;
+            case 1:
+                if (messageFragment != null && messageFragment.getMsgRecyclerView() != null)
+                    messageFragment.getMsgRecyclerView().scrollToPosition(0);
+                break;
+            default:
+                break;
+        }
     }
 
     private void handCheckUpdate() {
@@ -416,10 +425,6 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
         }
     }
 
-    public boolean getIsSeen() {
-        return isSeen;
-    }
-
     public BottomNavigationBar getBottomNavigationBar() {
         return bottomNavigationBar;
     }
@@ -432,8 +437,8 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
         return addFab;
     }
 
-    public void setIsSeen(boolean isSeen) {
-        this.isSeen = isSeen;
+    public int getIsRead() {
+        return isRead;
     }
 
     public void setIsRead(int isRead) {

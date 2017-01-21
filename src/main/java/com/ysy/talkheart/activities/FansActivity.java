@@ -70,7 +70,7 @@ public class FansActivity extends DayNightActivity {
         fansRecyclerView = (RecyclerView) findViewById(R.id.me_fans_listView);
         fansRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        listViewAdapter = new MeFansListViewAdapter(this, avatarList, nicknameList, introList, relationList, !isSelf);
+        listViewAdapter = new MeFansListViewAdapter(this, fansUIDList, avatarList, nicknameList, introList, relationList, !isSelf);
         fansRecyclerView.setAdapter(listViewAdapter);
 
         refreshLayout.setColorSchemeResources(R.color.colorAccent);

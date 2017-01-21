@@ -90,16 +90,11 @@ public class CommentActivity extends DayNightActivity {
             public void onScrollDown() {
                 commentFab.show();
             }
-
-            @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-
-            }
         };
         scrollListener.setScrollThreshold(4);
         commentRecyclerView.setOnScrollListener(scrollListener);
 
-        listViewAdapter = new CommentListViewAdapter(this, avatarList, nicknameList, timeList, textList);
+        listViewAdapter = new CommentListViewAdapter(this, uidList, avatarList, nicknameList, timeList, textList);
         commentRecyclerView.setAdapter(listViewAdapter);
 
         refreshLayout.setColorSchemeResources(R.color.colorAccent);

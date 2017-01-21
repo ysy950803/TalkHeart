@@ -70,7 +70,7 @@ public class WatchActivity extends DayNightActivity {
         watchRecyclerView = (RecyclerView) findViewById(R.id.me_watch_listView);
 
         watchRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        listViewAdapter = new MeWatchListViewAdapter(this, avatarList, nicknameList, introList, relationList, !isSelf);
+        listViewAdapter = new MeWatchListViewAdapter(this, watchUIDList, avatarList, nicknameList, introList, relationList, !isSelf);
         watchRecyclerView.setAdapter(listViewAdapter);
 
         refreshLayout.setColorSchemeResources(R.color.colorAccent);

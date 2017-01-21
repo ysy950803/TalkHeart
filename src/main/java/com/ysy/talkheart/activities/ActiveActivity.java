@@ -22,8 +22,12 @@ import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.NoDouleDialogClickListener;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class ActiveActivity extends DayNightActivity {
 
@@ -45,6 +49,8 @@ public class ActiveActivity extends DayNightActivity {
     public ImageView goodImg;
     private boolean isSelf;
     private String[] opts_o;
+    private byte[] avatarBytes;
+    private long timeNode;
 //    private int fav_actid_index = 0;
 
     @Override
@@ -52,17 +58,16 @@ public class ActiveActivity extends DayNightActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_active);
         setupActionBar();
-
+        activeHandler = new Handler();
         initData();
         initView();
         clickListener();
-        activeHandler = new Handler();
-
         refreshLayout.setRefreshing(true);
         refresh();
     }
 
     private void initData() {
+        avatarBytes = getIntent().getExtras().getByteArray("avatar");
         opts_o = getIntent().getExtras().getStringArray("opts_o");
         E_UID = getIntent().getExtras().getString("e_uid");
         UID = getIntent().getExtras().getString("uid");
@@ -77,7 +82,13 @@ public class ActiveActivity extends DayNightActivity {
         RecyclerView activeRecyclerView = (RecyclerView) findViewById(R.id.me_active_listView);
 
         activeRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        listViewAdapter = new MeActiveListViewAdapter(this, avatarList, nicknameList, timeList, textList, goodStatusList, goodNumList);
+        listViewAdapter = new MeActiveListViewAdapter(this, avatarBytes, avatarList, nicknameList, timeList, textList, goodStatusList, goodNumList);
+        listViewAdapter.setFootLoadCallBack(new MeActiveListViewAdapter.FootLoadCallBack() {
+            @Override
+            public void onLoad() {
+                refreshData(false);
+            }
+        });
         activeRecyclerView.setAdapter(listViewAdapter);
 
         refreshLayout.setColorSchemeResources(R.color.colorAccent);
@@ -116,20 +127,28 @@ public class ActiveActivity extends DayNightActivity {
     private void refresh() {
         if (!isRefreshing) {
             isRefreshing = true;
-            if (!refreshData()) {
+            if (!refreshData(true)) {
                 refreshLayout.setRefreshing(false);
                 isRefreshing = false;
             }
         }
     }
 
-    private boolean refreshData() {
+    private boolean refreshData(boolean isHeadRefresh) {
         ConnectionDetector cd = new ConnectionDetector(this);
         if (!cd.isConnectingToInternet()) {
             Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
             return false;
         }
-        connectToGetActive(UID, isSelf ? UID : E_UID, Integer.parseInt(SEX), NICKNAME);
+        if (isHeadRefresh) {
+            DateFormat df = new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault());
+            String time = df.format(new Date());
+            timeNode = Long.parseLong(time);
+            listViewAdapter.setMaxExistCount(9);
+            connectToGetActive(UID, isSelf ? UID : E_UID, Integer.parseInt(SEX), NICKNAME, 0);
+        } else
+            connectToGetActive(UID, isSelf ? UID : E_UID, Integer.parseInt(SEX), NICKNAME,
+                    listViewAdapter.getItemCount() - 1);
         return true;
     }
 
@@ -216,7 +235,7 @@ public class ActiveActivity extends DayNightActivity {
         }).start();
     }
 
-    private void connectToGetActive(final String uid, final String e_uid, final int sex, final String nickname) {
+    private void connectToGetActive(final String uid, final String e_uid, final int sex, final String nickname, final int loadPosition) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -226,14 +245,20 @@ public class ActiveActivity extends DayNightActivity {
                 } else {
                     List<List<String>> resList = dbP.activeSelect(
                             "select a.actid, sendtime, goodnum, content, ifnull(isfav, -1) as isfav from " +
-                                    "active a left join favorite f on f.actid = a.actid and f.uid = " + e_uid + " where a.uid = " + uid +
-                                    " order by actid desc"
+                                    "active a left join favorite f on f.actid = a.actid and f.uid = " + e_uid + " where " +
+                                    "(sendtime + 0) < " + timeNode +
+                                    " and a.uid = " + uid +
+                                    " order by actid desc limit " + loadPosition + ", 10"
                     );
-                    clearAllLists();
+                    if (loadPosition == 0)
+                        clearAllLists();
                     if (resList == null) {
                         activeHandler.post(serverErrorRunnable);
                     } else if (resList.get(0).size() == 0) {
-                        activeHandler.post(nothingRunnable);
+                        if (loadPosition == 0)
+                            activeHandler.post(headNothingRunnable);
+                        else
+                            activeHandler.post(footNothingRunnable);
                     } else if (resList.get(0).size() > 0) {
                         for (int i = 0; i < resList.get(0).size(); i++) {
                             avatarList.add(sex == 1 ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
@@ -244,6 +269,7 @@ public class ActiveActivity extends DayNightActivity {
                             textList.add(resList.get(3).get(i));
                             goodStatusList.add(Integer.parseInt(resList.get(4).get(i)));
                         }
+                        resList.clear();
                         activeHandler.post(successRunnable);
                     }
                 }
@@ -361,11 +387,22 @@ public class ActiveActivity extends DayNightActivity {
         startActivity(intent);
     }
 
-    private Runnable nothingRunnable = new Runnable() {
+    private Runnable headNothingRunnable = new Runnable() {
         @Override
         public void run() {
             listViewAdapter.notifyDataSetChanged();
             Toast.makeText(ActiveActivity.this, "还没有任何动态哦", Toast.LENGTH_SHORT).show();
+            refreshLayout.setRefreshing(false);
+            isRefreshing = false;
+        }
+    };
+
+    private Runnable footNothingRunnable = new Runnable() {
+        @Override
+        public void run() {
+            listViewAdapter.setMaxExistCount(listViewAdapter.getItemCount() - 1);
+            listViewAdapter.notifyDataSetChanged();
+            Toast.makeText(ActiveActivity.this, "没有更多动态哦", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
         }
@@ -405,6 +442,8 @@ public class ActiveActivity extends DayNightActivity {
     private Runnable serverErrorRunnable = new Runnable() {
         @Override
         public void run() {
+            listViewAdapter.setIsLoading(false);
+            listViewAdapter.notifyDataSetChanged();
             Toast.makeText(ActiveActivity.this, "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
@@ -414,6 +453,8 @@ public class ActiveActivity extends DayNightActivity {
     private Runnable timeOutRunnable = new Runnable() {
         @Override
         public void run() {
+            listViewAdapter.setIsLoading(false);
+            listViewAdapter.notifyDataSetChanged();
             Toast.makeText(ActiveActivity.this, "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;

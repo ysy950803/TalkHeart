@@ -99,7 +99,7 @@ public class SearchActivity extends DayNightNoActionBarActivity {
     private void setSearchContent() {
         RecyclerView searchRecyclerView = (RecyclerView) findViewById(R.id.search_recyclerView);
         searchRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        listViewAdapter = new SearchUserListViewAdapter(avatarList, nicknameList, introList);
+        listViewAdapter = new SearchUserListViewAdapter(this, uidList, avatarList, nicknameList, introList);
         searchRecyclerView.setAdapter(listViewAdapter);
     }
 

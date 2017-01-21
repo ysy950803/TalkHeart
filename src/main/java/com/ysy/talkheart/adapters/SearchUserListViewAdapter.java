@@ -1,17 +1,24 @@
 package com.ysy.talkheart.adapters;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.activities.SearchActivity;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
 import java.util.List;
+
+import cz.msebera.android.httpclient.Header;
 
 /**
  * Created by Shengyu Yao on 2016/12/11.
@@ -19,16 +26,21 @@ import java.util.List;
 
 public class SearchUserListViewAdapter extends RecyclerView.Adapter<SearchUserListViewAdapter.RecyclerViewHolder> {
 
+    private List<String> uidList;
     private List<Integer> avatarList;
     private List<String> nicknameList;
     private List<String> infoList;
     private ListOnItemClickListener mOnItemClickListener;
+    private SearchActivity context;
 
     public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
         this.mOnItemClickListener = mOnItemClickListener;
     }
 
-    public SearchUserListViewAdapter(List<Integer> avatarList, List<String> nicknameList, List<String> infoList) {
+    public SearchUserListViewAdapter(SearchActivity context, List<String> uidList,
+                                     List<Integer> avatarList, List<String> nicknameList, List<String> infoList) {
+        this.context = context;
+        this.uidList = uidList;
         this.avatarList = avatarList;
         this.nicknameList = nicknameList;
         this.infoList = infoList;
@@ -61,7 +73,7 @@ public class SearchUserListViewAdapter extends RecyclerView.Adapter<SearchUserLi
 
     @Override
     public void onBindViewHolder(final RecyclerViewHolder viewHolder, int position) {
-        viewHolder.avatarImg.setImageResource(avatarList.get(position));
+        downloadAvatar(viewHolder.avatarImg, uidList.get(position), avatarList.get(position));
         viewHolder.nicknameTv.setText(nicknameList.get(position));
         viewHolder.infoTv.setText(infoList.get(position));
 
@@ -84,6 +96,25 @@ public class SearchUserListViewAdapter extends RecyclerView.Adapter<SearchUserLi
                 }
             });
         }
+    }
+
+    private void downloadAvatar(final CircularImageView avatarImg, String uid, final int defaultResId) {
+        new AsyncHttpClient().get(context.getString(R.string.url_avatar_upload) + "/" + uid + "_avatar_img_thumb.jpg",
+                new AsyncHttpResponseHandler() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                        Bitmap picBmp = BitmapFactory.decodeByteArray(responseBody, 0, responseBody.length);
+                        if (picBmp != null) {
+                            avatarImg.setImageBitmap(picBmp);
+                        } else
+                            avatarImg.setImageResource(defaultResId);
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                        avatarImg.setImageResource(defaultResId);
+                    }
+                });
     }
 }
 
