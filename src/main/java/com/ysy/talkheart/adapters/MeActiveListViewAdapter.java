@@ -10,6 +10,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.lzy.ninegrid.ImageInfo;
+import com.lzy.ninegrid.NineGridView;
+import com.lzy.ninegrid.preview.NineGridViewClickAdapter;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.ActiveActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
@@ -17,6 +20,7 @@ import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -25,12 +29,16 @@ import java.util.List;
 
 public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListViewAdapter.RecyclerViewHolder> {
 
+    private String IMG_UPLOAD_URL = "";
+    private String UID = "";
+
     private List<Integer> avatarList;
     private List<String> nicknameList;
     private List<String> timeList;
     private List<String> textList;
     private List<Integer> goodStatusList;
     private List<String> goodNumList;
+    private List<String> imgInfoList;
     private ListOnItemClickListener mOnItemClickListener;
     private ActiveActivity context;
     private byte[] avatarBytes;
@@ -46,10 +54,12 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
         void onLoad();
     }
 
-    public MeActiveListViewAdapter(ActiveActivity context, byte[] avatarBytes,
+    public MeActiveListViewAdapter(ActiveActivity context, String uid, byte[] avatarBytes,
                                    List<Integer> avatarList, List<String> nicknameList,
                                    List<String> timeList, List<String> textList,
-                                   List<Integer> goodStatusList, List<String> gooNumList) {
+                                   List<Integer> goodStatusList, List<String> gooNumList,
+                                   List<String> imgInfoList) {
+        this.UID = uid;
         this.context = context;
         this.avatarBytes = avatarBytes;
         this.avatarList = avatarList;
@@ -58,6 +68,8 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
         this.textList = textList;
         this.goodStatusList = goodStatusList;
         this.goodNumList = gooNumList;
+        this.imgInfoList = imgInfoList;
+        this.IMG_UPLOAD_URL = context.getString(R.string.url_images_upload);
     }
 
     static class RecyclerViewHolder extends RecyclerView.ViewHolder {
@@ -68,6 +80,7 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
         ImageView goodImg;
         TextView goodNumTv;
         ImageView commentImg;
+        NineGridView gridView;
 
         ProgressBar loadingPBar;
         TextView loadingTv;
@@ -82,6 +95,7 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
                 goodImg = (ImageView) itemView.findViewById(R.id.me_active_good_img);
                 goodNumTv = (TextView) itemView.findViewById(R.id.me_active_good_num_tv);
                 commentImg = (ImageView) itemView.findViewById(R.id.me_active_comment_img);
+                gridView = (NineGridView) itemView.findViewById(R.id.me_active_gridView);
             } else {
                 loadingPBar = (ProgressBar) itemView.findViewById(R.id.foot_loading_progressbar);
                 loadingTv = (TextView) itemView.findViewById(R.id.foot_loading_tv);
@@ -199,6 +213,26 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
                         return false;
                     }
                 });
+            }
+
+            String imgInfo = imgInfoList.get(position);
+            if (imgInfo != null) {
+                String[] dateTimeCount = imgInfo.split("_");
+                String date = dateTimeCount[0];
+                String timePoint = dateTimeCount[1];
+                int imgCount = Integer.parseInt(dateTimeCount[2]);
+                ArrayList<ImageInfo> imageInfos = new ArrayList<>();
+                for (int i = 0; i < imgCount; i++) {
+                    ImageInfo info = new ImageInfo();
+                    String urlHead = IMG_UPLOAD_URL + "/" + date + "/" + UID +
+                            "_" + timePoint + "_active_img_" + i;
+                    info.setThumbnailUrl(urlHead + "_thumb.jpg");
+                    info.setBigImageUrl(urlHead + ".jpg");
+                    imageInfos.add(info);
+                }
+                viewHolder.gridView.setVisibility(View.VISIBLE);
+                viewHolder.gridView.setAdapter(new NineGridViewClickAdapter(
+                        context, imageInfos));
             }
         } else {
             if (isLoading) {

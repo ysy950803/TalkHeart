@@ -38,6 +38,8 @@ public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListView
     private WatchActivity context;
     private boolean isObserver;
 
+    private String AVATAR_UPLOAD_URL = "";
+
     public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
         this.mOnItemClickListener = mOnItemClickListener;
     }
@@ -52,6 +54,7 @@ public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListView
         this.introList = introList;
         this.relationList = relationList;
         this.isObserver = isObserver;
+        this.AVATAR_UPLOAD_URL = context.getResources().getString(R.string.url_avatar_upload);
     }
 
     class RecyclerViewHolder extends RecyclerView.ViewHolder {
@@ -130,7 +133,7 @@ public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListView
     }
 
     private void downloadAvatar(final CircularImageView avatarImg, String uid, final int defaultResId) {
-        new AsyncHttpClient().get(context.getResources().getString(R.string.url_avatar_upload) + "/" + uid + "_avatar_img_thumb.jpg",
+        new AsyncHttpClient().get(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg",
                 new AsyncHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {

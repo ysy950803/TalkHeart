@@ -57,6 +57,8 @@ public class PersonActivity extends DayNightNoActionBarActivity {
     private static final int CAMERA_REQUEST_CODE = 2;
     private static final int CROP_REQUEST_CODE = 4;
     private static final int READ_EXTERNAL_STORAGE_REQUEST_CODE = 3;
+    private String AVATAR_UPLOAD_URL = "";
+    private long AVATAR_TIME_POINT = System.currentTimeMillis();
 
     private CollapsingToolbarLayout toolbarLayout;
     private FloatingActionButton watchFab;
@@ -114,6 +116,7 @@ public class PersonActivity extends DayNightNoActionBarActivity {
     }
 
     private void initData() {
+        AVATAR_UPLOAD_URL = getResources().getString(R.string.url_avatar_upload);
         avatarBytes = getIntent().getExtras().getByteArray("avatar");
         opts_o = getIntent().getExtras().getStringArray("opts_o");
         E_UID = getIntent().getExtras().getString("e_uid");
@@ -573,7 +576,7 @@ public class PersonActivity extends DayNightNoActionBarActivity {
             @Override
             protected void onNoDoubleClick(MenuItem item) {
                 if (isCanClick) {
-                    Intent intent = new Intent(PersonActivity.this, ModifyActivity.class);
+                    Intent intent = new Intent(PersonActivity.this, PersonModifyActivity.class);
                     intent.putExtra("uid", E_UID);
                     intent.putExtra("school", SCHOOL.equals("未设置院校") ? "" : SCHOOL);
                     intent.putExtra("nickname", NICKNAME);
@@ -609,7 +612,7 @@ public class PersonActivity extends DayNightNoActionBarActivity {
 
     private void downloadAvatar() {
         setAvatarClickable(false);
-        new AsyncHttpClient().get(getResources().getString(R.string.url_avatar_upload) + "/" + UID + "_avatar_img.jpg",
+        new AsyncHttpClient().get(AVATAR_UPLOAD_URL + "/" + UID + "_avatar_img.jpg",
                 new AsyncHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
@@ -637,7 +640,7 @@ public class PersonActivity extends DayNightNoActionBarActivity {
             RequestParams params = new RequestParams();
             params.put("avatar_img", new ByteArrayInputStream(avatarBytes), UID + "_avatar_img.jpg", "multipart/form-data");
             params.put("avatar_img_thumb", new ByteArrayInputStream(avatarBytesThumb), UID + "_avatar_img_thumb.jpg", "multipart/form-data");
-            new AsyncHttpClient().post(getResources().getString(R.string.url_avatar_upload), params, new TextHttpResponseHandler() {
+            new AsyncHttpClient().post(AVATAR_UPLOAD_URL, params, new TextHttpResponseHandler() {
                 @Override
                 public void onStart() {
                     waitDialog = ProgressDialog.show(PersonActivity.this, "正在上传头像", "请稍等…");
@@ -653,9 +656,12 @@ public class PersonActivity extends DayNightNoActionBarActivity {
                 @Override
                 public void onSuccess(int i, Header[] headers, String s) {
                     waitDialog.dismiss();
-                    avatarImg.setImageBitmap(picBmp);
-                    ((GlobalApp) getApplication()).setMeInfoUpdated(true);
-                    Toast.makeText(PersonActivity.this, "上传头像成功咯", Toast.LENGTH_SHORT).show();
+                    if (s.equals("Success")) {
+                        avatarImg.setImageBitmap(picBmp);
+                        ((GlobalApp) getApplication()).setMeInfoUpdated(true);
+                        Toast.makeText(PersonActivity.this, "上传头像成功咯", Toast.LENGTH_SHORT).show();
+                    } else
+                        Toast.makeText(PersonActivity.this, "上传头像失败，稍后重试吧", Toast.LENGTH_SHORT).show();
                 }
             });
         }
@@ -663,7 +669,7 @@ public class PersonActivity extends DayNightNoActionBarActivity {
 
     boolean isFolderExists(String strFolder) {
         File dir = new File(strFolder);
-        return dir.exists() || dir.mkdirs();
+        return dir.exists() || dir.mkdirs(); // always true
     }
 
     private void selectImg() {
@@ -673,10 +679,10 @@ public class PersonActivity extends DayNightNoActionBarActivity {
     }
 
     private void takePhoto() {
-        if (isFolderExists(Environment.getExternalStorageDirectory() + "/talk_heart/")) {
+        if (isFolderExists(Environment.getExternalStorageDirectory() + "/TalkHeart/")) {
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(new File(Environment.getExternalStorageDirectory()
-                    + "/talk_heart/" + UID + "_avatar_img_tmp.jpg")));
+                    + "/TalkHeart/" + AVATAR_TIME_POINT + "_avatar_img_tmp.jpg")));
             startActivityForResult(intent, CAMERA_REQUEST_CODE);
         }
     }
@@ -753,7 +759,7 @@ public class PersonActivity extends DayNightNoActionBarActivity {
                 break;
             case CAMERA_REQUEST_CODE:
                 File tempPic = new File(Environment.getExternalStorageDirectory()
-                        + "/talk_heart/" + UID + "_avatar_img_tmp.jpg");
+                        + "/TalkHeart/" + AVATAR_TIME_POINT + "_avatar_img_tmp.jpg");
                 startCrop(Uri.fromFile(tempPic));
                 break;
             case CROP_REQUEST_CODE:

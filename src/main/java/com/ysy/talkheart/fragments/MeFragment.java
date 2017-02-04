@@ -57,6 +57,8 @@ import cz.msebera.android.httpclient.Header;
 
 public class MeFragment extends StatedFragment {
 
+    private String AVATAR_UPLOAD_URL = "";
+
     private List<TextView> tvList = new ArrayList<>();
     private List<TextView> tipTvList = new ArrayList<>();
     private List<CardView> cardList = new ArrayList<>();
@@ -132,6 +134,7 @@ public class MeFragment extends StatedFragment {
     }
 
     private void initData() {
+        AVATAR_UPLOAD_URL = context.getResources().getString(R.string.url_avatar_upload);
         isRefreshing = false;
     }
 
@@ -555,7 +558,7 @@ public class MeFragment extends StatedFragment {
 
     private void downloadAvatar() {
         setAvatarClickable(false);
-        new AsyncHttpClient().get(getResources().getString(R.string.url_avatar_upload) + "/" + UID + "_avatar_img.jpg",
+        new AsyncHttpClient().get(AVATAR_UPLOAD_URL + "/" + UID + "_avatar_img.jpg",
                 new AsyncHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {

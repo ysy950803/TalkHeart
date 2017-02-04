@@ -14,9 +14,11 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.lzy.ninegrid.NineGridView;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.bases.DayNightActivity;
 import com.ysy.talkheart.adapters.MeActiveListViewAdapter;
+import com.ysy.talkheart.utils.SuperImageLoader;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
@@ -38,6 +40,7 @@ public class ActiveActivity extends DayNightActivity {
     private List<Integer> goodStatusList = new ArrayList<>();
     private List<String> goodNumList = new ArrayList<>();
     private List<String> actidList = new ArrayList<>();
+    private List<String> imgInfoList = new ArrayList<>();
     private MeActiveListViewAdapter listViewAdapter;
     private SwipeRefreshLayout refreshLayout;
     private boolean isRefreshing = false;
@@ -63,7 +66,12 @@ public class ActiveActivity extends DayNightActivity {
         initView();
         clickListener();
         refreshLayout.setRefreshing(true);
+    }
+
+    @Override
+    protected void onResume() {
         refresh();
+        super.onResume();
     }
 
     private void initData() {
@@ -78,11 +86,14 @@ public class ActiveActivity extends DayNightActivity {
     }
 
     private void initView() {
+        NineGridView.setImageLoader(new SuperImageLoader());
+
         refreshLayout = (SwipeRefreshLayout) findViewById(R.id.me_active_refresh_layout);
         RecyclerView activeRecyclerView = (RecyclerView) findViewById(R.id.me_active_listView);
 
         activeRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        listViewAdapter = new MeActiveListViewAdapter(this, avatarBytes, avatarList, nicknameList, timeList, textList, goodStatusList, goodNumList);
+        listViewAdapter = new MeActiveListViewAdapter(this, UID, avatarBytes, avatarList,
+                nicknameList, timeList, textList, goodStatusList, goodNumList, imgInfoList);
         listViewAdapter.setFootLoadCallBack(new MeActiveListViewAdapter.FootLoadCallBack() {
             @Override
             public void onLoad() {
@@ -244,7 +255,7 @@ public class ActiveActivity extends DayNightActivity {
                     activeHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.activeSelect(
-                            "select a.actid, sendtime, goodnum, content, ifnull(isfav, -1) as isfav from " +
+                            "select a.actid, sendtime, goodnum, content, ifnull(isfav, -1) as isfav, img_info from " +
                                     "active a left join favorite f on f.actid = a.actid and f.uid = " + e_uid + " where " +
                                     "(sendtime + 0) < " + timeNode +
                                     " and a.uid = " + uid +
@@ -268,6 +279,7 @@ public class ActiveActivity extends DayNightActivity {
                             goodNumList.add(resList.get(2).get(i));
                             textList.add(resList.get(3).get(i));
                             goodStatusList.add(Integer.parseInt(resList.get(4).get(i)));
+                            imgInfoList.add(resList.get(5).get(i));
                         }
                         resList.clear();
                         activeHandler.post(successRunnable);
@@ -356,11 +368,12 @@ public class ActiveActivity extends DayNightActivity {
         goodNumList.clear();
         textList.clear();
         actidList.clear();
+        imgInfoList.clear();
 //        fav_actid_index = 0;
     }
 
     private void openContentModify(String e_uid, String actid, String modify_content) {
-        Intent intent = new Intent(this, WriteActivity.class);
+        Intent intent = new Intent(this, ActiveModifyActivity.class);
         intent.putExtra("uid", e_uid);
         intent.putExtra("actid", actid);
         intent.putExtra("modify_content", modify_content);

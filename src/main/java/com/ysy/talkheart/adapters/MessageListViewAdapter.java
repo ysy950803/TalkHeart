@@ -31,6 +31,8 @@ import cz.msebera.android.httpclient.Header;
 
 public class MessageListViewAdapter extends RecyclerView.Adapter<MessageListViewAdapter.RecyclerViewHolder> {
 
+    private String AVATAR_UPLOAD_URL = "";
+
     private List<String> uidList;
     private List<Integer> avatarList;
     private List<String> nameActList;
@@ -61,6 +63,7 @@ public class MessageListViewAdapter extends RecyclerView.Adapter<MessageListView
         this.contentList = contentList;
         this.quoteList = quoteList;
         this.context = context;
+        this.AVATAR_UPLOAD_URL = context.getResources().getString(R.string.url_avatar_upload);
     }
 
     static class RecyclerViewHolder extends RecyclerView.ViewHolder {
@@ -209,7 +212,7 @@ public class MessageListViewAdapter extends RecyclerView.Adapter<MessageListView
     }
 
     private void downloadAvatar(final CircularImageView avatarImg, String uid, final int defaultResId) {
-        new AsyncHttpClient().get(context.getResources().getString(R.string.url_avatar_upload) + "/" + uid + "_avatar_img_thumb.jpg",
+        new AsyncHttpClient().get(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg",
                 new AsyncHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {

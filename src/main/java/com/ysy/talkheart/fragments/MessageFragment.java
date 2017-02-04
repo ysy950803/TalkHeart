@@ -17,6 +17,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.inthecheesefactory.thecheeselibrary.fragment.support.v4.app.StatedFragment;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.CommentActivity;
@@ -27,6 +28,7 @@ import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.adapters.MessageListViewAdapter;
+import com.ysy.talkheart.utils.RecyclerViewScrollListener;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -107,25 +109,22 @@ public class MessageFragment extends StatedFragment {
     private void initView(View view) {
         refreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.msg_refresh_layout);
         msgRecyclerView = (RecyclerView) view.findViewById(R.id.message_listView);
+
+        final BottomNavigationBar navigationBar = context.getBottomNavigationBar();
         msgRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-//        RecyclerViewScrollListener scrollListener = new RecyclerViewScrollListener() {
-//            @Override
-//            public void onScrollUp() {
-//                navigationBar.hide();
-//            }
-//
-//            @Override
-//            public void onScrollDown() {
-//                navigationBar.show();
-//            }
-//
-//            @Override
-//            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-//
-//            }
-//        };
-//        scrollListener.setScrollThreshold(4);
-//        msgRecyclerView.setOnScrollListener(scrollListener);
+        RecyclerViewScrollListener scrollListener = new RecyclerViewScrollListener() {
+            @Override
+            public void onScrollUp() {
+                navigationBar.hide(false);
+            }
+
+            @Override
+            public void onScrollDown() {
+                navigationBar.show();
+            }
+        };
+        scrollListener.setScrollThreshold(4);
+        msgRecyclerView.setOnScrollListener(scrollListener);
 
         listViewAdapter = new MessageListViewAdapter(this, uidPList, avatarList, nameActList, timeList, contentList, quoteList);
         listViewAdapter.setFootLoadCallBack(new MessageListViewAdapter.FootLoadCallBack() {

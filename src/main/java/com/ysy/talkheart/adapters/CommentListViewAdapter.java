@@ -36,6 +36,7 @@ public class CommentListViewAdapter extends RecyclerView.Adapter<CommentListView
     private List<String> textList;
     private CommentActivity context;
     private ListOnItemClickListener mOnItemClickListener;
+    private String AVATAR_UPLOAD_URL = "";
 
     public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
         this.mOnItemClickListener = mOnItemClickListener;
@@ -50,6 +51,7 @@ public class CommentListViewAdapter extends RecyclerView.Adapter<CommentListView
         this.nicknameList = nicknameList;
         this.timeList = timeList;
         this.textList = textList;
+        this.AVATAR_UPLOAD_URL = context.getResources().getString(R.string.url_avatar_upload);
     }
 
     class RecyclerViewHolder extends RecyclerView.ViewHolder {
@@ -70,14 +72,14 @@ public class CommentListViewAdapter extends RecyclerView.Adapter<CommentListView
     }
 
     @Override
-    public CommentListViewAdapter.RecyclerViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public RecyclerViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         return new RecyclerViewHolder(LayoutInflater
                 .from(parent.getContext())
                 .inflate(R.layout.item_comment, parent, false));
     }
 
     @Override
-    public void onBindViewHolder(final CommentListViewAdapter.RecyclerViewHolder holder, int position) {
+    public void onBindViewHolder(final RecyclerViewHolder holder, int position) {
         downloadAvatar(holder.avatarImg, uidList.get(position), avatarList.get(position));
         holder.nicknameTv.setText(nicknameList.get(position));
         holder.contentTv.setText(textList.get(position));
@@ -133,7 +135,7 @@ public class CommentListViewAdapter extends RecyclerView.Adapter<CommentListView
     }
 
     private void downloadAvatar(final CircularImageView avatarImg, String uid, final int defaultResId) {
-        new AsyncHttpClient().get(context.getResources().getString(R.string.url_avatar_upload) + "/" + uid + "_avatar_img_thumb.jpg",
+        new AsyncHttpClient().get(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg",
                 new AsyncHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {

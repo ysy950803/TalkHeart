@@ -3,25 +3,22 @@ package com.ysy.talkheart.activities;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
-import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
-import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -45,7 +42,6 @@ import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.DataCleanManager;
 import com.ysy.talkheart.utils.DataProcessor;
 import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
-import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.utils.NoDouleDialogClickListener;
 import com.ysy.talkheart.utils.UpdateChecker;
 
@@ -66,7 +62,6 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
     private static final int MSG_REFRESH_TIME = 24 * 1024;
     private static final int UPDATE_CHECK_TIME = 2048;
     private BottomNavigationBar bottomNavigationBar;
-    private FloatingActionButton addFab;
     private ImageView msgUnreadImg;
     private String UID;
     private Resources.Theme theme;
@@ -121,21 +116,6 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
 
         msgUnreadImg = (ImageView) findViewById(R.id.msg_unread_img);
         msgUnreadImg.setVisibility(View.GONE);
-
-        addFab = (FloatingActionButton) findViewById(R.id.home_add_fab);
-        addFab.setOnClickListener(new NoDoubleViewClickListener() {
-            @Override
-            protected void onNoDoubleClick(View v) {
-                Intent intent = new Intent(HomeActivity.this, WriteActivity.class);
-                intent.putExtra("opts_o", opts_o);
-                intent.putExtra("uid", UID);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(HomeActivity.this, addFab, getString(R.string.trans_add));
-                    startActivity(intent, tAO.toBundle());
-                } else
-                    startActivity(intent);
-            }
-        });
 
         TypedValue bg = new TypedValue();
         theme.resolveAttribute(R.attr.colorNavBG, bg, true);
@@ -200,7 +180,6 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
                 if (actionBar != null)
                     actionBar.setTitle("首页");
                 setMenuItemVisible(false, false, true, false);
-                addFab.setVisibility(View.VISIBLE);
                 break;
             case 1:
                 messageFragment = (MessageFragment) fm.findFragmentByTag("Msg");
@@ -216,7 +195,6 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
                 if (actionBar != null)
                     actionBar.setTitle("消息");
                 setMenuItemVisible(false, false, false, false);
-                addFab.setVisibility(View.GONE);
                 if (bottomNavigationBar != null && bottomNavigationBar.isHidden())
                     bottomNavigationBar.show();
                 break;
@@ -231,7 +209,6 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
                 if (actionBar != null)
                     actionBar.setTitle("个人");
                 setMenuItemVisible(true, true, false, true);
-                addFab.setVisibility(View.GONE);
                 if (bottomNavigationBar != null && bottomNavigationBar.isHidden())
                     bottomNavigationBar.show();
                 break;
@@ -433,10 +410,6 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
         return msgUnreadImg;
     }
 
-    public FloatingActionButton getAddFab() {
-        return addFab;
-    }
-
     public int getIsRead() {
         return isRead;
     }
@@ -527,9 +500,6 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
         theme.resolveAttribute(R.attr.colorBG, bg, true);
         homeLayout.setBackgroundResource(bg.resourceId);
 
-        theme.resolveAttribute(R.attr.colorAccent, bg, true);
-        addFab.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(bg.resourceId)));
-
         refreshBar();
         if (meFragment != null)
             meFragment.refreshFragmentUI();
@@ -610,6 +580,7 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
             }
         });
         feedbackMenuItem.setVisible(false);
+
         updateMenuItem = menu.findItem(R.id.action_update);
         updateMenuItem.setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
             @Override
@@ -618,6 +589,7 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
             }
         });
         updateMenuItem.setVisible(false);
+
         searchMenuItem = menu.findItem(R.id.action_search);
         searchMenuItem.setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
             @Override
@@ -629,6 +601,7 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
             }
         });
         searchMenuItem.setVisible(true);
+
         clearMenuItem = menu.findItem(R.id.action_clear);
         clearMenuItem.setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
             @Override

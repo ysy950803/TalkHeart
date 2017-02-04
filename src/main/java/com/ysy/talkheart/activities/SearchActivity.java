@@ -15,6 +15,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.bases.DayNightActivity;
 import com.ysy.talkheart.bases.DayNightNoActionBarActivity;
 import com.ysy.talkheart.adapters.SearchUserListViewAdapter;
 import com.ysy.talkheart.utils.ConnectionDetector;

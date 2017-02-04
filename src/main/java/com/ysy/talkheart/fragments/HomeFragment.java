@@ -1,8 +1,11 @@
 package com.ysy.talkheart.fragments;
 
+import android.app.ActivityOptions;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -22,20 +25,24 @@ import android.widget.Toast;
 
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.inthecheesefactory.thecheeselibrary.fragment.support.v4.app.StatedFragment;
+import com.lzy.ninegrid.NineGridView;
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.activities.ActiveModifyActivity;
 import com.ysy.talkheart.activities.CommentActivity;
 import com.ysy.talkheart.activities.HomeActivity;
 import com.ysy.talkheart.activities.PersonActivity;
 import com.ysy.talkheart.activities.WriteActivity;
+import com.ysy.talkheart.bases.GlobalApp;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
+import com.ysy.talkheart.utils.SuperImageLoader;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.adapters.HomeActiveListViewAdapter;
+import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.utils.NoDouleDialogClickListener;
 import com.ysy.talkheart.utils.RecyclerViewScrollListener;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -50,6 +57,8 @@ import java.util.Locale;
 
 public class HomeFragment extends StatedFragment {
 
+    private FloatingActionButton addFab;
+
     private RecyclerView activeRecyclerView;
     private SwipeRefreshLayout refreshLayout;
     private List<Integer> avatarList = new ArrayList<>();
@@ -60,6 +69,8 @@ public class HomeFragment extends StatedFragment {
     private List<String> goodNumList = new ArrayList<>();
     private List<String> actidList = new ArrayList<>();
     private List<String> uidList = new ArrayList<>();
+    private List<String> imgInfoList = new ArrayList<>();
+
     private HomeActiveListViewAdapter listViewAdapter;
     private static final String FRAGMENT_TAG = "Home";
     private static final String OPTS_KEY = "opts_o";
@@ -107,34 +118,47 @@ public class HomeFragment extends StatedFragment {
         return view;
     }
 
+    @Override
+    public void onResume() {
+        GlobalApp app = ((GlobalApp)getActivity().getApplication());
+        if (app.getHomeActiveUpdated()) {
+            refresh();
+            app.setHomeActiveUpdated(false);
+        }
+        super.onResume();
+    }
+
     private void initData() {
         isRefreshing = false;
     }
 
     private void initView(View view) {
-        refreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.home_active_refresh_layout);
-        final FloatingActionButton addFab = context.getAddFab();
-        final BottomNavigationBar navigationBar = context.getBottomNavigationBar();
+        NineGridView.setImageLoader(new SuperImageLoader());
 
+        final BottomNavigationBar navigationBar = context.getBottomNavigationBar();
+        refreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.home_active_refresh_layout);
+        addFab = (FloatingActionButton) view.findViewById(R.id.home_add_fab);
         activeRecyclerView = (RecyclerView) view.findViewById(R.id.home_active_listView);
+
         activeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         RecyclerViewScrollListener scrollListener = new RecyclerViewScrollListener() {
             @Override
             public void onScrollUp() {
-                addFab.hide();
                 navigationBar.hide(false);
+                addFab.hide();
             }
 
             @Override
             public void onScrollDown() {
-                addFab.show();
                 navigationBar.show();
+                addFab.show();
             }
         };
         scrollListener.setScrollThreshold(4);
         activeRecyclerView.setOnScrollListener(scrollListener);
 
-        listViewAdapter = new HomeActiveListViewAdapter(this, uidList, avatarList, nicknameList, timeList, textList, goodStatusList, goodNumList);
+        listViewAdapter = new HomeActiveListViewAdapter(this, uidList, avatarList, nicknameList,
+                timeList, textList, goodStatusList, goodNumList, imgInfoList);
         listViewAdapter.setFootLoadCallBack(new HomeActiveListViewAdapter.FootLoadCallBack() {
             @Override
             public void onLoad() {
@@ -153,6 +177,20 @@ public class HomeFragment extends StatedFragment {
     }
 
     private void clickListener() {
+        addFab.setOnClickListener(new NoDoubleViewClickListener() {
+            @Override
+            protected void onNoDoubleClick(View v) {
+                Intent intent = new Intent(context, WriteActivity.class);
+                intent.putExtra("opts_o", opts_o);
+                intent.putExtra("uid", UID);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(context, addFab, getString(R.string.trans_add));
+                    startActivity(intent, tAO.toBundle());
+                } else
+                    startActivity(intent);
+            }
+        });
+
         listViewAdapter.setListOnItemClickListener(new ListOnItemClickListener() {
             @Override
             public void onItemClick(View view, int position) {
@@ -269,7 +307,7 @@ public class HomeFragment extends StatedFragment {
                     homeActiveHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.homeActiveSelect(
-                            "select a.actid, sex, nickname, sendtime, content, goodnum, u.uid, ifnull(isfav, -1) as isfav from " +
+                            "select a.actid, sex, nickname, sendtime, content, goodnum, u.uid, ifnull(isfav, -1) as isfav, img_info from " +
                                     "user u, active a left join favorite f on a.actid = f.actid and f.uid = " + uid +
                                     " where (sendtime + 0) < " + timeNode +
                                     " and a.uid = u.uid and u.uid in (" +
@@ -296,6 +334,7 @@ public class HomeFragment extends StatedFragment {
                             goodNumList.add(resList.get(5).get(i));
                             uidList.add(resList.get(6).get(i));
                             goodStatusList.add(Integer.parseInt(resList.get(7).get(i)));
+                            imgInfoList.add(resList.get(8).get(i));
                         }
                         resList.clear();
                         homeActiveHandler.post(successRunnable);
@@ -366,6 +405,7 @@ public class HomeFragment extends StatedFragment {
         textList.clear();
         actidList.clear();
         uidList.clear();
+        imgInfoList.clear();
 //        fav_actid_index = 0;
     }
 
@@ -393,7 +433,7 @@ public class HomeFragment extends StatedFragment {
     }
 
     private void openContentModify(String uid, String actid, String modify_content) {
-        Intent intent = new Intent(getActivity(), WriteActivity.class);
+        Intent intent = new Intent(getActivity(), ActiveModifyActivity.class);
         intent.putExtra("uid", uid);
         intent.putExtra("actid", actid);
         intent.putExtra("modify_content", modify_content);
@@ -539,6 +579,10 @@ public class HomeFragment extends StatedFragment {
         TypedValue typedValue = new TypedValue();
         Resources.Theme theme = context.getTheme();
         Resources res = getResources();
+
+        theme.resolveAttribute(R.attr.colorAccent, typedValue, true);
+        addFab.setBackgroundTintList(ColorStateList.valueOf(res.getColor(typedValue.resourceId)));
+
         int childCount = activeRecyclerView.getChildCount();
         for (int i = 0; i < childCount; i++) {
             theme.resolveAttribute(R.attr.colorPlaintViewBG, typedValue, true);

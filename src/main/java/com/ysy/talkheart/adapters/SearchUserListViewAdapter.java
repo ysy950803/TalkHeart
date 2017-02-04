@@ -33,6 +33,8 @@ public class SearchUserListViewAdapter extends RecyclerView.Adapter<SearchUserLi
     private ListOnItemClickListener mOnItemClickListener;
     private SearchActivity context;
 
+    private String AVATAR_UPLOAD_URL = "";
+
     public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
         this.mOnItemClickListener = mOnItemClickListener;
     }
@@ -44,6 +46,7 @@ public class SearchUserListViewAdapter extends RecyclerView.Adapter<SearchUserLi
         this.avatarList = avatarList;
         this.nicknameList = nicknameList;
         this.infoList = infoList;
+        this.AVATAR_UPLOAD_URL = context.getString(R.string.url_avatar_upload);
     }
 
     class RecyclerViewHolder extends RecyclerView.ViewHolder {
@@ -99,7 +102,7 @@ public class SearchUserListViewAdapter extends RecyclerView.Adapter<SearchUserLi
     }
 
     private void downloadAvatar(final CircularImageView avatarImg, String uid, final int defaultResId) {
-        new AsyncHttpClient().get(context.getString(R.string.url_avatar_upload) + "/" + uid + "_avatar_img_thumb.jpg",
+        new AsyncHttpClient().get(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg",
                 new AsyncHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {

@@ -13,6 +13,9 @@ import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.lzy.ninegrid.ImageInfo;
+import com.lzy.ninegrid.NineGridView;
+import com.lzy.ninegrid.preview.NineGridViewClickAdapter;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.bases.GlobalApp;
 import com.ysy.talkheart.fragments.HomeFragment;
@@ -21,6 +24,7 @@ import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import cz.msebera.android.httpclient.Header;
@@ -32,6 +36,9 @@ import cz.msebera.android.httpclient.Header;
 
 public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveListViewAdapter.RecyclerViewHolder> {
 
+    private String AVATAR_UPLOAD_URL = "";
+    private String IMG_UPLOAD_URL = "";
+
     private List<String> uidList;
     private List<Integer> avatarList;
     private List<String> nicknameList;
@@ -39,6 +46,7 @@ public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveLi
     private List<String> textList;
     private List<Integer> goodStatusList;
     private List<String> goodNumList;
+    private List<String> imgInfoList;
     private ListOnItemClickListener mOnItemClickListener;
     private HomeFragment context;
 
@@ -56,7 +64,8 @@ public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveLi
     public HomeActiveListViewAdapter(HomeFragment context, List<String> uidList,
                                      List<Integer> avatarList, List<String> nicknameList,
                                      List<String> timeList, List<String> textList,
-                                     List<Integer> goodStatusList, List<String> gooNumList) {
+                                     List<Integer> goodStatusList, List<String> gooNumList,
+                                     List<String> imgInfoList) {
         this.context = context;
         this.uidList = uidList;
         this.avatarList = avatarList;
@@ -65,6 +74,9 @@ public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveLi
         this.textList = textList;
         this.goodStatusList = goodStatusList;
         this.goodNumList = gooNumList;
+        this.imgInfoList = imgInfoList;
+        this.AVATAR_UPLOAD_URL = context.getString(R.string.url_avatar_upload);
+        this.IMG_UPLOAD_URL = context.getString(R.string.url_images_upload);
     }
 
     static class RecyclerViewHolder extends RecyclerView.ViewHolder {
@@ -75,6 +87,7 @@ public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveLi
         ImageView commentImg;
         ImageView goodImg;
         TextView goodNumTv;
+        NineGridView gridView;
 
         ProgressBar loadingPBar;
         TextView loadingTv;
@@ -89,6 +102,7 @@ public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveLi
                 goodImg = (ImageView) itemView.findViewById(R.id.home_active_good_img);
                 goodNumTv = (TextView) itemView.findViewById(R.id.home_active_good_num_tv);
                 commentImg = (ImageView) itemView.findViewById(R.id.home_active_comment_img);
+                gridView = (NineGridView) itemView.findViewById(R.id.home_active_gridView);
             } else {
                 loadingPBar = (ProgressBar) itemView.findViewById(R.id.foot_loading_progressbar);
                 loadingTv = (TextView) itemView.findViewById(R.id.foot_loading_tv);
@@ -203,6 +217,29 @@ public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveLi
                     }
                 });
             }
+
+            String imgInfo = imgInfoList.get(position);
+            if (imgInfo != null) {
+                String[] dateTimeCount = imgInfo.split("_");
+                String date = dateTimeCount[0];
+                String timePoint = dateTimeCount[1];
+                int imgCount = Integer.parseInt(dateTimeCount[2]);
+                String uid = uidList.get(position);
+                ArrayList<ImageInfo> imageInfos = new ArrayList<>();
+                for (int i = 0; i < imgCount; i++) {
+                    ImageInfo info = new ImageInfo();
+                    String urlHead = IMG_UPLOAD_URL + "/" + date + "/" + uid +
+                            "_" + timePoint + "_active_img_" + i;
+                    info.setThumbnailUrl(urlHead + "_thumb.jpg");
+                    info.setBigImageUrl(urlHead + ".jpg");
+                    imageInfos.add(info);
+                }
+                viewHolder.gridView.setVisibility(View.VISIBLE);
+                viewHolder.gridView.setAdapter(new NineGridViewClickAdapter(
+                        context.getContext(), imageInfos));
+            } else {
+                viewHolder.gridView.setVisibility(View.GONE);
+            }
         } else {
             if (isLoading) {
                 viewHolder.loadingPBar.setVisibility(View.VISIBLE);
@@ -225,7 +262,7 @@ public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveLi
     }
 
     private void downloadAvatar(final CircularImageView avatarImg, String uid, final int defaultResId) {
-        new AsyncHttpClient().get(context.getResources().getString(R.string.url_avatar_upload) + "/" + uid + "_avatar_img_thumb.jpg",
+        new AsyncHttpClient().get(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg",
                 new AsyncHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
