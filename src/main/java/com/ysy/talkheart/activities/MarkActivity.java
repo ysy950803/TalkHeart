@@ -13,6 +13,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.lzy.ninegrid.NineGridView;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.bases.DayNightActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
@@ -20,6 +21,7 @@ import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.adapters.MeMarkListViewAdapter;
 import com.ysy.talkheart.utils.NoDouleDialogClickListener;
+import com.ysy.talkheart.utils.SuperImageLoader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +37,7 @@ public class MarkActivity extends DayNightActivity {
     private List<String> textList = new ArrayList<>();
     private List<String> actidList = new ArrayList<>();
     private List<String> uidList = new ArrayList<>();
+    private List<String> imgInfoList = new ArrayList<>();
     private String UID = "0";
     private Handler refreshHandler;
     private String[] opts_o;
@@ -63,11 +66,14 @@ public class MarkActivity extends DayNightActivity {
     }
 
     private void initView() {
+        NineGridView.setImageLoader(new SuperImageLoader());
+
         refreshLayout = (SwipeRefreshLayout) findViewById(R.id.me_mark_refresh_layout);
         RecyclerView markRecyclerView = (RecyclerView) findViewById(R.id.me_mark_listView);
 
         markRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        listViewAdapter = new MeMarkListViewAdapter(this, uidList, avatarList, nicknameList, timeList, textList);
+        listViewAdapter = new MeMarkListViewAdapter(this, uidList, avatarList, nicknameList,
+                timeList, textList, imgInfoList);
         markRecyclerView.setAdapter(listViewAdapter);
 
         refreshLayout.setColorSchemeResources(R.color.colorAccent);
@@ -173,7 +179,7 @@ public class MarkActivity extends DayNightActivity {
                     refreshHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.markSelect(
-                            "select sex, sendtime, nickname, content, m.actid, a.uid " +
+                            "select sex, sendtime, nickname, content, m.actid, a.uid, img_info " +
                                     "from user u, mark m, active a where m.actid = a.actid and m.uid = " + uid + " and a.uid = u.uid " +
                                     "order by sendtime desc"
                     );
@@ -190,6 +196,7 @@ public class MarkActivity extends DayNightActivity {
                             textList.add(resList.get(3).get(i));
                             actidList.add(resList.get(4).get(i));
                             uidList.add(resList.get(5).get(i));
+                            imgInfoList.add(resList.get(6).get(i));
                         }
                         refreshHandler.post(successRunnable);
                     }
@@ -206,6 +213,7 @@ public class MarkActivity extends DayNightActivity {
         textList.clear();
         actidList.clear();
         uidList.clear();
+        imgInfoList.clear();
     }
 
     private Runnable successRunnable = new Runnable() {

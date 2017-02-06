@@ -12,7 +12,6 @@ import android.widget.Toast;
 
 import com.lzy.ninegrid.ImageInfo;
 import com.lzy.ninegrid.NineGridView;
-import com.lzy.ninegrid.preview.NineGridViewClickAdapter;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.ActiveActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
@@ -231,9 +230,10 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
                     imageInfos.add(info);
                 }
                 viewHolder.gridView.setVisibility(View.VISIBLE);
-                viewHolder.gridView.setAdapter(new NineGridViewClickAdapter(
+                viewHolder.gridView.setAdapter(new ImageGridViewAdapter(
                         context, imageInfos));
-            }
+            } else
+                viewHolder.gridView.setVisibility(View.GONE);
         } else {
             if (isLoading) {
                 viewHolder.loadingPBar.setVisibility(View.VISIBLE);

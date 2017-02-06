@@ -355,7 +355,9 @@ public class WriteActivity extends DayNightActivity {
     private Runnable imgUploadRunnable = new Runnable() {
         @Override
         public void run() {
-            new AsyncHttpClient().post(IMAGES_UPLOAD_URL, params, new TextHttpResponseHandler() {
+            AsyncHttpClient httpClient = new AsyncHttpClient();
+            httpClient.setTimeout(16 * 1000);
+            httpClient.post(IMAGES_UPLOAD_URL, params, new TextHttpResponseHandler() {
                 @Override
                 public void onStart() {
                     waitDialog = ProgressDialog.show(WriteActivity.this, "请稍后", "正在上传图片……");

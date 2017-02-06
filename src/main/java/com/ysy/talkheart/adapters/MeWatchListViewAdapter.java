@@ -10,6 +10,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.signature.StringSignature;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.ysy.talkheart.R;
@@ -54,7 +56,7 @@ public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListView
         this.introList = introList;
         this.relationList = relationList;
         this.isObserver = isObserver;
-        this.AVATAR_UPLOAD_URL = context.getResources().getString(R.string.url_avatar_upload);
+        this.AVATAR_UPLOAD_URL = context.getString(R.string.url_avatar_upload);
     }
 
     class RecyclerViewHolder extends RecyclerView.ViewHolder {
@@ -82,7 +84,6 @@ public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListView
     @Override
     public void onBindViewHolder(final MeWatchListViewAdapter.RecyclerViewHolder holder, int position) {
         downloadAvatar(holder.avatarImg, uidList.get(position), avatarList.get(position));
-        holder.avatarImg.setImageResource(avatarList.get(position));
         holder.nicknameTv.setText(nicknameList.get(position));
         holder.infoTv.setText(introList.get(position));
 
@@ -133,21 +134,29 @@ public class MeWatchListViewAdapter extends RecyclerView.Adapter<MeWatchListView
     }
 
     private void downloadAvatar(final CircularImageView avatarImg, String uid, final int defaultResId) {
-        new AsyncHttpClient().get(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg",
-                new AsyncHttpResponseHandler() {
-                    @Override
-                    public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-                        Bitmap picBmp = BitmapFactory.decodeByteArray(responseBody, 0, responseBody.length);
-                        if (picBmp != null) {
-                            avatarImg.setImageBitmap(picBmp);
-                        } else
-                            avatarImg.setImageResource(defaultResId);
-                    }
-
-                    @Override
-                    public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                        avatarImg.setImageResource(defaultResId);
-                    }
-                });
+//        AsyncHttpClient httpClient = new AsyncHttpClient();
+//        httpClient.setTimeout(16 * 1000);
+//        httpClient.get(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg",
+//                new AsyncHttpResponseHandler() {
+//                    @Override
+//                    public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+//                        Bitmap picBmp = BitmapFactory.decodeByteArray(responseBody, 0, responseBody.length);
+//                        if (picBmp != null) {
+//                            avatarImg.setImageBitmap(picBmp);
+//                        } else
+//                            avatarImg.setImageResource(defaultResId);
+//                    }
+//
+//                    @Override
+//                    public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+//                        avatarImg.setImageResource(defaultResId);
+//                    }
+//                });
+        Glide.with(context).load(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg")
+                .asBitmap()
+                .signature(new StringSignature("" + System.currentTimeMillis()))
+                .placeholder(defaultResId)
+                .error(defaultResId)
+                .into(avatarImg);
     }
 }

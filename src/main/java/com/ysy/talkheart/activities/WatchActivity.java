@@ -127,6 +127,14 @@ public class WatchActivity extends DayNightActivity {
         return true;
     }
 
+    public void updateRelation(int position) {
+        if (watchUIDList != null && watchUIDList.size() > position) {
+            String UID_L = Integer.parseInt(UID) < Integer.parseInt(watchUIDList.get(position)) ? UID : watchUIDList.get(position);
+            String UID_H = Integer.parseInt(UID) > Integer.parseInt(watchUIDList.get(position)) ? UID : watchUIDList.get(position);
+            connectToUpdateRelation(UID, watchUIDList.get(position), UID_L, UID_H);
+        }
+    }
+
     private void connectToGetWatch(final String uid) {
         watchRecyclerView.setClickable(false);
         new Thread(new Runnable() {
@@ -286,14 +294,6 @@ public class WatchActivity extends DayNightActivity {
         introList.clear();
         relationList.clear();
         watchUIDList.clear();
-    }
-
-    public void updateRelation(int position) {
-        if (watchUIDList != null && watchUIDList.size() > position) {
-            String UID_L = Integer.parseInt(UID) < Integer.parseInt(watchUIDList.get(position)) ? UID : watchUIDList.get(position);
-            String UID_H = Integer.parseInt(UID) > Integer.parseInt(watchUIDList.get(position)) ? UID : watchUIDList.get(position);
-            connectToUpdateRelation(UID, watchUIDList.get(position), UID_L, UID_H);
-        }
     }
 
     private Runnable successRunnable = new Runnable() {

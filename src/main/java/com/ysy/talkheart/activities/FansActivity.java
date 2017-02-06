@@ -68,8 +68,8 @@ public class FansActivity extends DayNightActivity {
     private void initView() {
         refreshLayout = (SwipeRefreshLayout) findViewById(R.id.me_fans_refresh_layout);
         fansRecyclerView = (RecyclerView) findViewById(R.id.me_fans_listView);
-        fansRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+        fansRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         listViewAdapter = new MeFansListViewAdapter(this, fansUIDList, avatarList, nicknameList, introList, relationList, !isSelf);
         fansRecyclerView.setAdapter(listViewAdapter);
 

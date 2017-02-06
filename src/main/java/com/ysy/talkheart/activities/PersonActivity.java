@@ -10,6 +10,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
@@ -19,7 +20,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
-import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -39,8 +39,8 @@ import com.ysy.talkheart.bases.DayNightNoActionBarActivity;
 import com.ysy.talkheart.bases.GlobalApp;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
-import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
+import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.utils.NoDouleDialogClickListener;
 
 import java.io.ByteArrayInputStream;
@@ -612,7 +612,9 @@ public class PersonActivity extends DayNightNoActionBarActivity {
 
     private void downloadAvatar() {
         setAvatarClickable(false);
-        new AsyncHttpClient().get(AVATAR_UPLOAD_URL + "/" + UID + "_avatar_img.jpg",
+        AsyncHttpClient httpClient = new AsyncHttpClient();
+        httpClient.setTimeout(16 * 1000);
+        httpClient.get(AVATAR_UPLOAD_URL + "/" + UID + "_avatar_img.jpg",
                 new AsyncHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
@@ -640,7 +642,9 @@ public class PersonActivity extends DayNightNoActionBarActivity {
             RequestParams params = new RequestParams();
             params.put("avatar_img", new ByteArrayInputStream(avatarBytes), UID + "_avatar_img.jpg", "multipart/form-data");
             params.put("avatar_img_thumb", new ByteArrayInputStream(avatarBytesThumb), UID + "_avatar_img_thumb.jpg", "multipart/form-data");
-            new AsyncHttpClient().post(AVATAR_UPLOAD_URL, params, new TextHttpResponseHandler() {
+            AsyncHttpClient httpClient = new AsyncHttpClient();
+            httpClient.setTimeout(16 * 1000);
+            httpClient.post(AVATAR_UPLOAD_URL, params, new TextHttpResponseHandler() {
                 @Override
                 public void onStart() {
                     waitDialog = ProgressDialog.show(PersonActivity.this, "正在上传头像", "请稍等…");

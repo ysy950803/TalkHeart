@@ -9,8 +9,12 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.signature.StringSignature;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.lzy.ninegrid.ImageInfo;
+import com.lzy.ninegrid.NineGridView;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.MarkActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
@@ -18,6 +22,7 @@ import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import cz.msebera.android.httpclient.Header;
@@ -33,24 +38,31 @@ public class MeMarkListViewAdapter extends RecyclerView.Adapter<MeMarkListViewAd
     private List<String> nicknameList;
     private List<String> timeList;
     private List<String> textList;
+    private List<String> imgInfoList;
+
     private MarkActivity context;
     private ListOnItemClickListener mOnItemClickListener;
 
     private String AVATAR_UPLOAD_URL = "";
+    private String IMG_UPLOAD_URL = "";
 
     public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
         this.mOnItemClickListener = mOnItemClickListener;
     }
 
     public MeMarkListViewAdapter(MarkActivity context, List<String> uidList,
-                                 List<Integer> avatarList, List<String> nicknameList, List<String> timeList, List<String> textList) {
+                                 List<Integer> avatarList, List<String> nicknameList,
+                                 List<String> timeList, List<String> textList,
+                                 List<String> imgInfoList) {
         this.uidList = uidList;
         this.avatarList = avatarList;
         this.nicknameList = nicknameList;
         this.timeList = timeList;
         this.textList = textList;
+        this.imgInfoList = imgInfoList;
         this.context = context;
         this.AVATAR_UPLOAD_URL = context.getResources().getString(R.string.url_avatar_upload);
+        this.IMG_UPLOAD_URL = context.getString(R.string.url_images_upload);
     }
 
     class RecyclerViewHolder extends RecyclerView.ViewHolder {
@@ -58,6 +70,7 @@ public class MeMarkListViewAdapter extends RecyclerView.Adapter<MeMarkListViewAd
         TextView nicknameTv;
         TextView timeTv;
         TextView textTv;
+        NineGridView gridView;
 
         RecyclerViewHolder(View itemView) {
             super(itemView);
@@ -65,6 +78,7 @@ public class MeMarkListViewAdapter extends RecyclerView.Adapter<MeMarkListViewAd
             nicknameTv = (TextView) itemView.findViewById(R.id.me_mark_nickname_tv);
             timeTv = (TextView) itemView.findViewById(R.id.me_mark_time_tv);
             textTv = (TextView) itemView.findViewById(R.id.me_mark_text_tv);
+            gridView = (NineGridView) itemView.findViewById(R.id.me_mark_gridView);
         }
     }
 
@@ -114,6 +128,28 @@ public class MeMarkListViewAdapter extends RecyclerView.Adapter<MeMarkListViewAd
                 }
             });
         }
+
+        String imgInfo = imgInfoList.get(position);
+        if (imgInfo != null) {
+            String[] dateTimeCount = imgInfo.split("_");
+            String date = dateTimeCount[0];
+            String timePoint = dateTimeCount[1];
+            int imgCount = Integer.parseInt(dateTimeCount[2]);
+            String uid = uidList.get(position);
+            ArrayList<ImageInfo> imageInfos = new ArrayList<>();
+            for (int i = 0; i < imgCount; i++) {
+                ImageInfo info = new ImageInfo();
+                String urlHead = IMG_UPLOAD_URL + "/" + date + "/" + uid +
+                        "_" + timePoint + "_active_img_" + i;
+                info.setThumbnailUrl(urlHead + "_thumb.jpg");
+                info.setBigImageUrl(urlHead + ".jpg");
+                imageInfos.add(info);
+            }
+            holder.gridView.setVisibility(View.VISIBLE);
+            holder.gridView.setAdapter(new ImageGridViewAdapter(
+                    context, imageInfos));
+        } else
+            holder.gridView.setVisibility(View.GONE);
     }
 
     @Override
@@ -122,21 +158,29 @@ public class MeMarkListViewAdapter extends RecyclerView.Adapter<MeMarkListViewAd
     }
 
     private void downloadAvatar(final CircularImageView avatarImg, String uid, final int defaultResId) {
-        new AsyncHttpClient().get(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg",
-                new AsyncHttpResponseHandler() {
-                    @Override
-                    public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-                        Bitmap picBmp = BitmapFactory.decodeByteArray(responseBody, 0, responseBody.length);
-                        if (picBmp != null) {
-                            avatarImg.setImageBitmap(picBmp);
-                        } else
-                            avatarImg.setImageResource(defaultResId);
-                    }
-
-                    @Override
-                    public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                        avatarImg.setImageResource(defaultResId);
-                    }
-                });
+//        AsyncHttpClient httpClient = new AsyncHttpClient();
+//        httpClient.setTimeout(16 * 1000);
+//        httpClient.get(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg",
+//                new AsyncHttpResponseHandler() {
+//                    @Override
+//                    public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+//                        Bitmap picBmp = BitmapFactory.decodeByteArray(responseBody, 0, responseBody.length);
+//                        if (picBmp != null) {
+//                            avatarImg.setImageBitmap(picBmp);
+//                        } else
+//                            avatarImg.setImageResource(defaultResId);
+//                    }
+//
+//                    @Override
+//                    public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+//                        avatarImg.setImageResource(defaultResId);
+//                    }
+//                });
+        Glide.with(context).load(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg")
+                .asBitmap()
+                .signature(new StringSignature("" + System.currentTimeMillis()))
+                .placeholder(defaultResId)
+                .error(defaultResId)
+                .into(avatarImg);
     }
 }
