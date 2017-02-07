@@ -35,13 +35,11 @@ public class RegisterActivity extends DayNightFullScreenActivity {
     private int YEAR = 1995;
     private int MONTH = 8;
     private int DAY = 3;
-    private String[] opts_o;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
-        opts_o = getIntent().getExtras().getStringArray("opts_o");
         initView();
         clickListener();
         registerHandler = new Handler();

@@ -7,8 +7,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.ysy.talkheart.R;
-import com.ysy.talkheart.utils.ListOnItemClickListener;
-import com.ysy.talkheart.utils.NoDoubleViewClickListener;
+import com.ysy.talkheart.bases.SuperRecyclerViewAdapter;
 
 import java.util.List;
 
@@ -16,22 +15,17 @@ import java.util.List;
  * Created by Shengyu Yao on 2016/11/23.
  */
 
-public class MeDraftListViewAdapter extends RecyclerView.Adapter<MeDraftListViewAdapter.RecyclerViewHolder> {
+public class MeDraftListViewAdapter extends SuperRecyclerViewAdapter {
 
     private List<String> timeList;
     private List<String> textList;
-    private ListOnItemClickListener mOnItemClickListener;
-
-    public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
-        this.mOnItemClickListener = mOnItemClickListener;
-    }
 
     public MeDraftListViewAdapter(List<String> timeList, List<String> textList) {
         this.timeList = timeList;
         this.textList = textList;
     }
 
-    class RecyclerViewHolder extends RecyclerView.ViewHolder {
+    private static class RecyclerViewHolder extends RecyclerView.ViewHolder {
         TextView timeTv;
         TextView textTv;
 
@@ -43,36 +37,19 @@ public class MeDraftListViewAdapter extends RecyclerView.Adapter<MeDraftListView
     }
 
     @Override
-    public RecyclerViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         return new RecyclerViewHolder(LayoutInflater
                 .from(parent.getContext())
                 .inflate(R.layout.item_me_draft, parent, false));
     }
 
     @Override
-    public void onBindViewHolder(final RecyclerViewHolder holder, int position) {
+    public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
+        RecyclerViewHolder holder = (RecyclerViewHolder) viewHolder;
         holder.timeTv.setText(timeList.get(position));
         holder.textTv.setText(textList.get(position));
 
-        // 如果设置了回调，则设置点击事件
-        if (mOnItemClickListener != null) {
-            holder.itemView.setOnClickListener(new NoDoubleViewClickListener() {
-                @Override
-                protected void onNoDoubleClick(View v) {
-                    int pos = holder.getLayoutPosition();
-                    mOnItemClickListener.onItemClick(holder.itemView, pos);
-                }
-            });
-
-            holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    int pos = holder.getLayoutPosition();
-                    mOnItemClickListener.onItemLongClick(holder.itemView, pos);
-                    return false;
-                }
-            });
-        }
+        super.onBindViewHolder(holder, position);
     }
 
     @Override

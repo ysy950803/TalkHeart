@@ -1,38 +1,23 @@
 package com.ysy.talkheart.activities;
 
 import android.app.ProgressDialog;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Handler;
-import android.support.v7.app.ActionBar;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.Selection;
 import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.ysy.albumselector.ImageSelector;
 import com.ysy.talkheart.R;
-import com.ysy.talkheart.adapters.SelectedImgListViewAdapter;
 import com.ysy.talkheart.bases.DayNightActivity;
-import com.ysy.talkheart.bases.GlobalApp;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
-import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
-import com.ysy.talkheart.utils.NoDoubleViewClickListener;
-import com.ysy.talkheart.utils.NoDouleDialogClickListener;
 import com.ysy.talkheart.utils.StringUtils;
-
-import java.util.ArrayList;
 
 public class ReplyActivity extends DayNightActivity {
 
@@ -46,21 +31,19 @@ public class ReplyActivity extends DayNightActivity {
     private Handler replyHandler;
     private ProgressDialog waitDialog;
     private int SEND_MODE; // 0:error 1:comment 2:reply 3:modify
-    private String[] opts_o;
     private String CONTENT, NICKNAME_P;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reply);
-        setupActionBar();
+        setupActionBar(true);
         replyHandler = new Handler();
         initData();
         initView();
     }
 
     private boolean initData() {
-        opts_o = getIntent().getExtras().getStringArray("opts_o");
         UID = getIntent().getExtras().getString("uid");
         E_UID = getIntent().getExtras().getString("e_uid");
         ACT_ID = getIntent().getExtras().getString("actid");
@@ -254,24 +237,5 @@ public class ReplyActivity extends DayNightActivity {
             }
         });
         return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == android.R.id.home) {
-            onBackPressed();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    private void setupActionBar() {
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            // Show the Up button in the action bar.
-            actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setHomeAsUpIndicator(R.drawable.ic_close_white_24dp);
-        }
     }
 }

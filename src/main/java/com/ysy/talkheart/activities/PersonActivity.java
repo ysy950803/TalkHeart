@@ -19,7 +19,6 @@ import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -88,7 +87,6 @@ public class PersonActivity extends DayNightNoActionBarActivity {
     private String RELATION = "-2";
     private String UID_L = "0";
     private String UID_H = "0";
-    private String[] opts_o;
     private boolean isCanClick = false;
     private ProgressDialog waitDialog;
     private byte[] avatarBytes;
@@ -118,7 +116,6 @@ public class PersonActivity extends DayNightNoActionBarActivity {
     private void initData() {
         AVATAR_UPLOAD_URL = getResources().getString(R.string.url_avatar_upload);
         avatarBytes = getIntent().getExtras().getByteArray("avatar");
-        opts_o = getIntent().getExtras().getStringArray("opts_o");
         E_UID = getIntent().getExtras().getString("e_uid");
         UID = getIntent().getExtras().getString("uid");
         SEX = getIntent().getExtras().getString("sex", "1");
@@ -590,24 +587,6 @@ public class PersonActivity extends DayNightNoActionBarActivity {
         });
         modifyMenuItem.setVisible(isSelf);
         return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == android.R.id.home) {
-            onBackPressed();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    private void setupActionBar() {
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            // Show the Up button in the action bar.
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
     }
 
     private void downloadAvatar() {

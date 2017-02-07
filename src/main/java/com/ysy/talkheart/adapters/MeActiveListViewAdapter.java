@@ -14,8 +14,8 @@ import com.lzy.ninegrid.ImageInfo;
 import com.lzy.ninegrid.NineGridView;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.ActiveActivity;
+import com.ysy.talkheart.bases.SuperRecyclerViewAdapter;
 import com.ysy.talkheart.utils.ConnectionDetector;
-import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
@@ -26,7 +26,7 @@ import java.util.List;
  * Created by Shengyu Yao on 2016/11/24.
  */
 
-public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListViewAdapter.RecyclerViewHolder> {
+public class MeActiveListViewAdapter extends SuperRecyclerViewAdapter {
 
     private String IMG_UPLOAD_URL = "";
     private String UID = "";
@@ -38,20 +38,11 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
     private List<Integer> goodStatusList;
     private List<String> goodNumList;
     private List<String> imgInfoList;
-    private ListOnItemClickListener mOnItemClickListener;
     private ActiveActivity context;
     private byte[] avatarBytes;
 
     private final int NORMAL_TYPE = R.layout.item_me_active;
     private final int FOOT_TYPE = R.layout.item_foot_loading;
-    private int maxExistCount = 9;
-    private boolean isLoading = true;
-
-    private FootLoadCallBack loadCallBack;
-
-    public interface FootLoadCallBack {
-        void onLoad();
-    }
 
     public MeActiveListViewAdapter(ActiveActivity context, String uid, byte[] avatarBytes,
                                    List<Integer> avatarList, List<String> nicknameList,
@@ -71,7 +62,7 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
         this.IMG_UPLOAD_URL = context.getString(R.string.url_images_upload);
     }
 
-    static class RecyclerViewHolder extends RecyclerView.ViewHolder {
+    private static class RecyclerViewHolder extends RecyclerView.ViewHolder {
         CircularImageView avatarImg;
         TextView nicknameTv;
         TextView timeTv;
@@ -103,7 +94,7 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
     }
 
     @Override
-    public RecyclerViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(viewType, parent, false);
         if (viewType == FOOT_TYPE)
             return new RecyclerViewHolder(view, FOOT_TYPE);
@@ -127,20 +118,21 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
     }
 
     @Override
-    public void onBindViewHolder(final RecyclerViewHolder viewHolder, int position) {
+    public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
+        final RecyclerViewHolder holder = (RecyclerViewHolder) viewHolder;
         if (getItemViewType(position) == NORMAL_TYPE) {
             if (avatarBytes != null) {
-                viewHolder.avatarImg.setImageBitmap(BitmapFactory.decodeByteArray(avatarBytes, 0, avatarBytes.length));
+                holder.avatarImg.setImageBitmap(BitmapFactory.decodeByteArray(avatarBytes, 0, avatarBytes.length));
             } else
-                viewHolder.avatarImg.setImageResource(avatarList.get(position));
-            viewHolder.nicknameTv.setText(nicknameList.get(position));
-            viewHolder.timeTv.setText(timeList.get(position));
-            viewHolder.textTv.setText(textList.get(position));
+                holder.avatarImg.setImageResource(avatarList.get(position));
+            holder.nicknameTv.setText(nicknameList.get(position));
+            holder.timeTv.setText(timeList.get(position));
+            holder.textTv.setText(textList.get(position));
             final int pos = Integer.parseInt(position + "");
 
-            final TextView goodNumTv = viewHolder.goodNumTv;
+            final TextView goodNumTv = holder.goodNumTv;
             goodNumTv.setText(goodNumList.get(position));
-            final ImageView goodImg = viewHolder.goodImg;
+            final ImageView goodImg = holder.goodImg;
             goodImg.setImageResource(goodStatusList.get(position) == 1 ? R.mipmap.ic_favorite_pink_36dp : R.mipmap.ic_favorite_blue_circle_36dp);
             goodImg.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -170,7 +162,7 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
                 }
             });
 
-            ImageView commentImg = viewHolder.commentImg;
+            ImageView commentImg = holder.commentImg;
             commentImg.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -183,7 +175,7 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
                 }
             });
 
-            viewHolder.avatarImg.setOnClickListener(new View.OnClickListener() {
+            holder.avatarImg.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     ConnectionDetector cd = new ConnectionDetector(context);
@@ -193,26 +185,6 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
                         context.openPerson(pos);
                 }
             });
-
-            // 如果设置了回调，则设置点击事件
-            if (mOnItemClickListener != null) {
-                viewHolder.itemView.setOnClickListener(new NoDoubleViewClickListener() {
-                    @Override
-                    protected void onNoDoubleClick(View v) {
-                        int pos = viewHolder.getLayoutPosition();
-                        mOnItemClickListener.onItemClick(viewHolder.itemView, pos);
-                    }
-                });
-
-                viewHolder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
-                    @Override
-                    public boolean onLongClick(View v) {
-                        int pos = viewHolder.getLayoutPosition();
-                        mOnItemClickListener.onItemLongClick(viewHolder.itemView, pos);
-                        return false;
-                    }
-                });
-            }
 
             String imgInfo = imgInfoList.get(position);
             if (imgInfo != null) {
@@ -229,45 +201,31 @@ public class MeActiveListViewAdapter extends RecyclerView.Adapter<MeActiveListVi
                     info.setBigImageUrl(urlHead + ".jpg");
                     imageInfos.add(info);
                 }
-                viewHolder.gridView.setVisibility(View.VISIBLE);
-                viewHolder.gridView.setAdapter(new ImageGridViewAdapter(
+                holder.gridView.setVisibility(View.VISIBLE);
+                holder.gridView.setAdapter(new ImageGridViewAdapter(
                         context, imageInfos));
             } else
-                viewHolder.gridView.setVisibility(View.GONE);
+                holder.gridView.setVisibility(View.GONE);
+
+            super.onBindViewHolder(viewHolder, position);
         } else {
             if (isLoading) {
-                viewHolder.loadingPBar.setVisibility(View.VISIBLE);
-                viewHolder.loadingTv.setText(R.string.content_loading);
+                holder.loadingPBar.setVisibility(View.VISIBLE);
+                holder.loadingTv.setText(R.string.content_loading);
                 loadCallBack.onLoad();
             } else {
-                viewHolder.loadingPBar.setVisibility(View.GONE);
-                viewHolder.loadingTv.setText(R.string.content_loading_fail);
-                viewHolder.loadingTv.setOnClickListener(new NoDoubleViewClickListener() {
+                holder.loadingPBar.setVisibility(View.GONE);
+                holder.loadingTv.setText(R.string.content_loading_fail);
+                holder.loadingTv.setOnClickListener(new NoDoubleViewClickListener() {
                     @Override
                     protected void onNoDoubleClick(View v) {
                         isLoading = true;
-                        viewHolder.loadingPBar.setVisibility(View.VISIBLE);
-                        viewHolder.loadingTv.setText(R.string.content_loading);
+                        holder.loadingPBar.setVisibility(View.VISIBLE);
+                        holder.loadingTv.setText(R.string.content_loading);
                         loadCallBack.onLoad();
                     }
                 });
             }
         }
-    }
-
-    public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
-        this.mOnItemClickListener = mOnItemClickListener;
-    }
-
-    public void setFootLoadCallBack(FootLoadCallBack loadCallBack) {
-        this.loadCallBack = loadCallBack;
-    }
-
-    public void setMaxExistCount(int maxExistCount) {
-        this.maxExistCount = maxExistCount;
-    }
-
-    public void setIsLoading(boolean isLoading) {
-        this.isLoading = isLoading;
     }
 }

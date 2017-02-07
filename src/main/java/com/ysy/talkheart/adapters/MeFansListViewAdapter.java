@@ -1,7 +1,5 @@
 package com.ysy.talkheart.adapters;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,26 +8,19 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.signature.StringSignature;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.FansActivity;
+import com.ysy.talkheart.bases.SuperRecyclerViewAdapter;
 import com.ysy.talkheart.utils.ConnectionDetector;
-import com.ysy.talkheart.utils.ListOnItemClickListener;
-import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
 import java.util.List;
-
-import cz.msebera.android.httpclient.Header;
 
 /**
  * Created by Shengyu Yao on 2016/11/25.
  */
 
-public class MeFansListViewAdapter extends RecyclerView.Adapter<MeFansListViewAdapter.RecyclerViewHolder> {
+public class MeFansListViewAdapter extends SuperRecyclerViewAdapter {
 
     private List<String> uidList;
     private List<Integer> avatarList;
@@ -37,14 +28,9 @@ public class MeFansListViewAdapter extends RecyclerView.Adapter<MeFansListViewAd
     private List<String> introList;
     private List<Integer> relationList;
     private FansActivity context;
-    private ListOnItemClickListener mOnItemClickListener;
     private boolean isObserver;
 
     private String AVATAR_UPLOAD_URL = "";
-
-    public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
-        this.mOnItemClickListener = mOnItemClickListener;
-    }
 
     public MeFansListViewAdapter(FansActivity context, List<String> uidList,
                                  List<Integer> avatarList, List<String> nicknameList,
@@ -59,33 +45,35 @@ public class MeFansListViewAdapter extends RecyclerView.Adapter<MeFansListViewAd
         this.AVATAR_UPLOAD_URL = context.getString(R.string.url_avatar_upload);
     }
 
-    class RecyclerViewHolder extends RecyclerView.ViewHolder {
+    private static class RecyclerViewHolder extends RecyclerView.ViewHolder {
         CircularImageView avatarImg;
         TextView nicknameTv;
-        TextView infoTv;
+        TextView introTv;
         ImageView eachOtherImg;
 
         RecyclerViewHolder(View itemView) {
             super(itemView);
             avatarImg = (CircularImageView) itemView.findViewById(R.id.me_fans_avatar_img);
             nicknameTv = (TextView) itemView.findViewById(R.id.me_fans_nickname_tv);
-            infoTv = (TextView) itemView.findViewById(R.id.me_fans_info_tv);
+            introTv = (TextView) itemView.findViewById(R.id.me_fans_intro_tv);
             eachOtherImg = (ImageView) itemView.findViewById(R.id.me_fans_each_other_img);
         }
     }
 
     @Override
-    public MeFansListViewAdapter.RecyclerViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         return new RecyclerViewHolder(LayoutInflater
                 .from(parent.getContext())
                 .inflate(R.layout.item_me_fans, parent, false));
     }
 
     @Override
-    public void onBindViewHolder(final MeFansListViewAdapter.RecyclerViewHolder holder, int position) {
-        downloadAvatar(holder.avatarImg, uidList.get(position), avatarList.get(position));
+    public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
+        RecyclerViewHolder holder = (RecyclerViewHolder) viewHolder;
+        downloadAvatar(context, AVATAR_UPLOAD_URL + "/" + uidList.get(position) + "_avatar_img_thumb.jpg",
+                holder.avatarImg, avatarList.get(position));
         holder.nicknameTv.setText(nicknameList.get(position));
-        holder.infoTv.setText(introList.get(position));
+        holder.introTv.setText(introList.get(position));
 
         final int pos = Integer.parseInt(position + "");
         final ImageView eachOther = holder.eachOtherImg;
@@ -107,56 +95,11 @@ public class MeFansListViewAdapter extends RecyclerView.Adapter<MeFansListViewAd
             });
         }
 
-        // 如果设置了回调，则设置点击事件
-        if (mOnItemClickListener != null) {
-            holder.itemView.setOnClickListener(new NoDoubleViewClickListener() {
-                @Override
-                protected void onNoDoubleClick(View v) {
-                    int pos = holder.getLayoutPosition();
-                    mOnItemClickListener.onItemClick(holder.itemView, pos);
-                }
-            });
-
-            holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    int pos = holder.getLayoutPosition();
-                    mOnItemClickListener.onItemLongClick(holder.itemView, pos);
-                    return false;
-                }
-            });
-        }
+        super.onBindViewHolder(viewHolder, position);
     }
 
     @Override
     public int getItemCount() {
         return nicknameList.size();
-    }
-
-    private void downloadAvatar(final CircularImageView avatarImg, String uid, final int defaultResId) {
-//        AsyncHttpClient httpClient = new AsyncHttpClient();
-//        httpClient.setTimeout(16 * 1000);
-//        httpClient.get(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg",
-//                new AsyncHttpResponseHandler() {
-//                    @Override
-//                    public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-//                        Bitmap picBmp = BitmapFactory.decodeByteArray(responseBody, 0, responseBody.length);
-//                        if (picBmp != null) {
-//                            avatarImg.setImageBitmap(picBmp);
-//                        } else
-//                            avatarImg.setImageResource(defaultResId);
-//                    }
-//
-//                    @Override
-//                    public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-//                        avatarImg.setImageResource(defaultResId);
-//                    }
-//                });
-        Glide.with(context).load(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg")
-                .asBitmap()
-                .signature(new StringSignature("" + System.currentTimeMillis()))
-                .placeholder(defaultResId)
-                .error(defaultResId)
-                .into(avatarImg);
     }
 }

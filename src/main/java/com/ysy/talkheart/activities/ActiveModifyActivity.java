@@ -3,7 +3,6 @@ package com.ysy.talkheart.activities;
 import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v7.app.ActionBar;
 import android.text.Editable;
 import android.text.Selection;
 import android.text.TextWatcher;
@@ -30,25 +29,22 @@ public class ActiveModifyActivity extends DayNightActivity {
     private ProgressDialog waitDialog;
     private String UID;
     private String ACT_ID = "";
-    private String[] opts_o;
     private String MODIFY_CONTENT = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_active_modify);
-        setupActionBar();
+        setupActionBar(true);
         initData();
         initView();
         modifyHandler = new Handler();
     }
 
     private void initData() {
-        opts_o = getIntent().getExtras().getStringArray("opts_o");
         UID = getIntent().getExtras().getString("uid");
         ACT_ID = getIntent().getExtras().getString("actid");
         MODIFY_CONTENT = getIntent().getExtras().getString("modify_content", "");
-
     }
 
     private void initView() {
@@ -218,24 +214,5 @@ public class ActiveModifyActivity extends DayNightActivity {
             }
         });
         return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == android.R.id.home) {
-            onBackPressed();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    private void setupActionBar() {
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            // Show the Up button in the action bar.
-            actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setHomeAsUpIndicator(R.drawable.ic_close_white_24dp);
-        }
     }
 }

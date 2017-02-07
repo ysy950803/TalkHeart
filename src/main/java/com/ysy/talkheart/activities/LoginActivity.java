@@ -31,7 +31,6 @@ public class LoginActivity extends DayNightFullScreenActivity {
     private long exitTime;
     private Handler loginHandler;
     private ProgressDialog waitDialog;
-    private String[] opts_o;
     private String[] opts_t;
 
     @Override
@@ -39,7 +38,6 @@ public class LoginActivity extends DayNightFullScreenActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ActivitiesDestroyer.getInstance().addActivity(this);
-        opts_o = getIntent().getExtras().getStringArray("opts_o");
         opts_t = getIntent().getExtras().getStringArray("opts_t");
         initView();
         clickListener();

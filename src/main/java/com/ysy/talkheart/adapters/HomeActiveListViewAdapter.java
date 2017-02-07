@@ -1,7 +1,5 @@
 package com.ysy.talkheart.adapters;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,30 +9,24 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.signature.StringSignature;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.lzy.ninegrid.ImageInfo;
 import com.lzy.ninegrid.NineGridView;
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.bases.SuperRecyclerViewAdapter;
 import com.ysy.talkheart.fragments.HomeFragment;
 import com.ysy.talkheart.utils.ConnectionDetector;
-import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import cz.msebera.android.httpclient.Header;
-
 /**
  * 列表适配器
  * Created by Shengyu Yao on 2016/7/7.
  */
 
-public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveListViewAdapter.RecyclerViewHolder> {
+public class HomeActiveListViewAdapter extends SuperRecyclerViewAdapter {
 
     private String AVATAR_UPLOAD_URL = "";
     private String IMG_UPLOAD_URL = "";
@@ -47,19 +39,10 @@ public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveLi
     private List<Integer> goodStatusList;
     private List<String> goodNumList;
     private List<String> imgInfoList;
-    private ListOnItemClickListener mOnItemClickListener;
     private HomeFragment context;
 
     private final int NORMAL_TYPE = R.layout.item_home_active;
     private final int FOOT_TYPE = R.layout.item_foot_loading;
-    private int maxExistCount = 9;
-    private boolean isLoading = true;
-
-    private FootLoadCallBack loadCallBack;
-
-    public interface FootLoadCallBack {
-        void onLoad();
-    }
 
     public HomeActiveListViewAdapter(HomeFragment context, List<String> uidList,
                                      List<Integer> avatarList, List<String> nicknameList,
@@ -79,7 +62,7 @@ public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveLi
         this.IMG_UPLOAD_URL = context.getString(R.string.url_images_upload);
     }
 
-    static class RecyclerViewHolder extends RecyclerView.ViewHolder {
+    private static class RecyclerViewHolder extends RecyclerView.ViewHolder {
         CircularImageView avatarImg;
         TextView nicknameTv;
         TextView timeTv;
@@ -111,7 +94,7 @@ public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveLi
     }
 
     @Override
-    public RecyclerViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(viewType, parent, false);
         if (viewType == FOOT_TYPE)
             return new RecyclerViewHolder(view, FOOT_TYPE);
@@ -135,17 +118,20 @@ public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveLi
     }
 
     @Override
-    public void onBindViewHolder(final RecyclerViewHolder viewHolder, int position) {
+    public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
+        final RecyclerViewHolder holder = (RecyclerViewHolder) viewHolder;
         if (getItemViewType(position) == NORMAL_TYPE) {
-            downloadAvatar(viewHolder.avatarImg, uidList.get(position), avatarList.get(position));
-            viewHolder.nicknameTv.setText(nicknameList.get(position));
-            viewHolder.timeTv.setText(timeList.get(position));
-            viewHolder.textTv.setText(textList.get(position));
+            downloadAvatar(context.getContext(),
+                    AVATAR_UPLOAD_URL + "/" + uidList.get(position) + "_avatar_img_thumb.jpg",
+                    holder.avatarImg, avatarList.get(position));
+            holder.nicknameTv.setText(nicknameList.get(position));
+            holder.timeTv.setText(timeList.get(position));
+            holder.textTv.setText(textList.get(position));
             final int pos = Integer.parseInt(position + "");
 
-            final TextView goodNumTv = viewHolder.goodNumTv;
+            final TextView goodNumTv = holder.goodNumTv;
             goodNumTv.setText(goodNumList.get(position));
-            final ImageView goodImg = viewHolder.goodImg;
+            final ImageView goodImg = holder.goodImg;
             goodImg.setImageResource(goodStatusList.get(position) == 1 ? R.mipmap.ic_favorite_pink_36dp : R.mipmap.ic_favorite_blue_circle_36dp);
             goodImg.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -175,7 +161,7 @@ public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveLi
                 }
             });
 
-            ImageView commentImg = viewHolder.commentImg;
+            ImageView commentImg = holder.commentImg;
             commentImg.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -187,7 +173,7 @@ public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveLi
                 }
             });
 
-            viewHolder.avatarImg.setOnClickListener(new View.OnClickListener() {
+            holder.avatarImg.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     ConnectionDetector cd = new ConnectionDetector(context.getActivity());
@@ -197,26 +183,6 @@ public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveLi
                         context.openPerson(pos);
                 }
             });
-
-            // 如果设置了回调，则设置点击事件
-            if (mOnItemClickListener != null) {
-                viewHolder.itemView.setOnClickListener(new NoDoubleViewClickListener() {
-                    @Override
-                    protected void onNoDoubleClick(View v) {
-                        int pos = viewHolder.getLayoutPosition();
-                        mOnItemClickListener.onItemClick(viewHolder.itemView, pos);
-                    }
-                });
-
-                viewHolder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
-                    @Override
-                    public boolean onLongClick(View v) {
-                        int pos = viewHolder.getLayoutPosition();
-                        mOnItemClickListener.onItemLongClick(viewHolder.itemView, pos);
-                        return false;
-                    }
-                });
-            }
 
             String imgInfo = imgInfoList.get(position);
             if (imgInfo != null) {
@@ -234,72 +200,31 @@ public class HomeActiveListViewAdapter extends RecyclerView.Adapter<HomeActiveLi
                     info.setBigImageUrl(urlHead + ".jpg");
                     imageInfos.add(info);
                 }
-                viewHolder.gridView.setVisibility(View.VISIBLE);
-                viewHolder.gridView.setAdapter(new ImageGridViewAdapter(
+                holder.gridView.setVisibility(View.VISIBLE);
+                holder.gridView.setAdapter(new ImageGridViewAdapter(
                         context.getContext(), imageInfos));
             } else
-                viewHolder.gridView.setVisibility(View.GONE);
+                holder.gridView.setVisibility(View.GONE);
+
+            super.onBindViewHolder(viewHolder, position);
         } else {
             if (isLoading) {
-                viewHolder.loadingPBar.setVisibility(View.VISIBLE);
-                viewHolder.loadingTv.setText(R.string.content_loading);
+                holder.loadingPBar.setVisibility(View.VISIBLE);
+                holder.loadingTv.setText(R.string.content_loading);
                 loadCallBack.onLoad();
             } else {
-                viewHolder.loadingPBar.setVisibility(View.GONE);
-                viewHolder.loadingTv.setText(R.string.content_loading_fail);
-                viewHolder.loadingTv.setOnClickListener(new NoDoubleViewClickListener() {
+                holder.loadingPBar.setVisibility(View.GONE);
+                holder.loadingTv.setText(R.string.content_loading_fail);
+                holder.loadingTv.setOnClickListener(new NoDoubleViewClickListener() {
                     @Override
                     protected void onNoDoubleClick(View v) {
                         isLoading = true;
-                        viewHolder.loadingPBar.setVisibility(View.VISIBLE);
-                        viewHolder.loadingTv.setText(R.string.content_loading);
+                        holder.loadingPBar.setVisibility(View.VISIBLE);
+                        holder.loadingTv.setText(R.string.content_loading);
                         loadCallBack.onLoad();
                     }
                 });
             }
         }
-    }
-
-    private void downloadAvatar(final CircularImageView avatarImg, String uid, final int defaultResId) {
-//        AsyncHttpClient httpClient = new AsyncHttpClient();
-//        httpClient.setTimeout(16 * 1000);
-//        httpClient.get(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg",
-//                new AsyncHttpResponseHandler() {
-//                    @Override
-//                    public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-//                        Bitmap picBmp = BitmapFactory.decodeByteArray(responseBody, 0, responseBody.length);
-//                        if (picBmp != null) {
-//                            avatarImg.setImageBitmap(picBmp);
-//                        } else
-//                            avatarImg.setImageResource(defaultResId);
-//                    }
-//
-//                    @Override
-//                    public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-//                        avatarImg.setImageResource(defaultResId);
-//                    }
-//                });
-        Glide.with(context).load(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg")
-                .asBitmap()
-                .signature(new StringSignature("" + System.currentTimeMillis()))
-                .placeholder(defaultResId)
-                .error(defaultResId)
-                .into(avatarImg);
-    }
-
-    public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
-        this.mOnItemClickListener = mOnItemClickListener;
-    }
-
-    public void setFootLoadCallBack(FootLoadCallBack loadCallBack) {
-        this.loadCallBack = loadCallBack;
-    }
-
-    public void setMaxExistCount(int maxExistCount) {
-        this.maxExistCount = maxExistCount;
-    }
-
-    public void setIsLoading(boolean isLoading) {
-        this.isLoading = isLoading;
     }
 }

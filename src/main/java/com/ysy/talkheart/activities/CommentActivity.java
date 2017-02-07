@@ -7,12 +7,10 @@ import android.os.Build;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
@@ -47,13 +45,12 @@ public class CommentActivity extends DayNightActivity {
     private List<String> cmtidList = new ArrayList<>();
     private List<String> uidList = new ArrayList<>();
     private List<String> contentList = new ArrayList<>();
-    private String[] opts_o;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_comment);
-        setupActionBar();
+        setupActionBar(false);
         commentHandler = new Handler();
         initData();
         initView();
@@ -68,7 +65,6 @@ public class CommentActivity extends DayNightActivity {
     }
 
     private void initData() {
-        opts_o = getIntent().getExtras().getStringArray("opts_o");
         UID = getIntent().getExtras().getString("uid");
         E_UID = getIntent().getExtras().getString("e_uid");
         ACT_ID = getIntent().getExtras().getString("actid");
@@ -311,22 +307,4 @@ public class CommentActivity extends DayNightActivity {
             isRefreshing = false;
         }
     };
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == android.R.id.home) {
-            onBackPressed();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    private void setupActionBar() {
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            // Show the Up button in the action bar.
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
-    }
 }

@@ -3,19 +3,16 @@ package com.ysy.talkheart.activities;
 import android.content.Intent;
 import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.ActionBar;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.ysy.talkheart.R;
-import com.ysy.talkheart.bases.DayNightActivity;
 import com.ysy.talkheart.bases.DayNightNoActionBarActivity;
 import com.ysy.talkheart.adapters.SearchUserListViewAdapter;
 import com.ysy.talkheart.utils.ConnectionDetector;
@@ -39,7 +36,6 @@ public class SearchActivity extends DayNightNoActionBarActivity {
     private List<String> uidList = new ArrayList<>();
     private String UID;
     private Handler searchHandler;
-    private String[] opts_o;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +43,6 @@ public class SearchActivity extends DayNightNoActionBarActivity {
         setContentView(R.layout.activity_search);
         setSupportActionBar((Toolbar) findViewById(R.id.search_toolbar));
         setupActionBar();
-        opts_o = getIntent().getExtras().getStringArray("opts_o");
         UID = getIntent().getExtras().getString("uid");
         initView();
         setSearchContent();
@@ -198,22 +193,4 @@ public class SearchActivity extends DayNightNoActionBarActivity {
             Toast.makeText(SearchActivity.this, "没有找到那个Ta", Toast.LENGTH_SHORT).show();
         }
     };
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == android.R.id.home) {
-            onBackPressed();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    private void setupActionBar() {
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            // Show the Up button in the action bar.
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
-    }
 }

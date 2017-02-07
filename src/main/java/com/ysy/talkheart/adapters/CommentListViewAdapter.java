@@ -1,7 +1,5 @@
 package com.ysy.talkheart.adapters;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,24 +10,19 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.signature.StringSignature;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.CommentActivity;
+import com.ysy.talkheart.bases.SuperRecyclerViewAdapter;
 import com.ysy.talkheart.utils.ConnectionDetector;
-import com.ysy.talkheart.utils.ListOnItemClickListener;
-import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
 import java.util.List;
-
-import cz.msebera.android.httpclient.Header;
 
 /**
  * Created by Shengyu Yao on 2016/12/22.
  */
 
-public class CommentListViewAdapter extends RecyclerView.Adapter<CommentListViewAdapter.RecyclerViewHolder> {
+public class CommentListViewAdapter extends SuperRecyclerViewAdapter {
 
     private List<String> uidList;
     private List<Integer> avatarList;
@@ -37,12 +30,7 @@ public class CommentListViewAdapter extends RecyclerView.Adapter<CommentListView
     private List<String> timeList;
     private List<String> textList;
     private CommentActivity context;
-    private ListOnItemClickListener mOnItemClickListener;
     private String AVATAR_UPLOAD_URL = "";
-
-    public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
-        this.mOnItemClickListener = mOnItemClickListener;
-    }
 
     public CommentListViewAdapter(CommentActivity context, List<String> uidList,
                                   List<Integer> avatarList, List<String> nicknameList,
@@ -56,7 +44,7 @@ public class CommentListViewAdapter extends RecyclerView.Adapter<CommentListView
         this.AVATAR_UPLOAD_URL = context.getResources().getString(R.string.url_avatar_upload);
     }
 
-    class RecyclerViewHolder extends RecyclerView.ViewHolder {
+    private static class RecyclerViewHolder extends RecyclerView.ViewHolder {
         CircularImageView avatarImg;
         TextView nicknameTv;
         TextView timeTv;
@@ -74,14 +62,15 @@ public class CommentListViewAdapter extends RecyclerView.Adapter<CommentListView
     }
 
     @Override
-    public RecyclerViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         return new RecyclerViewHolder(LayoutInflater
                 .from(parent.getContext())
                 .inflate(R.layout.item_comment, parent, false));
     }
 
     @Override
-    public void onBindViewHolder(final RecyclerViewHolder holder, int position) {
+    public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
+        RecyclerViewHolder holder = (RecyclerViewHolder) viewHolder;
         downloadAvatar(holder.avatarImg, uidList.get(position), avatarList.get(position));
         holder.nicknameTv.setText(nicknameList.get(position));
         holder.contentTv.setText(textList.get(position));
@@ -111,24 +100,7 @@ public class CommentListViewAdapter extends RecyclerView.Adapter<CommentListView
             }
         });
 
-        if (mOnItemClickListener != null) {
-            holder.itemView.setOnClickListener(new NoDoubleViewClickListener() {
-                @Override
-                protected void onNoDoubleClick(View v) {
-                    int pos = holder.getLayoutPosition();
-                    mOnItemClickListener.onItemClick(holder.itemView, pos);
-                }
-            });
-
-            holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    int pos = holder.getLayoutPosition();
-                    mOnItemClickListener.onItemLongClick(holder.itemView, pos);
-                    return false;
-                }
-            });
-        }
+        super.onBindViewHolder(viewHolder, position);
     }
 
     @Override

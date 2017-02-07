@@ -43,7 +43,6 @@ public class PersonModifyActivity extends DayNightFullScreenActivity {
     private String UID;
     private Handler modifyHandler;
     private ProgressDialog waitDialog;
-    private String[] opts_o;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +55,6 @@ public class PersonModifyActivity extends DayNightFullScreenActivity {
     }
 
     private void initData() {
-        opts_o = getIntent().getExtras().getStringArray("opts_o");
         UID = getIntent().getExtras().getString("uid");
         SCHOOL = getIntent().getExtras().getString("school");
         NICKNAME = getIntent().getExtras().getString("nickname");

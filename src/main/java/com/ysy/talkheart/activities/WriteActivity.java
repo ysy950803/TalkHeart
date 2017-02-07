@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v7.app.ActionBar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
@@ -60,7 +59,6 @@ public class WriteActivity extends DayNightActivity {
     private String UID;
     private String DFT_ID;
     private String DFT_CONTENT = "";
-    private String[] opts_o;
     private ArrayList<String> imagesPath = new ArrayList<>();
     private ArrayList<Integer> imagePos = new ArrayList<>();
     private SelectedImgListViewAdapter listViewAdapter;
@@ -77,7 +75,7 @@ public class WriteActivity extends DayNightActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_write);
-        setupActionBar();
+        setupActionBar(true);
         initData();
         initView();
         writeHandler = new Handler();
@@ -94,7 +92,6 @@ public class WriteActivity extends DayNightActivity {
         TIME_POINT = year + "" + month + "" + day + "" + hour + "" + min + "" + sec;
 
         IMAGES_UPLOAD_URL = getString(R.string.url_images_upload);
-        opts_o = getIntent().getExtras().getStringArray("opts_o");
         UID = getIntent().getExtras().getString("uid");
         DFT_ID = getIntent().getExtras().getString("dft_id");
         DFT_CONTENT = getIntent().getExtras().getString("dft_content", "");
@@ -416,25 +413,6 @@ public class WriteActivity extends DayNightActivity {
             }
         });
         return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == android.R.id.home) {
-            onBackPressed();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    private void setupActionBar() {
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            // Show the Up button in the action bar.
-            actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setHomeAsUpIndicator(R.drawable.ic_close_white_24dp);
-        }
     }
 
     @Override

@@ -20,8 +20,8 @@ import com.ysy.talkheart.utils.StringUtils;
 public class WelcomeActivity extends DayNightFullScreenActivity {
 
     private String UID = "0";
-    private String[] opts_o = new String[4];
-    private String[] opts_t = new String[4];
+    private String[] org_opts_o = new String[4];
+    private String[] org_opts_t = new String[4];
 
     public static String getVersionName(Context context) {
         try {
@@ -42,14 +42,14 @@ public class WelcomeActivity extends DayNightFullScreenActivity {
         version.setText(getVersionName(this));
         try {
             String[] temps = initOption();
-            opts_o[0] = temps[2];
-            opts_o[1] = temps[3];
-            opts_o[2] = temps[0];
-            opts_o[3] = temps[1];
-            opts_t[0] = temps[2];
-            opts_t[1] = temps[4];
-            opts_t[2] = temps[0];
-            opts_t[3] = temps[1];
+            org_opts_o[0] = temps[2];
+            org_opts_o[1] = temps[3];
+            org_opts_o[2] = temps[0];
+            org_opts_o[3] = temps[1];
+            org_opts_t[0] = temps[2];
+            org_opts_t[1] = temps[4];
+            org_opts_t[2] = temps[0];
+            org_opts_t[3] = temps[1];
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(this, "出现了一点小异常，请重启啦", Toast.LENGTH_SHORT).show();
@@ -67,13 +67,13 @@ public class WelcomeActivity extends DayNightFullScreenActivity {
                 if (!UID.equals("")) {
                     Intent intent = new Intent(WelcomeActivity.this, HomeActivity.class);
                     intent.putExtra("uid", UID);
-                    intent.putExtra("opts_o", opts_o);
-                    intent.putExtra("opts_t", opts_t);
+                    intent.putExtra("opts_o", org_opts_o);
+                    intent.putExtra("opts_t", org_opts_t);
                     startActivity(intent);
                 } else {
                     Intent intent = new Intent(WelcomeActivity.this, LoginActivity.class);
-                    intent.putExtra("opts_o", opts_o);
-                    intent.putExtra("opts_t", opts_t);
+                    intent.putExtra("opts_o", org_opts_o);
+                    intent.putExtra("opts_t", org_opts_t);
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                         ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(WelcomeActivity.this, findViewById(R.id.welcome_logo_img), getString(R.string.trans_logo));
                         startActivity(intent, tAO.toBundle());

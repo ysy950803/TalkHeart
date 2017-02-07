@@ -67,7 +67,6 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
     private Resources.Theme theme;
     private int isRead = 1;
     private long backTime;
-    private String[] opts_o;
     private String[] opts_t;
     private String UPDATE_DETAIL = "检测到有新版本哦，快快下载吧！";
 
@@ -99,16 +98,10 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
         super.onStop();
     }
 
-    @Override
-    protected void initTheme() {
-        super.initTheme();
-        theme = getTheme();
-    }
-
     private void initData() {
         UID = getIntent().getExtras().getString("uid");
-        opts_o = getIntent().getExtras().getStringArray("opts_o");
         opts_t = getIntent().getExtras().getStringArray("opts_t");
+        theme = getTheme();
     }
 
     private void initView() {

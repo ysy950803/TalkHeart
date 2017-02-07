@@ -10,9 +10,8 @@ import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.bases.SuperRecyclerViewAdapter;
 import com.ysy.talkheart.utils.AndroidLifecycleUtils;
-import com.ysy.talkheart.utils.ListOnItemClickListener;
-import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -21,15 +20,10 @@ import java.util.ArrayList;
  * Created by Shengyu Yao on 2017/1/29.
  */
 
-public class SelectedImgListViewAdapter extends RecyclerView.Adapter<SelectedImgListViewAdapter.RecyclerViewHolder> {
+public class SelectedImgListViewAdapter extends SuperRecyclerViewAdapter {
 
     private ArrayList<String> imagesPath;
     private Context mContext;
-    private ListOnItemClickListener mOnItemClickListener;
-
-    public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
-        this.mOnItemClickListener = mOnItemClickListener;
-    }
 
     public SelectedImgListViewAdapter(Context context, ArrayList<String> imagesPath) {
         this.imagesPath = imagesPath;
@@ -37,7 +31,7 @@ public class SelectedImgListViewAdapter extends RecyclerView.Adapter<SelectedImg
     }
 
     @Override
-    public RecyclerViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         return new RecyclerViewHolder(LayoutInflater
                 .from(parent.getContext())
                 .inflate(R.layout.item_selected_img, parent, false));
@@ -48,7 +42,7 @@ public class SelectedImgListViewAdapter extends RecyclerView.Adapter<SelectedImg
         return imagesPath.size();
     }
 
-    class RecyclerViewHolder extends RecyclerView.ViewHolder {
+    private static class RecyclerViewHolder extends RecyclerView.ViewHolder {
         ImageView selectedImg;
 
         RecyclerViewHolder(View itemView) {
@@ -58,7 +52,8 @@ public class SelectedImgListViewAdapter extends RecyclerView.Adapter<SelectedImg
     }
 
     @Override
-    public void onBindViewHolder(final RecyclerViewHolder holder, int position) {
+    public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
+        RecyclerViewHolder holder = (RecyclerViewHolder) viewHolder;
         Uri uri = Uri.fromFile(new File(imagesPath.get(position)));
         boolean canLoadImg = AndroidLifecycleUtils.canLoadImage(holder.selectedImg.getContext());
         if (canLoadImg) {
@@ -70,23 +65,6 @@ public class SelectedImgListViewAdapter extends RecyclerView.Adapter<SelectedImg
                     .into(holder.selectedImg);
         }
 
-        if (mOnItemClickListener != null) {
-            holder.itemView.setOnClickListener(new NoDoubleViewClickListener() {
-                @Override
-                protected void onNoDoubleClick(View v) {
-                    int pos = holder.getLayoutPosition();
-                    mOnItemClickListener.onItemClick(holder.itemView, pos);
-                }
-            });
-
-            holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    int pos = holder.getLayoutPosition();
-                    mOnItemClickListener.onItemLongClick(holder.itemView, pos);
-                    return false;
-                }
-            });
-        }
+        super.onBindViewHolder(viewHolder, position);
     }
 }

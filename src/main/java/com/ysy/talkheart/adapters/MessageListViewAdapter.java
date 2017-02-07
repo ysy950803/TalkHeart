@@ -17,9 +17,9 @@ import com.bumptech.glide.signature.StringSignature;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.bases.SuperRecyclerViewAdapter;
 import com.ysy.talkheart.fragments.MessageFragment;
 import com.ysy.talkheart.utils.ConnectionDetector;
-import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
@@ -31,7 +31,7 @@ import cz.msebera.android.httpclient.Header;
  * Created by Shengyu Yao on 2016/11/25.
  */
 
-public class MessageListViewAdapter extends RecyclerView.Adapter<MessageListViewAdapter.RecyclerViewHolder> {
+public class MessageListViewAdapter extends SuperRecyclerViewAdapter {
 
     private String AVATAR_UPLOAD_URL = "";
 
@@ -42,18 +42,9 @@ public class MessageListViewAdapter extends RecyclerView.Adapter<MessageListView
     private List<String> contentList;
     private List<String> quoteList;
     private MessageFragment context;
-    private ListOnItemClickListener mOnItemClickListener;
 
     private final int NORMAL_TYPE = R.layout.item_message;
     private final int FOOT_TYPE = R.layout.item_foot_loading;
-    private int maxExistCount = 9;
-    private boolean isLoading = true;
-
-    private FootLoadCallBack loadCallBack;
-
-    public interface FootLoadCallBack {
-        void onLoad();
-    }
 
     public MessageListViewAdapter(MessageFragment context, List<String> uidList,
                                   List<Integer> avatarList, List<String> nameActList,
@@ -68,7 +59,7 @@ public class MessageListViewAdapter extends RecyclerView.Adapter<MessageListView
         this.AVATAR_UPLOAD_URL = context.getResources().getString(R.string.url_avatar_upload);
     }
 
-    static class RecyclerViewHolder extends RecyclerView.ViewHolder {
+    private static class RecyclerViewHolder extends RecyclerView.ViewHolder {
         CircularImageView avatarImg;
         TextView nameActTv;
         TextView timeTv;
@@ -98,7 +89,7 @@ public class MessageListViewAdapter extends RecyclerView.Adapter<MessageListView
     }
 
     @Override
-    public MessageListViewAdapter.RecyclerViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 //        return new RecyclerViewHolder(LayoutInflater
 //                .from(parent.getContext())
 //                .inflate(R.layout.item_message, parent, false));
@@ -125,9 +116,12 @@ public class MessageListViewAdapter extends RecyclerView.Adapter<MessageListView
     }
 
     @Override
-    public void onBindViewHolder(final MessageListViewAdapter.RecyclerViewHolder holder, int position) {
+    public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
+        final RecyclerViewHolder holder = (RecyclerViewHolder) viewHolder;
         if (getItemViewType(position) == NORMAL_TYPE) {
-            downloadAvatar(holder.avatarImg, uidList.get(position), avatarList.get(position));
+            downloadAvatar(context.getContext(),
+                    AVATAR_UPLOAD_URL + "/" + uidList.get(position) + "_avatar_img_thumb.jpg",
+                    holder.avatarImg, avatarList.get(position));
             holder.nameActTv.setText(nameActList.get(position));
             holder.timeTv.setText(timeList.get(position));
             holder.quoteTv.setText(quoteList.get(position));
@@ -173,25 +167,6 @@ public class MessageListViewAdapter extends RecyclerView.Adapter<MessageListView
                 }
             });
 
-            // 如果设置了回调，则设置点击事件
-            if (mOnItemClickListener != null) {
-                holder.itemView.setOnClickListener(new NoDoubleViewClickListener() {
-                    @Override
-                    protected void onNoDoubleClick(View v) {
-                        int pos = holder.getLayoutPosition();
-                        mOnItemClickListener.onItemClick(holder.itemView, pos);
-                    }
-                });
-
-                holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
-                    @Override
-                    public boolean onLongClick(View v) {
-                        int pos = holder.getLayoutPosition();
-                        mOnItemClickListener.onItemLongClick(holder.itemView, pos);
-                        return false;
-                    }
-                });
-            }
         } else {
             if (isLoading) {
                 holder.loadingPBar.setVisibility(View.VISIBLE);
@@ -211,48 +186,5 @@ public class MessageListViewAdapter extends RecyclerView.Adapter<MessageListView
                 });
             }
         }
-    }
-
-    private void downloadAvatar(final CircularImageView avatarImg, String uid, final int defaultResId) {
-//        AsyncHttpClient httpClient = new AsyncHttpClient();
-//        httpClient.setTimeout(16 * 1000);
-//        httpClient.get(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg",
-//                new AsyncHttpResponseHandler() {
-//                    @Override
-//                    public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-//                        Bitmap picBmp = BitmapFactory.decodeByteArray(responseBody, 0, responseBody.length);
-//                        if (picBmp != null) {
-//                            avatarImg.setImageBitmap(picBmp);
-//                        } else
-//                            avatarImg.setImageResource(defaultResId);
-//                    }
-//
-//                    @Override
-//                    public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-//                        avatarImg.setImageResource(defaultResId);
-//                    }
-//                });
-        Glide.with(context).load(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg")
-                .asBitmap()
-                .signature(new StringSignature("" + System.currentTimeMillis()))
-                .placeholder(defaultResId)
-                .error(defaultResId)
-                .into(avatarImg);
-    }
-
-    public void setListOnItemClickListener(ListOnItemClickListener mOnItemClickListener) {
-        this.mOnItemClickListener = mOnItemClickListener;
-    }
-
-    public void setFootLoadCallBack(FootLoadCallBack loadCallBack) {
-        this.loadCallBack = loadCallBack;
-    }
-
-    public void setMaxExistCount(int maxExistCount) {
-        this.maxExistCount = maxExistCount;
-    }
-
-    public void setIsLoading(boolean isLoading) {
-        this.isLoading = isLoading;
     }
 }

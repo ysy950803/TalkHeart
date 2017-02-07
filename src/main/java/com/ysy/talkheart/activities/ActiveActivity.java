@@ -4,12 +4,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -51,7 +49,6 @@ public class ActiveActivity extends DayNightActivity {
     private String NICKNAME = "加载中…";
     public ImageView goodImg;
     private boolean isSelf;
-    private String[] opts_o;
     private byte[] avatarBytes;
     private long timeNode;
 //    private int fav_actid_index = 0;
@@ -60,7 +57,7 @@ public class ActiveActivity extends DayNightActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_active);
-        setupActionBar();
+        setupActionBar(false);
         activeHandler = new Handler();
         initData();
         initView();
@@ -76,12 +73,10 @@ public class ActiveActivity extends DayNightActivity {
 
     private void initData() {
         avatarBytes = getIntent().getExtras().getByteArray("avatar");
-        opts_o = getIntent().getExtras().getStringArray("opts_o");
         E_UID = getIntent().getExtras().getString("e_uid");
         UID = getIntent().getExtras().getString("uid");
         SEX = getIntent().getExtras().getString("sex");
         NICKNAME = getIntent().getExtras().getString("nickname");
-
         isSelf = E_UID.equals(UID);
     }
 
@@ -487,22 +482,4 @@ public class ActiveActivity extends DayNightActivity {
             Toast.makeText(ActiveActivity.this, "心连心不易断，请刷新重试", Toast.LENGTH_SHORT).show();
         }
     };
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == android.R.id.home) {
-            onBackPressed();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    private void setupActionBar() {
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            // Show the Up button in the action bar.
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
-    }
 }
