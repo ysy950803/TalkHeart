@@ -38,6 +38,7 @@ public class MeActiveListViewAdapter extends SuperRecyclerViewAdapter {
     private List<Integer> goodStatusList;
     private List<String> goodNumList;
     private List<String> imgInfoList;
+    private List<String> cmtNumList;
     private ActiveActivity context;
     private byte[] avatarBytes;
 
@@ -48,7 +49,7 @@ public class MeActiveListViewAdapter extends SuperRecyclerViewAdapter {
                                    List<Integer> avatarList, List<String> nicknameList,
                                    List<String> timeList, List<String> textList,
                                    List<Integer> goodStatusList, List<String> gooNumList,
-                                   List<String> imgInfoList) {
+                                   List<String> imgInfoList, List<String> cmtNumList) {
         this.UID = uid;
         this.context = context;
         this.avatarBytes = avatarBytes;
@@ -59,6 +60,7 @@ public class MeActiveListViewAdapter extends SuperRecyclerViewAdapter {
         this.goodStatusList = goodStatusList;
         this.goodNumList = gooNumList;
         this.imgInfoList = imgInfoList;
+        this.cmtNumList = cmtNumList;
         this.IMG_UPLOAD_URL = context.getString(R.string.url_images_upload);
     }
 
@@ -71,6 +73,7 @@ public class MeActiveListViewAdapter extends SuperRecyclerViewAdapter {
         TextView goodNumTv;
         ImageView commentImg;
         NineGridView gridView;
+        TextView cmtNumTv;
 
         ProgressBar loadingPBar;
         TextView loadingTv;
@@ -86,6 +89,7 @@ public class MeActiveListViewAdapter extends SuperRecyclerViewAdapter {
                 goodNumTv = (TextView) itemView.findViewById(R.id.me_active_good_num_tv);
                 commentImg = (ImageView) itemView.findViewById(R.id.me_active_comment_img);
                 gridView = (NineGridView) itemView.findViewById(R.id.me_active_gridView);
+                cmtNumTv = (TextView) itemView.findViewById(R.id.me_active_comment_num_tv);
             } else {
                 loadingPBar = (ProgressBar) itemView.findViewById(R.id.foot_loading_progressbar);
                 loadingTv = (TextView) itemView.findViewById(R.id.foot_loading_tv);
@@ -128,6 +132,7 @@ public class MeActiveListViewAdapter extends SuperRecyclerViewAdapter {
             holder.nicknameTv.setText(nicknameList.get(position));
             holder.timeTv.setText(timeList.get(position));
             holder.textTv.setText(textList.get(position));
+            holder.cmtNumTv.setText(cmtNumList.get(position));
             final int pos = Integer.parseInt(position + "");
 
             final TextView goodNumTv = holder.goodNumTv;

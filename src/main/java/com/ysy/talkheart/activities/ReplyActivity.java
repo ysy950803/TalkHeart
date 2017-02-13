@@ -1,8 +1,8 @@
 package com.ysy.talkheart.activities;
 
 import android.app.ProgressDialog;
-import android.os.Handler;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.Selection;
 import android.text.TextWatcher;
@@ -109,6 +109,7 @@ public class ReplyActivity extends DayNightActivity {
                                         e_uid + ", " + ACT_ID + ", '" + content + "', NOW(), " + uid + ")"
                         );
                         if (res == 1) {
+                            dbP.update("update active set cmtnum = (cmtnum + 1) where actid = " + ACT_ID);
                             if (e_uid != uid)
                                 dbP.update("update user set isread = 0 where uid = " + uid);
                             replyHandler.post(sendRunnable);
@@ -133,7 +134,8 @@ public class ReplyActivity extends DayNightActivity {
                                         uid + ", " + (CMT_ID.equals("") ? "-1" : CMT_ID) + ")"
                         );
                         if (res == 1) {
-                            dbP.update("update user set isread = 0 where uid = " + uid);
+                            dbP.doubleUpdate("update user set isread = 0 where uid = " + uid,
+                                    "update active set cmtnum = (cmtnum + 1) where actid = " + ACT_ID);
                             replyHandler.post(sendRunnable);
                         } else
                             replyHandler.post(serverErrorRunnable);
@@ -233,7 +235,12 @@ public class ReplyActivity extends DayNightActivity {
         menuItem.setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
             @Override
             protected void onNoDoubleClick(MenuItem item) {
-                send(SEND_MODE, Integer.parseInt(E_UID), Integer.parseInt(UID), writeEdt.getText().toString());
+                String writeContent = writeEdt.getText().toString();
+                writeContent = StringUtils.zipBlank(writeContent);
+                if (!StringUtils.replaceBlank(writeContent).equals(""))
+                    send(SEND_MODE, Integer.parseInt(E_UID), Integer.parseInt(UID), writeContent);
+                else
+                    Toast.makeText(ReplyActivity.this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
             }
         });
         return true;

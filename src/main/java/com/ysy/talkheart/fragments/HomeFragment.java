@@ -25,6 +25,9 @@ import android.widget.Toast;
 
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.inthecheesefactory.thecheeselibrary.fragment.support.v4.app.StatedFragment;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.RequestParams;
+import com.loopj.android.http.TextHttpResponseHandler;
 import com.lzy.ninegrid.NineGridView;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.ActiveModifyActivity;
@@ -32,15 +35,15 @@ import com.ysy.talkheart.activities.CommentActivity;
 import com.ysy.talkheart.activities.HomeActivity;
 import com.ysy.talkheart.activities.PersonActivity;
 import com.ysy.talkheart.activities.WriteActivity;
+import com.ysy.talkheart.adapters.HomeActiveListViewAdapter;
 import com.ysy.talkheart.bases.GlobalApp;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
-import com.ysy.talkheart.utils.SuperImageLoader;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
-import com.ysy.talkheart.adapters.HomeActiveListViewAdapter;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.utils.NoDouleDialogClickListener;
 import com.ysy.talkheart.utils.RecyclerViewScrollListener;
+import com.ysy.talkheart.utils.SuperImageLoader;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -50,6 +53,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import cz.msebera.android.httpclient.Header;
 
 /**
  * Created by Shengyu Yao on 2016/11/22.
@@ -70,6 +75,7 @@ public class HomeFragment extends StatedFragment {
     private List<String> actidList = new ArrayList<>();
     private List<String> uidList = new ArrayList<>();
     private List<String> imgInfoList = new ArrayList<>();
+    private List<String> cmtNumList = new ArrayList<>();
 
     private HomeActiveListViewAdapter listViewAdapter;
     private static final String FRAGMENT_TAG = "Home";
@@ -81,6 +87,9 @@ public class HomeFragment extends StatedFragment {
     public ImageView goodImg;
     private String[] opts_o;
     private long timeNode;
+
+    private String IMAGES_DEL_URL = "";
+    private String imgInfo = null;
 
     public HomeFragment() {
 
@@ -120,7 +129,7 @@ public class HomeFragment extends StatedFragment {
 
     @Override
     public void onResume() {
-        GlobalApp app = ((GlobalApp)getActivity().getApplication());
+        GlobalApp app = ((GlobalApp) getActivity().getApplication());
         if (app.getHomeActiveUpdated()) {
             refresh();
             app.setHomeActiveUpdated(false);
@@ -129,6 +138,7 @@ public class HomeFragment extends StatedFragment {
     }
 
     private void initData() {
+        IMAGES_DEL_URL = getString(R.string.url_images_del);
         isRefreshing = false;
     }
 
@@ -158,7 +168,7 @@ public class HomeFragment extends StatedFragment {
         activeRecyclerView.setOnScrollListener(scrollListener);
 
         listViewAdapter = new HomeActiveListViewAdapter(this, uidList, avatarList, nicknameList,
-                timeList, textList, goodStatusList, goodNumList, imgInfoList);
+                timeList, textList, goodStatusList, goodNumList, imgInfoList, cmtNumList);
         listViewAdapter.setFootLoadCallBack(new HomeActiveListViewAdapter.FootLoadCallBack() {
             @Override
             public void onLoad() {
@@ -204,6 +214,7 @@ public class HomeFragment extends StatedFragment {
                     boolean isSelf = UID.equals(uidList.get(position));
                     if (isSelf) {
                         String items[] = {"收藏", "修改", "删除"};
+                        imgInfo = imgInfoList.get(position);
                         showItemDialog(items, UID, actidList.get(position), textList.get(position));
                     } else {
                         String item[] = {"收藏"};
@@ -307,7 +318,7 @@ public class HomeFragment extends StatedFragment {
                     homeActiveHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.homeActiveSelect(
-                            "select a.actid, sex, nickname, sendtime, content, goodnum, u.uid, ifnull(isfav, -1) as isfav, img_info from " +
+                            "select a.actid, sex, nickname, sendtime, content, goodnum, u.uid, ifnull(isfav, -1) as isfav, img_info, cmtnum from " +
                                     "user u, active a left join favorite f on a.actid = f.actid and f.uid = " + uid +
                                     " where (sendtime + 0) < " + timeNode +
                                     " and a.uid = u.uid and u.uid in (" +
@@ -335,6 +346,7 @@ public class HomeFragment extends StatedFragment {
                             uidList.add(resList.get(6).get(i));
                             goodStatusList.add(Integer.parseInt(resList.get(7).get(i)));
                             imgInfoList.add(resList.get(8).get(i));
+                            cmtNumList.add(resList.get(9).get(i));
                         }
                         resList.clear();
                         homeActiveHandler.post(successRunnable);
@@ -355,8 +367,8 @@ public class HomeFragment extends StatedFragment {
                 } else {
                     String actid = actidList.get(position);
                     if (goodStatusList.get(position) == 1) {
-                        int res = dbP.goodUpdate(
-                                "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
+                        int res = dbP.doubleUpdate(
+                                "update active set goodnum = (goodnum - 1) where actid = " + actid,
                                 "update favorite set isfav = 0 where uid = " + e_uid + " and actid = " + actid
                         );
                         if (res == 2)
@@ -364,8 +376,8 @@ public class HomeFragment extends StatedFragment {
                         else
                             homeActiveHandler.post(noGoodErrorRunnable);
                     } else if (goodStatusList.get(position) == -1) {
-                        int res = dbP.goodUpdate(
-                                "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
+                        int res = dbP.doubleUpdate(
+                                "update active set goodnum = (goodnum + 1) where actid = " + actid,
                                 "insert into favorite(uid, actid, isfav, favtime) values(" + e_uid + ", " + actid + ", 1, NOW())"
                         );
                         if (res == 2) {
@@ -375,8 +387,8 @@ public class HomeFragment extends StatedFragment {
                         } else
                             homeActiveHandler.post(goodErrorRunnable);
                     } else if (goodStatusList.get(position) == 0) {
-                        int res = dbP.goodUpdate(
-                                "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
+                        int res = dbP.doubleUpdate(
+                                "update active set goodnum = (goodnum + 1) where actid = " + actid,
                                 "update favorite set isfav = 1, favtime = NOW() where uid = " + e_uid + " and actid = " + actid
                         );
                         if (res == 2) {
@@ -406,6 +418,7 @@ public class HomeFragment extends StatedFragment {
         actidList.clear();
         uidList.clear();
         imgInfoList.clear();
+        cmtNumList.clear();
 //        fav_actid_index = 0;
     }
 
@@ -493,6 +506,8 @@ public class HomeFragment extends StatedFragment {
     private Runnable deleteRunnable = new Runnable() {
         @Override
         public void run() {
+            if (UID != null && imgInfo != null)
+                delImg(UID, imgInfo);
             refresh();
             Toast.makeText(getActivity(), "删除成功", Toast.LENGTH_SHORT).show();
         }
@@ -574,6 +589,27 @@ public class HomeFragment extends StatedFragment {
             Toast.makeText(getActivity(), "心连心不易断，请刷新重试", Toast.LENGTH_SHORT).show();
         }
     };
+
+    private void delImg(String uid, String imgInfo) {
+        if (uid != null && imgInfo != null) {
+            AsyncHttpClient httpClient = new AsyncHttpClient();
+            httpClient.setTimeout(16 * 1000);
+            RequestParams rPs = new RequestParams();
+            rPs.put("uid", uid);
+            rPs.put("del_img", imgInfo);
+            httpClient.post(IMAGES_DEL_URL, rPs, new TextHttpResponseHandler() {
+                @Override
+                public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+
+                }
+
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, String responseString) {
+
+                }
+            });
+        }
+    }
 
     public void refreshFragmentUI() {
         TypedValue typedValue = new TypedValue();

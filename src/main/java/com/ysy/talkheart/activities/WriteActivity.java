@@ -64,12 +64,15 @@ public class WriteActivity extends DayNightActivity {
     private SelectedImgListViewAdapter listViewAdapter;
 
     private String IMAGES_UPLOAD_URL = "";
+    private String IMAGES_DEL_URL = "";
     private String TIME_POINT = "";
     private RequestParams params;
     private String CONTENT = "";
 
     private boolean isImgUploaded = false;
     private String imgInfo = null; // 2017/12/21_20171221182345_9
+
+    private boolean isSent = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,6 +95,7 @@ public class WriteActivity extends DayNightActivity {
         TIME_POINT = year + "" + month + "" + day + "" + hour + "" + min + "" + sec;
 
         IMAGES_UPLOAD_URL = getString(R.string.url_images_upload);
+        IMAGES_DEL_URL = getString(R.string.url_images_del);
         UID = getIntent().getExtras().getString("uid");
         DFT_ID = getIntent().getExtras().getString("dft_id");
         DFT_CONTENT = getIntent().getExtras().getString("dft_content", "");
@@ -211,7 +215,6 @@ public class WriteActivity extends DayNightActivity {
                         }
                     });
         } else {
-            waitDialog = ProgressDialog.show(WriteActivity.this, "请稍后", "正在和数据库君吃饭……");
             sendText(uid, content, imgInfo);
         }
     }
@@ -314,6 +317,7 @@ public class WriteActivity extends DayNightActivity {
         @Override
         public void run() {
             ((GlobalApp) getApplication()).setHomeActiveUpdated(true);
+            isSent = true;
             Toast.makeText(WriteActivity.this, "发送成功", Toast.LENGTH_SHORT).show();
             onBackPressed();
         }
@@ -330,7 +334,7 @@ public class WriteActivity extends DayNightActivity {
     private Runnable serverErrorRunnable = new Runnable() {
         @Override
         public void run() {
-            Toast.makeText(WriteActivity.this, "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
+            Toast.makeText(WriteActivity.this, "可能有非法字符，导致服务器傻掉，请重试", Toast.LENGTH_SHORT).show();
         }
     };
 
@@ -365,7 +369,7 @@ public class WriteActivity extends DayNightActivity {
                 public void onFailure(int i, Header[] headers, String s, Throwable throwable) {
                     waitDialog.dismiss();
                     isImgUploaded = false;
-                    Toast.makeText(WriteActivity.this, "图片上传失败，请重试发送", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(WriteActivity.this, "图片传输失败，请重试发送", Toast.LENGTH_SHORT).show();
                 }
 
                 @Override
@@ -375,14 +379,44 @@ public class WriteActivity extends DayNightActivity {
                         isImgUploaded = true;
                         imgInfo = (s.split(":"))[1] + "_" + TIME_POINT + "_" + imagesPath.size();
                         sendText(UID, CONTENT, imgInfo);
-                    } else if (s.equals("Failure")) {
+                    } else if (s.contains("Failure")) {
                         isImgUploaded = false;
+                        imgInfo = (s.split(":"))[1] + "_" + TIME_POINT + "_" + imagesPath.size();
                         Toast.makeText(WriteActivity.this, "图片上传失败，请重试发送", Toast.LENGTH_SHORT).show();
                     }
                 }
             });
         }
     };
+
+    @Override
+    public void onBackPressed() {
+        if (!isSent) {
+            delImg(UID, imgInfo);
+        }
+        super.onBackPressed();
+    }
+
+    private void delImg(String uid, String imgInfo) {
+        if (uid != null && imgInfo != null) {
+            AsyncHttpClient httpClient = new AsyncHttpClient();
+            httpClient.setTimeout(16 * 1000);
+            RequestParams rPs = new RequestParams();
+            rPs.put("uid", uid);
+            rPs.put("del_img", imgInfo);
+            httpClient.post(IMAGES_DEL_URL, rPs, new TextHttpResponseHandler() {
+                @Override
+                public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+
+                }
+
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, String responseString) {
+
+                }
+            });
+        }
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

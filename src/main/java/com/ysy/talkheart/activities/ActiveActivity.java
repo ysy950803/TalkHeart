@@ -12,6 +12,9 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.RequestParams;
+import com.loopj.android.http.TextHttpResponseHandler;
 import com.lzy.ninegrid.NineGridView;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.bases.DayNightActivity;
@@ -29,6 +32,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import cz.msebera.android.httpclient.Header;
+
 public class ActiveActivity extends DayNightActivity {
 
     private List<Integer> avatarList = new ArrayList<>();
@@ -39,6 +44,8 @@ public class ActiveActivity extends DayNightActivity {
     private List<String> goodNumList = new ArrayList<>();
     private List<String> actidList = new ArrayList<>();
     private List<String> imgInfoList = new ArrayList<>();
+    private List<String> cmtNumList = new ArrayList<>();
+
     private MeActiveListViewAdapter listViewAdapter;
     private SwipeRefreshLayout refreshLayout;
     private boolean isRefreshing = false;
@@ -51,6 +58,10 @@ public class ActiveActivity extends DayNightActivity {
     private boolean isSelf;
     private byte[] avatarBytes;
     private long timeNode;
+
+    private String IMAGES_DEL_URL = "";
+    private String imgInfo = null;
+
 //    private int fav_actid_index = 0;
 
     @Override
@@ -72,6 +83,7 @@ public class ActiveActivity extends DayNightActivity {
     }
 
     private void initData() {
+        IMAGES_DEL_URL = getString(R.string.url_images_del);
         avatarBytes = getIntent().getExtras().getByteArray("avatar");
         E_UID = getIntent().getExtras().getString("e_uid");
         UID = getIntent().getExtras().getString("uid");
@@ -88,7 +100,7 @@ public class ActiveActivity extends DayNightActivity {
 
         activeRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         listViewAdapter = new MeActiveListViewAdapter(this, UID, avatarBytes, avatarList,
-                nicknameList, timeList, textList, goodStatusList, goodNumList, imgInfoList);
+                nicknameList, timeList, textList, goodStatusList, goodNumList, imgInfoList, cmtNumList);
         listViewAdapter.setFootLoadCallBack(new MeActiveListViewAdapter.FootLoadCallBack() {
             @Override
             public void onLoad() {
@@ -119,6 +131,7 @@ public class ActiveActivity extends DayNightActivity {
                 if (cd.isConnectingToInternet()) {
                     if (isSelf) {
                         String items[] = {"收藏", "修改", "删除"};
+                        imgInfo = imgInfoList.get(position);
                         showItemDialog(items, E_UID, actidList.get(position), textList.get(position));
                     } else {
                         String item[] = {"收藏"};
@@ -250,7 +263,7 @@ public class ActiveActivity extends DayNightActivity {
                     activeHandler.post(timeOutRunnable);
                 } else {
                     List<List<String>> resList = dbP.activeSelect(
-                            "select a.actid, sendtime, goodnum, content, ifnull(isfav, -1) as isfav, img_info from " +
+                            "select a.actid, sendtime, goodnum, content, ifnull(isfav, -1) as isfav, img_info, cmtnum from " +
                                     "active a left join favorite f on f.actid = a.actid and f.uid = " + e_uid + " where " +
                                     "(sendtime + 0) < " + timeNode +
                                     " and a.uid = " + uid +
@@ -275,6 +288,7 @@ public class ActiveActivity extends DayNightActivity {
                             textList.add(resList.get(3).get(i));
                             goodStatusList.add(Integer.parseInt(resList.get(4).get(i)));
                             imgInfoList.add(resList.get(5).get(i));
+                            cmtNumList.add(resList.get(6).get(i));
                         }
                         resList.clear();
                         activeHandler.post(successRunnable);
@@ -314,8 +328,8 @@ public class ActiveActivity extends DayNightActivity {
                 } else {
                     String actid = actidList.get(position);
                     if (goodStatusList.get(position) == 1) {
-                        int res = dbP.goodUpdate(
-                                "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
+                        int res = dbP.doubleUpdate(
+                                "update active set goodnum = (goodnum - 1) where actid = " + actid,
                                 "update favorite set isfav = 0 where uid = " + e_uid + " and actid = " + actid
                         );
                         if (res == 2)
@@ -323,8 +337,8 @@ public class ActiveActivity extends DayNightActivity {
                         else
                             activeHandler.post(noGoodErrorRunnable);
                     } else if (goodStatusList.get(position) == -1) {
-                        int res = dbP.goodUpdate(
-                                "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
+                        int res = dbP.doubleUpdate(
+                                "update active set goodnum = (goodnum + 1) where actid = " + actid,
                                 "insert into favorite(uid, actid, isfav, favtime) values(" + e_uid + ", " + actid + ", 1, NOW())"
                         );
                         if (res == 2) {
@@ -334,8 +348,8 @@ public class ActiveActivity extends DayNightActivity {
                         } else
                             activeHandler.post(goodErrorRunnable);
                     } else if (goodStatusList.get(position) == 0) {
-                        int res = dbP.goodUpdate(
-                                "update active set goodnum = " + goodNumList.get(position) + " where actid = " + actid,
+                        int res = dbP.doubleUpdate(
+                                "update active set goodnum = (goodnum + 1) where actid = " + actid,
                                 "update favorite set isfav = 1 where uid = " + e_uid + " and actid = " + actid
                         );
                         if (res == 2) {
@@ -364,6 +378,7 @@ public class ActiveActivity extends DayNightActivity {
         textList.clear();
         actidList.clear();
         imgInfoList.clear();
+        cmtNumList.clear();
 //        fav_actid_index = 0;
     }
 
@@ -428,6 +443,8 @@ public class ActiveActivity extends DayNightActivity {
     private Runnable deleteRunnable = new Runnable() {
         @Override
         public void run() {
+            if (UID != null && imgInfo != null)
+                delImg(UID, imgInfo);
             refresh();
             Toast.makeText(ActiveActivity.this, "删除成功", Toast.LENGTH_SHORT).show();
         }
@@ -482,4 +499,25 @@ public class ActiveActivity extends DayNightActivity {
             Toast.makeText(ActiveActivity.this, "心连心不易断，请刷新重试", Toast.LENGTH_SHORT).show();
         }
     };
+
+    private void delImg(String uid, String imgInfo) {
+        if (uid != null && imgInfo != null) {
+            AsyncHttpClient httpClient = new AsyncHttpClient();
+            httpClient.setTimeout(16 * 1000);
+            RequestParams rPs = new RequestParams();
+            rPs.put("uid", uid);
+            rPs.put("del_img", imgInfo);
+            httpClient.post(IMAGES_DEL_URL, rPs, new TextHttpResponseHandler() {
+                @Override
+                public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+
+                }
+
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, String responseString) {
+
+                }
+            });
+        }
+    }
 }
