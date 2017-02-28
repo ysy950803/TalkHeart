@@ -38,15 +38,17 @@ import com.ysy.talkheart.bases.DayNightNoActionBarActivity;
 import com.ysy.talkheart.bases.GlobalApp;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
+import com.ysy.talkheart.utils.NoDoubleDialogClickListener;
 import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
-import com.ysy.talkheart.utils.NoDouleDialogClickListener;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import cz.msebera.android.httpclient.Header;
 
 public class PersonActivity extends DayNightNoActionBarActivity {
@@ -59,18 +61,30 @@ public class PersonActivity extends DayNightNoActionBarActivity {
     private String AVATAR_UPLOAD_URL = "";
     private long AVATAR_TIME_POINT = System.currentTimeMillis();
 
-    private CollapsingToolbarLayout toolbarLayout;
-    private FloatingActionButton watchFab;
-    private ImageView avatarImg;
-    private TextView introTv;
-    private LinearLayout activeNumLayout;
-    private LinearLayout watchNumLayout;
-    private LinearLayout fansNumLayout;
-    private TextView activeNumTv;
-    private TextView watchNumTv;
-    private TextView fansNumTv;
-    private TextView schoolTv;
-    private TextView birthdayTv;
+    @BindView(R.id.person_toolbar_layout)
+    CollapsingToolbarLayout toolbarLayout;
+    @BindView(R.id.person_watch_fab)
+    FloatingActionButton watchFab;
+    @BindView(R.id.person_avatar_img)
+    ImageView avatarImg;
+    @BindView(R.id.person_intro_tv)
+    TextView introTv;
+    @BindView(R.id.person_active_layout)
+    LinearLayout activeNumLayout;
+    @BindView(R.id.person_watch_layout)
+    LinearLayout watchNumLayout;
+    @BindView(R.id.person_fans_layout)
+    LinearLayout fansNumLayout;
+    @BindView(R.id.person_active_num_tv)
+    TextView activeNumTv;
+    @BindView(R.id.person_watch_num_tv)
+    TextView watchNumTv;
+    @BindView(R.id.person_fans_num_tv)
+    TextView fansNumTv;
+    @BindView(R.id.person_school_tv)
+    TextView schoolTv;
+    @BindView(R.id.person_birthday_tv)
+    TextView birthdayTv;
     private Handler personHandler;
     private boolean isSelf;
     private String E_UID = "0";
@@ -126,20 +140,8 @@ public class PersonActivity extends DayNightNoActionBarActivity {
     }
 
     private void initView() {
-        toolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.person_toolbar_layout);
-        avatarImg = (ImageView) findViewById(R.id.person_avatar_img);
-        watchFab = (FloatingActionButton) findViewById(R.id.person_watch_fab);
-        activeNumLayout = (LinearLayout) findViewById(R.id.person_active_layout);
-        watchNumLayout = (LinearLayout) findViewById(R.id.person_watch_layout);
-        fansNumLayout = (LinearLayout) findViewById(R.id.person_fans_layout);
-        introTv = (TextView) findViewById(R.id.person_intro_tv);
-        activeNumTv = (TextView) findViewById(R.id.person_active_num_tv);
-        watchNumTv = (TextView) findViewById(R.id.person_watch_num_tv);
-        fansNumTv = (TextView) findViewById(R.id.person_fans_num_tv);
-        schoolTv = (TextView) findViewById(R.id.person_school_tv);
-        birthdayTv = (TextView) findViewById(R.id.person_birthday_tv);
+        ButterKnife.bind(this);
         watchFab.setVisibility(isSelf ? View.GONE : View.VISIBLE);
-
         if (avatarBytes != null)
             avatarImg.setImageBitmap(BitmapFactory.decodeByteArray(avatarBytes, 0, avatarBytes.length));
     }
@@ -700,7 +702,7 @@ public class PersonActivity extends DayNightNoActionBarActivity {
 
     private void showItemDialog(String[] items) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setItems(items, new NoDouleDialogClickListener() {
+        builder.setItems(items, new NoDoubleDialogClickListener() {
             @Override
             protected void onNoDoubleClick(DialogInterface dialog, int which) {
                 switch (which) {

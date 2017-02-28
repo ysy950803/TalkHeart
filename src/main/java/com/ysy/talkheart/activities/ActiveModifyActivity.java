@@ -20,10 +20,14 @@ import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 
+import butterknife.BindView;
+
 public class ActiveModifyActivity extends DayNightActivity {
 
-    private EditText modifyEdt;
-    private TextView restWordTv;
+    @BindView(R.id.active_modify_edt)
+    EditText modifyEdt;
+    @BindView(R.id.active_modify_word_tv)
+    TextView restWordTv;
     private static final int WORD_LIMIT = 144;
     private Handler modifyHandler;
     private ProgressDialog waitDialog;
@@ -48,8 +52,6 @@ public class ActiveModifyActivity extends DayNightActivity {
     }
 
     private void initView() {
-        modifyEdt = (EditText) findViewById(R.id.active_modify_edt);
-        restWordTv = (TextView) findViewById(R.id.active_modify_word_tv);
         modifyEdt.addTextChangedListener(tw);
         modifyEdt.setText(MODIFY_CONTENT);
     }
@@ -97,15 +99,15 @@ public class ActiveModifyActivity extends DayNightActivity {
         return true;
     }
 
-    private boolean save(final int uid, final String content) {
-        ConnectionDetector cd = new ConnectionDetector(this);
-        if (!cd.isConnectingToInternet()) {
-            Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        connectToSave(uid, content);
-        return true;
-    }
+//    private boolean save(final int uid, final String content) {
+//        ConnectionDetector cd = new ConnectionDetector(this);
+//        if (!cd.isConnectingToInternet()) {
+//            Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+//            return false;
+//        }
+//        connectToSave(uid, content);
+//        return true;
+//    }
 
     private void connectToModify(final String actid, final String content) {
         waitDialog = ProgressDialog.show(ActiveModifyActivity.this, "请稍后", "正在和数据库君吃饭……");
@@ -189,8 +191,7 @@ public class ActiveModifyActivity extends DayNightActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_write, menu);
-        MenuItem menuItem = menu.findItem(R.id.action_send);
-        menuItem.setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
+        menu.findItem(R.id.action_save).setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
             @Override
             protected void onNoDoubleClick(MenuItem item) {
                 String modifyContent = modifyEdt.getText().toString();
@@ -202,17 +203,17 @@ public class ActiveModifyActivity extends DayNightActivity {
             }
         });
 
-        menu.findItem(R.id.action_save).setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
-            @Override
-            protected void onNoDoubleClick(MenuItem item) {
-                String modifyContent = modifyEdt.getText().toString();
-                modifyContent = StringUtils.zipBlank(modifyContent);
-                if (!StringUtils.replaceBlank(modifyContent).equals(""))
-                    save(Integer.parseInt(UID), modifyContent);
-                else
-                    Toast.makeText(ActiveModifyActivity.this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
-            }
-        });
+//        menu.findItem(R.id.action_save).setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
+//            @Override
+//            protected void onNoDoubleClick(MenuItem item) {
+//                String modifyContent = modifyEdt.getText().toString();
+//                modifyContent = StringUtils.zipBlank(modifyContent);
+//                if (!StringUtils.replaceBlank(modifyContent).equals(""))
+//                    save(Integer.parseInt(UID), modifyContent);
+//                else
+//                    Toast.makeText(ActiveModifyActivity.this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
+//            }
+//        });
         return true;
     }
 }

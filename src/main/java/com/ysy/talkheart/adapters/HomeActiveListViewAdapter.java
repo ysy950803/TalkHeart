@@ -125,7 +125,7 @@ public class HomeActiveListViewAdapter extends SuperRecyclerViewAdapter {
     public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
         final RecyclerViewHolder holder = (RecyclerViewHolder) viewHolder;
         if (getItemViewType(position) == NORMAL_TYPE) {
-            downloadAvatar(context.getContext(),
+            downloadAvatar(context.getActivity(),
                     AVATAR_UPLOAD_URL + "/" + uidList.get(position) + "_avatar_img_thumb.jpg",
                     holder.avatarImg, avatarList.get(position));
             holder.nicknameTv.setText(nicknameList.get(position));
@@ -207,7 +207,7 @@ public class HomeActiveListViewAdapter extends SuperRecyclerViewAdapter {
                 }
                 holder.gridView.setVisibility(View.VISIBLE);
                 holder.gridView.setAdapter(new ImageGridViewAdapter(
-                        context.getContext(), imageInfos));
+                        context.getActivity(), imageInfos));
             } else
                 holder.gridView.setVisibility(View.GONE);
 

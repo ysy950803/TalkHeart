@@ -2,30 +2,33 @@ package com.ysy.talkheart.activities;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.Toast;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.adapters.MeDraftListViewAdapter;
 import com.ysy.talkheart.bases.DayNightActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
-import com.ysy.talkheart.adapters.MeDraftListViewAdapter;
-import com.ysy.talkheart.utils.NoDouleDialogClickListener;
+import com.ysy.talkheart.utils.NoDoubleDialogClickListener;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
+
 public class DraftActivity extends DayNightActivity {
 
     private MeDraftListViewAdapter listViewAdapter;
-    private SwipeRefreshLayout refreshLayout;
+    @BindView(R.id.me_draft_refresh_layout)
+    SwipeRefreshLayout refreshLayout;
     private boolean isRefreshing = false;
     private List<String> timeList = new ArrayList<>();
     private List<String> textList = new ArrayList<>();
@@ -56,9 +59,7 @@ public class DraftActivity extends DayNightActivity {
     }
 
     private void initView() {
-        refreshLayout = (SwipeRefreshLayout) findViewById(R.id.me_draft_refresh_layout);
         RecyclerView draftRecyclerView = (RecyclerView) findViewById(R.id.me_draft_listView);
-
         draftRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         listViewAdapter = new MeDraftListViewAdapter(timeList, textList);
         draftRecyclerView.setAdapter(listViewAdapter);
@@ -114,7 +115,7 @@ public class DraftActivity extends DayNightActivity {
     private void showItemDialog(final String dftid, final int position) {
         final String items[] = {"删除"};
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setItems(items, new NoDouleDialogClickListener() {
+        builder.setItems(items, new NoDoubleDialogClickListener() {
             @Override
             protected void onNoDoubleClick(DialogInterface dialog, int which) {
                 connectToDelete(dftid, position);

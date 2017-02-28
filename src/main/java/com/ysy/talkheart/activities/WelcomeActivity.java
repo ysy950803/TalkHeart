@@ -6,13 +6,14 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.os.Handler;
 import android.os.Bundle;
+import android.os.Handler;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.bases.DayNightFullScreenActivity;
+import com.ysy.talkheart.im.activities.HomeActivity;
 import com.ysy.talkheart.utils.ActivitiesDestroyer;
 import com.ysy.talkheart.utils.DataProcessor;
 import com.ysy.talkheart.utils.StringUtils;
@@ -40,6 +41,7 @@ public class WelcomeActivity extends DayNightFullScreenActivity {
         ActivitiesDestroyer.getInstance().addActivity(this);
         TextView version = (TextView) findViewById(R.id.welcome_version_tv);
         version.setText(getVersionName(this));
+
         try {
             String[] temps = initOption();
             org_opts_o[0] = temps[2];
@@ -55,9 +57,9 @@ public class WelcomeActivity extends DayNightFullScreenActivity {
             Toast.makeText(this, "出现了一点小异常，请重启啦", Toast.LENGTH_SHORT).show();
             finish();
         }
-        int WAIT_TIME;
         DataProcessor dp = new DataProcessor(WelcomeActivity.this);
         UID = dp.readStrData("uid");
+        int WAIT_TIME;
         if (!UID.equals("")) {
             WAIT_TIME = 256;
         } else

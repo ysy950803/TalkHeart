@@ -5,6 +5,7 @@ import android.util.AttributeSet;
 import android.widget.RelativeLayout;
 
 public class SquareItemLayout extends RelativeLayout {
+
     public SquareItemLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }

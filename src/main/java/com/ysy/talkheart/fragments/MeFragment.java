@@ -30,7 +30,7 @@ import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.ActiveActivity;
 import com.ysy.talkheart.activities.DraftActivity;
 import com.ysy.talkheart.activities.FansActivity;
-import com.ysy.talkheart.activities.HomeActivity;
+import com.ysy.talkheart.im.activities.HomeActivity;
 import com.ysy.talkheart.activities.MarkActivity;
 import com.ysy.talkheart.activities.PersonActivity;
 import com.ysy.talkheart.activities.WatchActivity;
@@ -46,11 +46,9 @@ import com.ysy.talkheart.views.CircularImageView;
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import cz.msebera.android.httpclient.Header;
-
-/**
- * Created by Shengyu Yao on 2016/11/22.
- */
 
 public class MeFragment extends StatedFragment {
 
@@ -61,24 +59,42 @@ public class MeFragment extends StatedFragment {
     private List<CardView> cardList = new ArrayList<>();
     private List<View> viewList = new ArrayList<>();
 
-    private CircularImageView avatarImg;
-    private TextView nicknameTv;
-    private TextView activeNumTv;
-    private LinearLayout activeNumLayout;
-    private TextView watchNumTv;
-    private LinearLayout watchNumLayout;
-    private TextView fansNumTv;
-    private LinearLayout fansNumLayout;
-    private TextView introductionTv;
-    private LinearLayout markLayout;
-    private LinearLayout draftLayout;
-    private LinearLayout dayNightLayout;
-    private LinearLayout exitLayout;
-    private LinearLayout introInputLayout;
-    private AppCompatEditText introEdt;
-    private ImageView introDoneImg;
-    private TextView nightTv;
-    private TextView dayTv;
+    @BindView(R.id.me_avatar_img)
+    CircularImageView avatarImg;
+    @BindView(R.id.me_nickname_tv)
+    TextView nicknameTv;
+    @BindView(R.id.me_active_num_tv)
+    TextView activeNumTv;
+    @BindView(R.id.me_active_layout)
+    LinearLayout activeNumLayout;
+    @BindView(R.id.me_watch_num_tv)
+    TextView watchNumTv;
+    @BindView(R.id.me_watch_layout)
+    LinearLayout watchNumLayout;
+    @BindView(R.id.me_fans_num_tv)
+    TextView fansNumTv;
+    @BindView(R.id.me_fans_layout)
+    LinearLayout fansNumLayout;
+    @BindView(R.id.me_introduction_tv)
+    TextView introductionTv;
+    @BindView(R.id.me_mark_layout)
+    LinearLayout markLayout;
+    @BindView(R.id.me_draft_layout)
+    LinearLayout draftLayout;
+    @BindView(R.id.me_day_night_layout)
+    LinearLayout dayNightLayout;
+    @BindView(R.id.me_exit_layout)
+    LinearLayout exitLayout;
+    @BindView(R.id.me_intro_input_layout)
+    LinearLayout introInputLayout;
+    @BindView(R.id.me_intro_edt)
+    AppCompatEditText introEdt;
+    @BindView(R.id.me_intro_done_img)
+    ImageView introDoneImg;
+    @BindView(R.id.me_night_tv)
+    TextView nightTv;
+    @BindView(R.id.me_day_tv)
+    TextView dayTv;
     private String NICKNAME = "加载中…";
     private String INTRODUCTION = "加载中…";
     private String SEX = "1";
@@ -90,7 +106,8 @@ public class MeFragment extends StatedFragment {
     private String UID;
     private HomeActivity context;
     private Handler meFragmentHandler;
-    private SwipeRefreshLayout refreshLayout;
+    @BindView(R.id.me_refresh_layout)
+    SwipeRefreshLayout refreshLayout;
     private boolean isRefreshing = false;
     private String[] opts_o;
     private byte[] avatarBytes;
@@ -136,6 +153,8 @@ public class MeFragment extends StatedFragment {
     }
 
     private void initView(View view) {
+        ButterKnife.bind(this, view);
+
         CardView mainInfoCard = (CardView) view.findViewById(R.id.me_main_info_card);
         CardView introCard = (CardView) view.findViewById(R.id.me_introduction_card);
         CardView othersCard = (CardView) view.findViewById(R.id.me_others_card);
@@ -145,25 +164,7 @@ public class MeFragment extends StatedFragment {
         TextView fansTv = (TextView) view.findViewById(R.id.me_fans_tv);
         TextView markTv = (TextView) view.findViewById(R.id.me_mark_tv);
         TextView draftTv = (TextView) view.findViewById(R.id.me_draft_tv);
-        refreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.me_refresh_layout);
-        avatarImg = (CircularImageView) view.findViewById(R.id.me_avatar_img);
-        nicknameTv = (TextView) view.findViewById(R.id.me_nickname_tv);
-        activeNumTv = (TextView) view.findViewById(R.id.me_active_num_tv);
-        activeNumLayout = (LinearLayout) view.findViewById(R.id.me_active_layout);
-        watchNumTv = (TextView) view.findViewById(R.id.me_watch_num_tv);
-        watchNumLayout = (LinearLayout) view.findViewById(R.id.me_watch_layout);
-        fansNumTv = (TextView) view.findViewById(R.id.me_fans_num_tv);
-        fansNumLayout = (LinearLayout) view.findViewById(R.id.me_fans_layout);
-        introductionTv = (TextView) view.findViewById(R.id.me_introduction_tv);
-        markLayout = (LinearLayout) view.findViewById(R.id.me_mark_layout);
-        draftLayout = (LinearLayout) view.findViewById(R.id.me_draft_layout);
-        dayNightLayout = (LinearLayout) view.findViewById(R.id.me_day_night_layout);
-        exitLayout = (LinearLayout) view.findViewById(R.id.me_exit_layout);
-        introInputLayout = (LinearLayout) view.findViewById(R.id.me_intro_input_layout);
-        introEdt = (AppCompatEditText) view.findViewById(R.id.me_intro_edt);
-        introDoneImg = (ImageView) view.findViewById(R.id.me_intro_done_img);
-        nightTv = (TextView) view.findViewById(R.id.me_night_tv);
-        dayTv = (TextView) view.findViewById(R.id.me_day_tv);
+
         View divOthers = view.findViewById(R.id.me_div_others);
         View divLast = view.findViewById(R.id.me_div_last);
 
@@ -205,7 +206,7 @@ public class MeFragment extends StatedFragment {
         avatarImg.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
             protected void onNoDoubleClick(View v) {
-                Intent intent = new Intent(getActivity(), PersonActivity.class);
+                Intent intent = new Intent(context, PersonActivity.class);
                 if (avatarBytes != null) {
                     intent.putExtra("avatar", avatarBytes);
                 }
@@ -226,7 +227,7 @@ public class MeFragment extends StatedFragment {
         nicknameTv.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
             protected void onNoDoubleClick(View v) {
-                Intent intent = new Intent(getActivity(), PersonActivity.class);
+                Intent intent = new Intent(context, PersonActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", UID);
                 intent.putExtra("opts_o", opts_o);
@@ -237,7 +238,7 @@ public class MeFragment extends StatedFragment {
         activeNumLayout.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
             protected void onNoDoubleClick(View v) {
-                Intent intent = new Intent(getActivity(), ActiveActivity.class);
+                Intent intent = new Intent(context, ActiveActivity.class);
                 if (avatarBytes != null) {
                     intent.putExtra("avatar", avatarBytes);
                 }
@@ -258,7 +259,7 @@ public class MeFragment extends StatedFragment {
         watchNumLayout.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
             protected void onNoDoubleClick(View v) {
-                Intent intent = new Intent(getActivity(), WatchActivity.class);
+                Intent intent = new Intent(context, WatchActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", UID);
                 intent.putExtra("opts_o", opts_o);
@@ -274,7 +275,7 @@ public class MeFragment extends StatedFragment {
         fansNumLayout.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
             protected void onNoDoubleClick(View v) {
-                Intent intent = new Intent(getActivity(), FansActivity.class);
+                Intent intent = new Intent(context, FansActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("e_uid", UID);
                 intent.putExtra("opts_o", opts_o);
@@ -314,7 +315,7 @@ public class MeFragment extends StatedFragment {
         markLayout.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
             protected void onNoDoubleClick(View v) {
-                Intent intent = new Intent(getActivity(), MarkActivity.class);
+                Intent intent = new Intent(context, MarkActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("opts_o", opts_o);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -329,7 +330,7 @@ public class MeFragment extends StatedFragment {
         draftLayout.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
             protected void onNoDoubleClick(View v) {
-                Intent intent = new Intent(getActivity(), DraftActivity.class);
+                Intent intent = new Intent(context, DraftActivity.class);
                 intent.putExtra("uid", UID);
                 intent.putExtra("opts_o", opts_o);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -401,7 +402,7 @@ public class MeFragment extends StatedFragment {
     private boolean refreshData() {
         ConnectionDetector cd = new ConnectionDetector(getActivity());
         if (!cd.isConnectingToInternet()) {
-            Toast.makeText(getActivity(), "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
             return false;
         }
         downloadAvatar();
@@ -502,7 +503,9 @@ public class MeFragment extends StatedFragment {
         @Override
         public void run() {
             if (MeFragment.this.isAdded())
-                Toast.makeText(getActivity(), "服务器君生病了，重试一下吧", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "服务器君生病了，重试一下吧", Toast.LENGTH_SHORT).show();
+            refreshLayout.setRefreshing(false);
+            isRefreshing = false;
         }
     };
 
@@ -510,7 +513,9 @@ public class MeFragment extends StatedFragment {
         @Override
         public void run() {
             if (MeFragment.this.isAdded())
-                Toast.makeText(getActivity(), "连接超时啦，重试一下吧", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "连接超时啦，重试一下吧", Toast.LENGTH_SHORT).show();
+            refreshLayout.setRefreshing(false);
+            isRefreshing = false;
         }
     };
 
@@ -541,16 +546,6 @@ public class MeFragment extends StatedFragment {
         theme.resolveAttribute(R.attr.colorPlaintViewBG, typedValue, true);
         for (CardView cardView : cardList)
             cardView.setCardBackgroundColor(res.getColor(typedValue.resourceId));
-    }
-
-    @Override
-    protected void onSaveState(Bundle outState) {
-        super.onSaveState(outState);
-    }
-
-    @Override
-    protected void onRestoreState(Bundle savedInstanceState) {
-        super.onRestoreState(savedInstanceState);
     }
 
     private void downloadAvatar() {

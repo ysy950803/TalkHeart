@@ -1,8 +1,9 @@
-package com.ysy.talkheart.activities;
+package com.ysy.talkheart.im.activities;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -31,25 +32,48 @@ import android.widget.Toast;
 
 import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.ashokvarma.bottomnavigation.BottomNavigationItem;
+import com.avos.avoscloud.im.v2.AVIMClient;
+import com.avos.avoscloud.im.v2.AVIMException;
+import com.avos.avoscloud.im.v2.callback.AVIMClientCallback;
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.activities.FeedbackActivity;
+import com.ysy.talkheart.activities.LoginActivity;
+import com.ysy.talkheart.activities.SearchActivity;
 import com.ysy.talkheart.bases.DayNightActivity;
 import com.ysy.talkheart.bases.GlobalApp;
 import com.ysy.talkheart.fragments.HomeFragment;
 import com.ysy.talkheart.fragments.MeFragment;
 import com.ysy.talkheart.fragments.MessageFragment;
+import com.ysy.talkheart.im.ChatClientManager;
+import com.ysy.talkheart.im.OfflineMsgUnreadHandler;
+import com.ysy.talkheart.im.events.ChatTypeMsgEvent;
+import com.ysy.talkheart.im.events.ChatTypeMsgResentEvent;
+import com.ysy.talkheart.im.fragments.ChatListFragment;
 import com.ysy.talkheart.utils.ActivitiesDestroyer;
+import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.DataCleanManager;
 import com.ysy.talkheart.utils.DataProcessor;
+import com.ysy.talkheart.utils.NoDoubleDialogClickListener;
 import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
-import com.ysy.talkheart.utils.NoDouleDialogClickListener;
 import com.ysy.talkheart.utils.UpdateChecker;
+
+import butterknife.BindView;
+import de.greenrobot.event.EventBus;
 
 public class HomeActivity extends DayNightActivity implements BottomNavigationBar.OnTabSelectedListener {
 
-    private RelativeLayout homeLayout;
+    @BindView(R.id.activity_home)
+    RelativeLayout homeLayout;
+    @BindView(R.id.home_bottom_navigation_bar)
+    BottomNavigationBar bottomNavigationBar;
+    @BindView(R.id.msg_unread_img)
+    ImageView msgUnreadImg;
+    @BindView(R.id.chat_unread_img)
+    ImageView chatUnreadImg;
     private HomeFragment homeFragment;
     private MessageFragment messageFragment;
+    private ChatListFragment chatListFragment;
     private MeFragment meFragment;
     int curSelectedPosition = 0;
     private ActionBar actionBar;
@@ -61,8 +85,7 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
     private String UPDATE_URL = "";
     private static final int MSG_REFRESH_TIME = 24 * 1024;
     private static final int UPDATE_CHECK_TIME = 2048;
-    private BottomNavigationBar bottomNavigationBar;
-    private ImageView msgUnreadImg;
+
     private String UID;
     private Resources.Theme theme;
     private int isRead = 1;
@@ -76,20 +99,70 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
         setContentView(R.layout.activity_home);
         ActivitiesDestroyer.getInstance().killAll();
         actionBar = getSupportActionBar();
+        EventBus.getDefault().register(this);
         initData();
+        chatConnect(UID);
         initView();
         homeHandler = new Handler();
         homeHandler.post(autoCheckUpdateRunnable);
     }
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        if (intent.getBooleanExtra("to_home", false))
+            readChatFragment();
+    }
+
+    @Override
     protected void onResume() {
+        GlobalApp app = ((GlobalApp) getApplication());
+        if (app.getMeInfoUpdated() && meFragment != null && meFragment.isAdded() && !meFragment.isHidden())
+            meFragment.getMeInfo();
+        if (app.getMeMsgSent() && chatListFragment != null && chatListFragment.isAdded()) {
+            chatListFragment.refreshData();
+            app.setMeMsgSent(false);
+        }
+        if (app.getNotificationShown()) {
+            NotificationManager manager = (NotificationManager) app.getSystemService(Context.NOTIFICATION_SERVICE);
+            manager.cancelAll();
+            app.setNotificationShown(false);
+            if (app.getNotificationCount() <= 0 && chatUnreadImg != null)
+                chatUnreadImg.setVisibility(View.INVISIBLE);
+        }
+        app.setHomeVisible(true);
         homeHandler.post(msgRefreshRunnable);
-        if (((GlobalApp) getApplication()).getMeInfoUpdated())
-            if (meFragment != null && meFragment.isAdded() && !meFragment.isHidden()) {
-                meFragment.getMeInfo();
-            }
         super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        ((GlobalApp) getApplication()).setHomeVisible(false);
+        super.onPause();
+    }
+
+    public void onEvent(ChatTypeMsgEvent event) {
+        chatMsgEvent();
+    }
+
+    public void onEvent(ChatTypeMsgResentEvent event) {
+        chatMsgEvent();
+    }
+
+    private void chatMsgEvent() {
+        if (curSelectedPosition != 2) {
+            if (chatUnreadImg != null)
+                chatUnreadImg.setVisibility(View.VISIBLE);
+        } else {
+            if (chatListFragment != null)
+                chatListFragment.refreshData();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        EventBus.getDefault().unregister(this);
+        super.onDestroy();
     }
 
     @Override
@@ -102,19 +175,27 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
         UID = getIntent().getExtras().getString("uid");
         opts_t = getIntent().getExtras().getStringArray("opts_t");
         theme = getTheme();
+        GlobalApp app = (GlobalApp) getApplication();
+        app.setOpts_o(opts_o);
     }
 
     private void initView() {
-        homeLayout = (RelativeLayout) findViewById(R.id.activity_home);
-
-        msgUnreadImg = (ImageView) findViewById(R.id.msg_unread_img);
-        msgUnreadImg.setVisibility(View.GONE);
+        msgUnreadImg.setVisibility(View.INVISIBLE);
+        chatUnreadImg.setVisibility(View.INVISIBLE);
 
         TypedValue bg = new TypedValue();
         theme.resolveAttribute(R.attr.colorNavBG, bg, true);
-        bottomNavigationBar = (BottomNavigationBar) findViewById(R.id.home_bottom_navigation_bar);
         reInitNavBar(bg);
         setDefaultFragment();
+    }
+
+    private void chatConnect(String uid) {
+        ChatClientManager.getInstance().open(uid, new AVIMClientCallback() {
+            @Override
+            public void done(AVIMClient avimClient, AVIMException e) {
+
+            }
+        }, new OfflineMsgUnreadHandler(this));
     }
 
     private void reInitNavBar(TypedValue bg) {
@@ -122,8 +203,11 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
             bottomNavigationBar
                     .addItem(new BottomNavigationItem(R.drawable.ic_home_white_24dp, "首页"))
                     .addItem(new BottomNavigationItem(R.drawable.ic_message_white_24dp, "消息"))
+                    .addItem(new BottomNavigationItem(R.drawable.ic_chat_white_24dp, "会话"))
                     .addItem(new BottomNavigationItem(R.drawable.ic_person_pin_white_24dp, "个人"))
                     .setFirstSelectedPosition(curSelectedPosition)
+                    .setMode(BottomNavigationBar.MODE_FIXED)
+                    .setBackgroundStyle(BottomNavigationBar.BACKGROUND_STYLE_STATIC)
                     .setBarBackgroundColor(bg.resourceId)
                     .setActiveColor("#2196F3")
                     .initialise();
@@ -136,6 +220,8 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
             transaction.hide(homeFragment);
         if (messageFragment != null)
             transaction.hide(messageFragment);
+        if (chatListFragment != null)
+            transaction.hide(chatListFragment);
         if (meFragment != null)
             transaction.hide(meFragment);
     }
@@ -192,13 +278,16 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
                     bottomNavigationBar.show();
                 break;
             case 2:
+                showChatFragment(fm, transaction);
+                break;
+            case 3:
                 meFragment = (MeFragment) fm.findFragmentByTag("Me");
                 if (meFragment == null) {
                     meFragment = MeFragment.newInstance(UID, opts_o);
                     transaction.add(R.id.content_table_layout, meFragment, "Me");
                 } else
                     transaction.show(meFragment);
-                curSelectedPosition = 2;
+                curSelectedPosition = 3;
                 if (actionBar != null)
                     actionBar.setTitle("个人");
                 setMenuItemVisible(true, true, false, true);
@@ -228,63 +317,106 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
                 if (messageFragment != null && messageFragment.getMsgRecyclerView() != null)
                     messageFragment.getMsgRecyclerView().scrollToPosition(0);
                 break;
+            case 2:
+                if (chatListFragment != null) {
+                    if (chatUnreadImg != null && chatUnreadImg.getVisibility() == View.VISIBLE)
+                        chatListFragment.refreshData();
+                    else {
+                        if (chatListFragment.getChatListRecyclerView() != null)
+                            chatListFragment.getChatListRecyclerView().scrollToPosition(0);
+                    }
+                }
             default:
                 break;
         }
     }
 
+    private void showChatFragment(FragmentManager fm, FragmentTransaction transaction) {
+        chatListFragment = (ChatListFragment) fm.findFragmentByTag("ChatList");
+        if (chatListFragment == null) {
+            chatListFragment = ChatListFragment.newInstance(UID, opts_o);
+            transaction.add(R.id.content_table_layout, chatListFragment, "ChatList");
+        } else
+            transaction.show(chatListFragment);
+        curSelectedPosition = 2;
+        if (actionBar != null)
+            actionBar.setTitle("会话");
+        setMenuItemVisible(false, false, false, false);
+        if (bottomNavigationBar != null && bottomNavigationBar.isHidden())
+            bottomNavigationBar.show();
+    }
+
+    private void readChatFragment() {
+        if (bottomNavigationBar != null)
+            bottomNavigationBar.selectTab(2);
+        FragmentManager fm = this.getSupportFragmentManager();
+        // 开启事务
+        FragmentTransaction transaction = fm.beginTransaction();
+        hideAllFragments(transaction);
+        showChatFragment(fm, transaction);
+        transaction.commit();
+    }
+
     private void handCheckUpdate() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                UpdateChecker dbP = new UpdateChecker();
-                if (dbP.getConn(opts_t) != null) {
-                    int code;
-                    if ((code = dbP.codeSelect("select max(code) from app_version")) > getVersionCode(getApplicationContext())) {
+        ConnectionDetector cd = new ConnectionDetector(this);
+        if (cd.isConnectingToInternet()) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    UpdateChecker dbP = new UpdateChecker();
+                    if (dbP.getConn(opts_t) != null) {
+                        int code;
+                        if ((code = dbP.codeSelect("select max(code) from app_version")) > getVersionCode(getApplicationContext())) {
+                            String res[] = dbP.urlAndDetailSelect("select url, detail from download_url u, details d " +
+                                    "where d.code = u.code and d.code = " + code);
+                            UPDATE_URL = res[0];
+                            if (res[1] == null)
+                                res[1] = "";
+                            UPDATE_DETAIL = "检测到有新版本哦，快快下载吧！\n" + res[1];
+                            homeHandler.post(updateRunnable);
+                        } else {
+                            String res = dbP.detailSelect("select detail from details d where code = " + getVersionCode(getApplicationContext()));
+                            if (res != null)
+                                UPDATE_DETAIL = "谢谢关注哦！本版已更新内容：\n" + res;
+                            else
+                                UPDATE_DETAIL = "谢谢关注哦！开发君会努力更新的！";
+                            homeHandler.post(noUpdateRunnable);
+                        }
+                    }
+                    dbP.closeConn();
+                }
+            }).start();
+        } else
+            Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+    }
+
+    public void forceCheckUpdate() {
+        ConnectionDetector cd = new ConnectionDetector(this);
+        if (cd.isConnectingToInternet()) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    UpdateChecker dbP = new UpdateChecker();
+                    if (dbP.getConn(opts_t) != null) {
                         String res[] = dbP.urlAndDetailSelect("select url, detail from download_url u, details d " +
-                                "where d.code = u.code and d.code = " + code);
+                                "where d.code = u.code and d.code = " + getVersionCode(getApplicationContext()));
                         UPDATE_URL = res[0];
                         if (res[1] == null)
                             res[1] = "";
                         UPDATE_DETAIL = "检测到有新版本哦，快快下载吧！\n" + res[1];
                         homeHandler.post(updateRunnable);
-                    } else {
-                        String res = dbP.detailSelect("select detail from details d where code = " + getVersionCode(getApplicationContext()));
-                        if (res != null)
-                            UPDATE_DETAIL = "谢谢关注哦！本版已更新内容：\n" + res;
-                        else
-                            UPDATE_DETAIL = "谢谢关注哦！开发君会努力更新的！";
-                        homeHandler.post(noUpdateRunnable);
                     }
+                    dbP.closeConn();
                 }
-                dbP.closeConn();
-            }
-        }).start();
-    }
-
-    public void forceCheckUpdate() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                UpdateChecker dbP = new UpdateChecker();
-                if (dbP.getConn(opts_t) != null) {
-                    String res[] = dbP.urlAndDetailSelect("select url, detail from download_url u, details d " +
-                            "where d.code = u.code and d.code = " + getVersionCode(getApplicationContext()));
-                    UPDATE_URL = res[0];
-                    if (res[1] == null)
-                        res[1] = "";
-                    UPDATE_DETAIL = "检测到有新版本哦，快快下载吧！\n" + res[1];
-                    homeHandler.post(updateRunnable);
-                }
-                dbP.closeConn();
-            }
-        }).start();
+            }).start();
+        } else
+            Toast.makeText(this, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
     }
 
     private void updateDialog(final String url) {
         android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
         builder.setTitle("兴高采烈的提示框").setMessage(UPDATE_DETAIL).setCancelable(false)
-                .setPositiveButton("非常乐意", new NoDouleDialogClickListener() {
+                .setPositiveButton("非常乐意", new NoDoubleDialogClickListener() {
                     @Override
                     protected void onNoDoubleClick(DialogInterface dialog, int which) {
                         Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -403,6 +535,10 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
         return msgUnreadImg;
     }
 
+    public ImageView getChatUnreadImg() {
+        return chatUnreadImg;
+    }
+
     public int getIsRead() {
         return isRead;
     }
@@ -434,17 +570,26 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
     public void exitDialog() {
         android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
         builder.setTitle("可爱的提示框").setMessage("确定要退出登录切换用户吗亲？").setCancelable(false)
-                .setPositiveButton("好哒", new NoDouleDialogClickListener() {
+                .setPositiveButton("好哒", new NoDoubleDialogClickListener() {
                     @Override
                     protected void onNoDoubleClick(DialogInterface dialog, int which) {
+                        AVIMClient client = ChatClientManager.getInstance().getClient();
+                        if (client != null)
+                            client.close(new AVIMClientCallback() {
+                                @Override
+                                public void done(AVIMClient avimClient, AVIMException e) {
+                                    if (e == null)
+                                        Toast.makeText(HomeActivity.this, "退出成功", Toast.LENGTH_SHORT).show();
+                                }
+                            });
                         DataProcessor dp = new DataProcessor(HomeActivity.this);
                         dp.saveData("uid", "");
                         Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
                         intent.putExtra("opts_o", opts_o);
                         intent.putExtra("opts_t", opts_t);
-                        startActivity(intent);
                         ActivitiesDestroyer.getInstance().addActivity(HomeActivity.this);
                         HomeActivity.this.finish();
+                        startActivity(intent);
                     }
                 }).setNegativeButton("再想想", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
@@ -500,6 +645,8 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
             homeFragment.refreshFragmentUI();
         if (messageFragment != null)
             messageFragment.refreshFragmentUI();
+        if (chatListFragment != null)
+            chatListFragment.refreshFragmentUI();
     }
 
     private void dayNightTransAnim() {

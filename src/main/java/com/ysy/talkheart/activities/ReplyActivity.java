@@ -19,11 +19,15 @@ import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 
+import butterknife.BindView;
+
 public class ReplyActivity extends DayNightActivity {
 
     private static final int WORD_LIMIT = 72;
-    private TextView restWordTv;
-    private EditText writeEdt;
+    @BindView(R.id.reply_write_word_tv)
+    TextView restWordTv;
+    @BindView(R.id.reply_write_edt)
+    EditText writeEdt;
     private String UID;
     private String E_UID;
     private String ACT_ID;
@@ -68,8 +72,6 @@ public class ReplyActivity extends DayNightActivity {
     }
 
     private void initView() {
-        writeEdt = (EditText) findViewById(R.id.reply_write_edt);
-        restWordTv = (TextView) findViewById(R.id.reply_write_word_tv);
         writeEdt.addTextChangedListener(tw);
         if (CONTENT != null)
             writeEdt.setText(CONTENT);

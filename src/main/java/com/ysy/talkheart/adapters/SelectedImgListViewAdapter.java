@@ -23,11 +23,11 @@ import java.util.ArrayList;
 public class SelectedImgListViewAdapter extends SuperRecyclerViewAdapter {
 
     private ArrayList<String> imagesPath;
-    private Context mContext;
+    private Context context;
 
     public SelectedImgListViewAdapter(Context context, ArrayList<String> imagesPath) {
         this.imagesPath = imagesPath;
-        this.mContext = context;
+        this.context = context;
     }
 
     @Override
@@ -57,7 +57,7 @@ public class SelectedImgListViewAdapter extends SuperRecyclerViewAdapter {
         Uri uri = Uri.fromFile(new File(imagesPath.get(position)));
         boolean canLoadImg = AndroidLifecycleUtils.canLoadImage(holder.selectedImg.getContext());
         if (canLoadImg) {
-            Glide.with(mContext).load(uri)
+            Glide.with(context).load(uri)
                     .centerCrop()
                     .thumbnail(0.1f)
                     .placeholder(R.drawable.__picker_ic_photo_black_48dp)

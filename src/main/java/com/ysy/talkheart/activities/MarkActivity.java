@@ -2,10 +2,10 @@ package com.ysy.talkheart.activities;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -13,21 +13,25 @@ import android.widget.Toast;
 
 import com.lzy.ninegrid.NineGridView;
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.adapters.MeMarkListViewAdapter;
 import com.ysy.talkheart.bases.DayNightActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
-import com.ysy.talkheart.adapters.MeMarkListViewAdapter;
-import com.ysy.talkheart.utils.NoDouleDialogClickListener;
+import com.ysy.talkheart.utils.NoDoubleDialogClickListener;
 import com.ysy.talkheart.utils.SuperImageLoader;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
+
 public class MarkActivity extends DayNightActivity {
 
     private MeMarkListViewAdapter listViewAdapter;
-    private SwipeRefreshLayout refreshLayout;
+    @BindView(R.id.me_mark_refresh_layout)
+    SwipeRefreshLayout refreshLayout;
+
     private boolean isRefreshing = false;
     private List<Integer> avatarList = new ArrayList<>();
     private List<String> nicknameList = new ArrayList<>();
@@ -64,9 +68,7 @@ public class MarkActivity extends DayNightActivity {
     private void initView() {
         NineGridView.setImageLoader(new SuperImageLoader());
 
-        refreshLayout = (SwipeRefreshLayout) findViewById(R.id.me_mark_refresh_layout);
         RecyclerView markRecyclerView = (RecyclerView) findViewById(R.id.me_mark_listView);
-
         markRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         listViewAdapter = new MeMarkListViewAdapter(this, uidList, avatarList, nicknameList,
                 timeList, textList, imgInfoList);
@@ -118,7 +120,7 @@ public class MarkActivity extends DayNightActivity {
     private void showItemDialog(final String actid, final int position) {
         final String items[] = {"删除"};
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setItems(items, new NoDouleDialogClickListener() {
+        builder.setItems(items, new NoDoubleDialogClickListener() {
             @Override
             protected void onNoDoubleClick(DialogInterface dialog, int which) {
                 connectToDelete(actid, position);

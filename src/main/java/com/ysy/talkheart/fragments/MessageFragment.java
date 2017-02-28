@@ -21,13 +21,13 @@ import com.ashokvarma.bottomnavigation.BottomNavigationBar;
 import com.inthecheesefactory.thecheeselibrary.fragment.support.v4.app.StatedFragment;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.CommentActivity;
-import com.ysy.talkheart.activities.HomeActivity;
+import com.ysy.talkheart.im.activities.HomeActivity;
 import com.ysy.talkheart.activities.PersonActivity;
 import com.ysy.talkheart.activities.ReplyActivity;
+import com.ysy.talkheart.adapters.MessageListViewAdapter;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
-import com.ysy.talkheart.adapters.MessageListViewAdapter;
 import com.ysy.talkheart.utils.RecyclerViewScrollListener;
 
 import java.lang.reflect.Field;
@@ -39,14 +39,15 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Created by Shengyu Yao on 2016/11/22.
- */
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 public class MessageFragment extends StatedFragment {
 
-    private RecyclerView msgRecyclerView;
-    private SwipeRefreshLayout refreshLayout;
+    @BindView(R.id.message_listView)
+    RecyclerView msgRecyclerView;
+    @BindView(R.id.msg_refresh_layout)
+    SwipeRefreshLayout refreshLayout;
     private List<Integer> avatarList = new ArrayList<>();
     private List<String> nameActList = new ArrayList<>();
     private List<String> nicknameList = new ArrayList<>();
@@ -107,8 +108,7 @@ public class MessageFragment extends StatedFragment {
     }
 
     private void initView(View view) {
-        refreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.msg_refresh_layout);
-        msgRecyclerView = (RecyclerView) view.findViewById(R.id.message_listView);
+        ButterKnife.bind(this, view);
 
         final BottomNavigationBar navigationBar = context.getBottomNavigationBar();
         msgRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -171,7 +171,7 @@ public class MessageFragment extends StatedFragment {
     private boolean refreshData(boolean isHeadRefresh) {
         ConnectionDetector cd = new ConnectionDetector(getActivity());
         if (!cd.isConnectingToInternet() && MessageFragment.this.isAdded()) {
-            Toast.makeText(getActivity(), "请检查网络连接哦", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
             return false;
         }
         if (isHeadRefresh) {
@@ -271,7 +271,7 @@ public class MessageFragment extends StatedFragment {
     }
 
     public void reply(int position) {
-        Intent intent = new Intent(getActivity(), ReplyActivity.class);
+        Intent intent = new Intent(context, ReplyActivity.class);
         intent.putExtra("uid", uidPList.get(position));
         intent.putExtra("e_uid", UID);
         intent.putExtra("actid", actidList.get(position));
@@ -282,7 +282,7 @@ public class MessageFragment extends StatedFragment {
     }
 
     public void openComment(int position) {
-        Intent intent = new Intent(getActivity(), CommentActivity.class);
+        Intent intent = new Intent(context, CommentActivity.class);
         intent.putExtra("uid", uidPList.get(position));
         intent.putExtra("e_uid", UID);
         intent.putExtra("actid", actidList.get(position));
@@ -291,7 +291,7 @@ public class MessageFragment extends StatedFragment {
     }
 
     public void openPerson(int position) {
-        Intent intent = new Intent(getActivity(), PersonActivity.class);
+        Intent intent = new Intent(context, PersonActivity.class);
         intent.putExtra("uid", uidPList.get(position));
         intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
         intent.putExtra("nickname", nicknameList.get(position));
@@ -378,7 +378,7 @@ public class MessageFragment extends StatedFragment {
             listViewAdapter.setIsLoading(false);
             listViewAdapter.notifyDataSetChanged();
             if (MessageFragment.this.isAdded())
-                Toast.makeText(getActivity(), "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
         }
@@ -390,7 +390,7 @@ public class MessageFragment extends StatedFragment {
             listViewAdapter.setIsLoading(false);
             listViewAdapter.notifyDataSetChanged();
             if (MessageFragment.this.isAdded())
-                Toast.makeText(getActivity(), "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
         }
@@ -401,10 +401,10 @@ public class MessageFragment extends StatedFragment {
         public void run() {
             listViewAdapter.notifyDataSetChanged();
             if (MessageFragment.this.isAdded())
-                Toast.makeText(getActivity(), "还没有消息哦", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "还没有消息哦", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
-            context.getMsgUnreadImg().setVisibility(View.GONE);
+            context.getMsgUnreadImg().setVisibility(View.INVISIBLE);
         }
     };
 
@@ -414,10 +414,10 @@ public class MessageFragment extends StatedFragment {
             listViewAdapter.setMaxExistCount(listViewAdapter.getItemCount() - 1);
             listViewAdapter.notifyDataSetChanged();
             if (MessageFragment.this.isAdded())
-                Toast.makeText(getActivity(), "没有更多消息哦", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "没有更多消息哦", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
-            context.getMsgUnreadImg().setVisibility(View.GONE);
+            context.getMsgUnreadImg().setVisibility(View.INVISIBLE);
         }
     };
 
@@ -427,7 +427,7 @@ public class MessageFragment extends StatedFragment {
             listViewAdapter.notifyDataSetChanged();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
-            context.getMsgUnreadImg().setVisibility(View.GONE);
+            context.getMsgUnreadImg().setVisibility(View.INVISIBLE);
             context.setIsRead(1);
         }
     };
@@ -477,15 +477,5 @@ public class MessageFragment extends StatedFragment {
 
     public RecyclerView getMsgRecyclerView() {
         return msgRecyclerView;
-    }
-
-    @Override
-    protected void onSaveState(Bundle outState) {
-        super.onSaveState(outState);
-    }
-
-    @Override
-    protected void onRestoreState(Bundle savedInstanceState) {
-        super.onRestoreState(savedInstanceState);
     }
 }

@@ -14,6 +14,7 @@ import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -29,10 +30,11 @@ import com.ysy.talkheart.bases.DayNightActivity;
 import com.ysy.talkheart.bases.GlobalApp;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
+import com.ysy.talkheart.utils.KeyboardChangeListener;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
+import com.ysy.talkheart.utils.NoDoubleDialogClickListener;
 import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
-import com.ysy.talkheart.utils.NoDouleDialogClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 
 import java.io.ByteArrayInputStream;
@@ -45,14 +47,18 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import cz.msebera.android.httpclient.Header;
 import me.shaohui.advancedluban.Luban;
 import me.shaohui.advancedluban.OnMultiCompressListener;
 
 public class WriteActivity extends DayNightActivity {
 
-    private EditText writeEdt;
-    private TextView restWordTv;
+    @BindView(R.id.write_edt)
+    EditText writeEdt;
+    @BindView(R.id.write_word_tv)
+    TextView restWordTv;
     private static final int WORD_LIMIT = 144;
     private Handler writeHandler;
     private ProgressDialog waitDialog;
@@ -73,6 +79,7 @@ public class WriteActivity extends DayNightActivity {
     private String imgInfo = null; // 2017/12/21_20171221182345_9
 
     private boolean isSent = false;
+    private boolean isKeyboardShow = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,6 +89,13 @@ public class WriteActivity extends DayNightActivity {
         initData();
         initView();
         writeHandler = new Handler();
+
+        new KeyboardChangeListener(this).setKeyBoardListener(new KeyboardChangeListener.KeyBoardListener() {
+            @Override
+            public void onKeyboardChange(boolean isShow, int keyboardHeight) {
+                isKeyboardShow = isShow;
+            }
+        });
     }
 
     private void initData() {
@@ -102,9 +116,7 @@ public class WriteActivity extends DayNightActivity {
     }
 
     private void initView() {
-        writeEdt = (EditText) findViewById(R.id.write_edt);
         ImageView albumImg = (ImageView) findViewById(R.id.write_album_img);
-        restWordTv = (TextView) findViewById(R.id.write_word_tv);
 
         writeEdt.addTextChangedListener(tw);
         writeEdt.setText(DFT_CONTENT);
@@ -391,9 +403,8 @@ public class WriteActivity extends DayNightActivity {
 
     @Override
     public void onBackPressed() {
-        if (!isSent) {
+        if (!isSent)
             delImg(UID, imgInfo);
-        }
         super.onBackPressed();
     }
 
@@ -450,6 +461,21 @@ public class WriteActivity extends DayNightActivity {
     }
 
     @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == android.R.id.home) {
+            if (isKeyboardShow) {
+                InputMethodManager iMM = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                if (getCurrentFocus() != null)
+                    iMM.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+            } else
+                onBackPressed();
+            return true;
+        }
+        return onOptionsItemSelected(item);
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == ImageSelector.REQUEST_SELECT_IMAGE) {
@@ -467,7 +493,7 @@ public class WriteActivity extends DayNightActivity {
     private void removeSelectedImg(final int position) {
         android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
         builder.setTitle("紧张的提示框").setMessage("要移除这张图片吗？").setCancelable(true)
-                .setPositiveButton("好哒", new NoDouleDialogClickListener() {
+                .setPositiveButton("好哒", new NoDoubleDialogClickListener() {
                     @Override
                     protected void onNoDoubleClick(DialogInterface dialog, int which) {
                         imagesPath.remove(imagesPath.get(position));

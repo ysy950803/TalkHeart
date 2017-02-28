@@ -2,8 +2,8 @@ package com.ysy.talkheart.activities;
 
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
-import android.os.Handler;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.DatePicker;
@@ -19,16 +19,27 @@ import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 public class RegisterActivity extends DayNightFullScreenActivity {
 
-    private ImageView backImg;
-    private ImageView doneImg;
-    private EditText userEdt;
-    private EditText pwEdt;
-    private EditText rePwEdt;
-    private EditText nicknameEdt;
-    private TextView setBirthTv;
-    private Switch sexSwitch;
+    @BindView(R.id.register_back_img)
+    ImageView backImg;
+    @BindView(R.id.register_done_img)
+    ImageView doneImg;
+    @BindView(R.id.register_user_edt)
+    EditText userEdt;
+    @BindView(R.id.register_pw_edt)
+    EditText pwEdt;
+    @BindView(R.id.register_re_pw_edt)
+    EditText rePwEdt;
+    @BindView(R.id.register_nickname_edt)
+    EditText nicknameEdt;
+    @BindView(R.id.register_birthday_tv)
+    TextView setBirthTv;
+    @BindView(R.id.register_sex_switch)
+    Switch sexSwitch;
     private Handler registerHandler;
     private ProgressDialog waitDialog;
     private int SEX = 1;
@@ -40,20 +51,9 @@ public class RegisterActivity extends DayNightFullScreenActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
-        initView();
+        ButterKnife.bind(this);
         clickListener();
         registerHandler = new Handler();
-    }
-
-    private void initView() {
-        backImg = (ImageView) findViewById(R.id.register_back_img);
-        doneImg = (ImageView) findViewById(R.id.register_done_img);
-        userEdt = (EditText) findViewById(R.id.register_user_edt);
-        pwEdt = (EditText) findViewById(R.id.register_pw_edt);
-        rePwEdt = (EditText) findViewById(R.id.register_re_pw_edt);
-        nicknameEdt = (EditText) findViewById(R.id.register_nickname_edt);
-        setBirthTv = (TextView) findViewById(R.id.register_birthday_tv);
-        sexSwitch = (Switch) findViewById(R.id.register_sex_switch);
     }
 
     private void clickListener() {

@@ -32,7 +32,7 @@ import com.lzy.ninegrid.NineGridView;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.ActiveModifyActivity;
 import com.ysy.talkheart.activities.CommentActivity;
-import com.ysy.talkheart.activities.HomeActivity;
+import com.ysy.talkheart.im.activities.HomeActivity;
 import com.ysy.talkheart.activities.PersonActivity;
 import com.ysy.talkheart.activities.WriteActivity;
 import com.ysy.talkheart.adapters.HomeActiveListViewAdapter;
@@ -40,8 +40,8 @@ import com.ysy.talkheart.bases.GlobalApp;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
+import com.ysy.talkheart.utils.NoDoubleDialogClickListener;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
-import com.ysy.talkheart.utils.NoDouleDialogClickListener;
 import com.ysy.talkheart.utils.RecyclerViewScrollListener;
 import com.ysy.talkheart.utils.SuperImageLoader;
 
@@ -54,18 +54,18 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import cz.msebera.android.httpclient.Header;
-
-/**
- * Created by Shengyu Yao on 2016/11/22.
- */
 
 public class HomeFragment extends StatedFragment {
 
-    private FloatingActionButton addFab;
-
-    private RecyclerView activeRecyclerView;
-    private SwipeRefreshLayout refreshLayout;
+    @BindView(R.id.home_add_fab)
+    FloatingActionButton addFab;
+    @BindView(R.id.home_active_listView)
+    RecyclerView activeRecyclerView;
+    @BindView(R.id.home_active_refresh_layout)
+    SwipeRefreshLayout refreshLayout;
     private List<Integer> avatarList = new ArrayList<>();
     private List<String> nicknameList = new ArrayList<>();
     private List<String> timeList = new ArrayList<>();
@@ -143,12 +143,9 @@ public class HomeFragment extends StatedFragment {
     }
 
     private void initView(View view) {
+        ButterKnife.bind(this, view);
         NineGridView.setImageLoader(new SuperImageLoader());
-
         final BottomNavigationBar navigationBar = context.getBottomNavigationBar();
-        refreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.home_active_refresh_layout);
-        addFab = (FloatingActionButton) view.findViewById(R.id.home_add_fab);
-        activeRecyclerView = (RecyclerView) view.findViewById(R.id.home_active_listView);
 
         activeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         RecyclerViewScrollListener scrollListener = new RecyclerViewScrollListener() {
@@ -190,14 +187,18 @@ public class HomeFragment extends StatedFragment {
         addFab.setOnClickListener(new NoDoubleViewClickListener() {
             @Override
             protected void onNoDoubleClick(View v) {
-                Intent intent = new Intent(context, WriteActivity.class);
-                intent.putExtra("opts_o", opts_o);
-                intent.putExtra("uid", UID);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(context, addFab, getString(R.string.trans_add));
-                    startActivity(intent, tAO.toBundle());
+                ConnectionDetector cd = new ConnectionDetector(context);
+                if (cd.isConnectingToInternet()) {
+                    Intent intent = new Intent(context, WriteActivity.class);
+                    intent.putExtra("opts_o", opts_o);
+                    intent.putExtra("uid", UID);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(context, addFab, getString(R.string.trans_add));
+                        startActivity(intent, tAO.toBundle());
+                    } else
+                        startActivity(intent);
                 } else
-                    startActivity(intent);
+                    Toast.makeText(context, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -446,7 +447,7 @@ public class HomeFragment extends StatedFragment {
     }
 
     private void openContentModify(String uid, String actid, String modify_content) {
-        Intent intent = new Intent(getActivity(), ActiveModifyActivity.class);
+        Intent intent = new Intent(context, ActiveModifyActivity.class);
         intent.putExtra("uid", uid);
         intent.putExtra("actid", actid);
         intent.putExtra("modify_content", modify_content);
@@ -455,7 +456,7 @@ public class HomeFragment extends StatedFragment {
     }
 
     public void openComment(int position) {
-        Intent intent = new Intent(getActivity(), CommentActivity.class);
+        Intent intent = new Intent(context, CommentActivity.class);
         intent.putExtra("uid", uidList.get(position));
         intent.putExtra("e_uid", UID);
         intent.putExtra("actid", actidList.get(position));
@@ -464,7 +465,7 @@ public class HomeFragment extends StatedFragment {
     }
 
     public void openPerson(int position) {
-        Intent intent = new Intent(getActivity(), PersonActivity.class);
+        Intent intent = new Intent(context, PersonActivity.class);
         intent.putExtra("uid", uidList.get(position));
         intent.putExtra("sex", avatarList.get(position) == R.drawable.me_avatar_boy ? "1" : "0");
         intent.putExtra("nickname", nicknameList.get(position));
@@ -476,7 +477,7 @@ public class HomeFragment extends StatedFragment {
     private void showItemDialog(String[] items, final String uid, final String actid,
                                 final String modify_content) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setItems(items, new NoDouleDialogClickListener() {
+        builder.setItems(items, new NoDoubleDialogClickListener() {
             @Override
             protected void onNoDoubleClick(DialogInterface dialog, int which) {
                 switch (which) {
@@ -499,7 +500,7 @@ public class HomeFragment extends StatedFragment {
     private Runnable markRunnable = new Runnable() {
         @Override
         public void run() {
-            Toast.makeText(getActivity(), "收藏成功啦", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "收藏成功啦", Toast.LENGTH_SHORT).show();
         }
     };
 
@@ -509,14 +510,14 @@ public class HomeFragment extends StatedFragment {
             if (UID != null && imgInfo != null)
                 delImg(UID, imgInfo);
             refresh();
-            Toast.makeText(getActivity(), "删除成功", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "删除成功", Toast.LENGTH_SHORT).show();
         }
     };
 
     private Runnable markErrorRunnable = new Runnable() {
         @Override
         public void run() {
-            Toast.makeText(getActivity(), "已经收藏过了", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "已经收藏过了", Toast.LENGTH_SHORT).show();
         }
     };
 
@@ -535,7 +536,7 @@ public class HomeFragment extends StatedFragment {
             listViewAdapter.setIsLoading(false);
             listViewAdapter.notifyDataSetChanged();
             if (HomeFragment.this.isAdded())
-                Toast.makeText(getActivity(), "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "连接超时啦，请重试", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
         }
@@ -547,7 +548,7 @@ public class HomeFragment extends StatedFragment {
             listViewAdapter.setIsLoading(false);
             listViewAdapter.notifyDataSetChanged();
             if (HomeFragment.this.isAdded())
-                Toast.makeText(getActivity(), "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "服务器君发脾气了，请重试", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
         }
@@ -558,7 +559,7 @@ public class HomeFragment extends StatedFragment {
         public void run() {
             listViewAdapter.notifyDataSetChanged();
             if (HomeFragment.this.isAdded())
-                Toast.makeText(getActivity(), "还没有任何动态哦", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "还没有任何动态哦", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
         }
@@ -570,7 +571,7 @@ public class HomeFragment extends StatedFragment {
             listViewAdapter.setMaxExistCount(listViewAdapter.getItemCount() - 1);
             listViewAdapter.notifyDataSetChanged();
             if (HomeFragment.this.isAdded())
-                Toast.makeText(getActivity(), "没有更多动态哦", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "没有更多动态哦", Toast.LENGTH_SHORT).show();
             refreshLayout.setRefreshing(false);
             isRefreshing = false;
         }
@@ -579,14 +580,14 @@ public class HomeFragment extends StatedFragment {
     private Runnable goodErrorRunnable = new Runnable() {
         @Override
         public void run() {
-            Toast.makeText(getActivity(), "连心失败了，请刷新重试", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "连心失败了，请刷新重试", Toast.LENGTH_SHORT).show();
         }
     };
 
     private Runnable noGoodErrorRunnable = new Runnable() {
         @Override
         public void run() {
-            Toast.makeText(getActivity(), "心连心不易断，请刷新重试", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "心连心不易断，请刷新重试", Toast.LENGTH_SHORT).show();
         }
     };
 
@@ -636,6 +637,8 @@ public class HomeFragment extends StatedFragment {
             tv.setTextColor(res.getColor(typedValue.resourceId));
             tv = (TextView) childView.findViewById(R.id.home_active_good_num_tv);
             tv.setTextColor(res.getColor(typedValue.resourceId));
+            tv = (TextView) childView.findViewById(R.id.home_active_comment_num_tv);
+            tv.setTextColor(res.getColor(typedValue.resourceId));
         }
 
         Class<RecyclerView> recyclerViewClass = RecyclerView.class;
@@ -654,15 +657,5 @@ public class HomeFragment extends StatedFragment {
 
     public RecyclerView getActiveRecyclerView() {
         return activeRecyclerView;
-    }
-
-    @Override
-    protected void onSaveState(Bundle outState) {
-        super.onSaveState(outState);
-    }
-
-    @Override
-    protected void onRestoreState(Bundle savedInstanceState) {
-        super.onRestoreState(savedInstanceState);
     }
 }

@@ -1,8 +1,8 @@
 package com.ysy.talkheart.activities;
 
 import android.app.ProgressDialog;
-import android.os.Handler;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.Selection;
 import android.text.TextWatcher;
@@ -19,11 +19,16 @@ import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.NoDoubleMenuItemClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 
+import butterknife.BindView;
+
 public class FeedbackActivity extends DayNightActivity {
 
     private static final int WORD_LIMIT = 144;
-    private TextView restWordTv;
-    private EditText writeEdt;
+    @BindView(R.id.feedback_write_word_tv)
+    TextView restWordTv;
+    @BindView(R.id.feedback_write_edt)
+    EditText writeEdt;
+
     private String UID;
     private Handler feedbackHandler;
     private ProgressDialog waitDialog;
@@ -43,9 +48,6 @@ public class FeedbackActivity extends DayNightActivity {
     }
 
     private void initView() {
-        writeEdt = (EditText) findViewById(R.id.feedback_write_edt);
-        restWordTv = (TextView) findViewById(R.id.feedback_write_word_tv);
-
         writeEdt.addTextChangedListener(tw);
     }
 

@@ -455,6 +455,4 @@ public class CircularImageView extends ImageView {
     public boolean isSelected() {
         return this.isSelected;
     }
-
 }
-

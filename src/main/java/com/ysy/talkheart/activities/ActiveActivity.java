@@ -23,7 +23,7 @@ import com.ysy.talkheart.utils.SuperImageLoader;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
-import com.ysy.talkheart.utils.NoDouleDialogClickListener;
+import com.ysy.talkheart.utils.NoDoubleDialogClickListener;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -32,6 +32,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import butterknife.BindView;
 import cz.msebera.android.httpclient.Header;
 
 public class ActiveActivity extends DayNightActivity {
@@ -47,7 +48,8 @@ public class ActiveActivity extends DayNightActivity {
     private List<String> cmtNumList = new ArrayList<>();
 
     private MeActiveListViewAdapter listViewAdapter;
-    private SwipeRefreshLayout refreshLayout;
+    @BindView(R.id.me_active_refresh_layout)
+    SwipeRefreshLayout refreshLayout;
     private boolean isRefreshing = false;
     private Handler activeHandler;
     private String UID = "0";
@@ -94,8 +96,6 @@ public class ActiveActivity extends DayNightActivity {
 
     private void initView() {
         NineGridView.setImageLoader(new SuperImageLoader());
-
-        refreshLayout = (SwipeRefreshLayout) findViewById(R.id.me_active_refresh_layout);
         RecyclerView activeRecyclerView = (RecyclerView) findViewById(R.id.me_active_listView);
 
         activeRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -173,7 +173,7 @@ public class ActiveActivity extends DayNightActivity {
 
     private void showItemDialog(String[] items, final String e_uid, final String actid, final String modify_content) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setItems(items, new NoDouleDialogClickListener() {
+        builder.setItems(items, new NoDoubleDialogClickListener() {
             @Override
             protected void onNoDoubleClick(DialogInterface dialog, int which) {
                 switch (which) {
@@ -200,7 +200,7 @@ public class ActiveActivity extends DayNightActivity {
     private void connectToDelete(final String e_uid, final String actid) {
         android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
         builder.setTitle("紧张的提示框").setMessage("确定要删除这条动态吗亲？（与之相关联信息都会删除哦）").setCancelable(true)
-                .setPositiveButton("我意已决", new NoDouleDialogClickListener() {
+                .setPositiveButton("我意已决", new NoDoubleDialogClickListener() {
                     @Override
                     protected void onNoDoubleClick(DialogInterface dialog, int which) {
                         new Thread(new Runnable() {

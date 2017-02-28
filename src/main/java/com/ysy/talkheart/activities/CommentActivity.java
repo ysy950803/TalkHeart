@@ -4,37 +4,42 @@ import android.app.ActivityOptions;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.Toast;
 
 import com.ysy.talkheart.R;
-import com.ysy.talkheart.bases.DayNightActivity;
 import com.ysy.talkheart.adapters.CommentListViewAdapter;
+import com.ysy.talkheart.bases.DayNightActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
+import com.ysy.talkheart.utils.NoDoubleDialogClickListener;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
-import com.ysy.talkheart.utils.NoDouleDialogClickListener;
 import com.ysy.talkheart.utils.RecyclerViewScrollListener;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import butterknife.BindView;
 
 public class CommentActivity extends DayNightActivity {
 
     private String ACT_ID;
     private String UID;
     private String E_UID;
-    private SwipeRefreshLayout refreshLayout;
+
+    @BindView(R.id.comment_refresh_layout)
+    SwipeRefreshLayout refreshLayout;
+    @BindView(R.id.comment_fab)
+    FloatingActionButton commentFab;
     private Handler commentHandler;
-    private FloatingActionButton commentFab;
     private CommentListViewAdapter listViewAdapter;
     private boolean isRefreshing = false;
     private List<Integer> avatarList = new ArrayList<>();
@@ -71,9 +76,6 @@ public class CommentActivity extends DayNightActivity {
     }
 
     private void initView() {
-        refreshLayout = (SwipeRefreshLayout) findViewById(R.id.comment_refresh_layout);
-        commentFab = (FloatingActionButton) findViewById(R.id.comment_fab);
-
         RecyclerView commentRecyclerView = (RecyclerView) findViewById(R.id.comment_listView);
         commentRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         RecyclerViewScrollListener scrollListener = new RecyclerViewScrollListener() {
@@ -261,7 +263,7 @@ public class CommentActivity extends DayNightActivity {
     private void showItemDialog(String[] items, final String uid, final String e_uid,
                                 final String cmtid, final String modify_content, final String nickname_p) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setItems(items, new NoDouleDialogClickListener() {
+        builder.setItems(items, new NoDoubleDialogClickListener() {
             @Override
             protected void onNoDoubleClick(DialogInterface dialog, int which) {
                 openContentModify(uid, e_uid, cmtid, modify_content, nickname_p);

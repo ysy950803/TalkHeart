@@ -1,7 +1,5 @@
 package com.ysy.talkheart.adapters;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,10 +10,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.signature.StringSignature;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.bases.SuperRecyclerViewAdapter;
 import com.ysy.talkheart.fragments.MessageFragment;
@@ -24,8 +18,6 @@ import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.views.CircularImageView;
 
 import java.util.List;
-
-import cz.msebera.android.httpclient.Header;
 
 /**
  * Created by Shengyu Yao on 2016/11/25.
@@ -119,7 +111,7 @@ public class MessageListViewAdapter extends SuperRecyclerViewAdapter {
     public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
         final RecyclerViewHolder holder = (RecyclerViewHolder) viewHolder;
         if (getItemViewType(position) == NORMAL_TYPE) {
-            downloadAvatar(context.getContext(),
+            downloadAvatar(context.getActivity(),
                     AVATAR_UPLOAD_URL + "/" + uidList.get(position) + "_avatar_img_thumb.jpg",
                     holder.avatarImg, avatarList.get(position));
             holder.nameActTv.setText(nameActList.get(position));

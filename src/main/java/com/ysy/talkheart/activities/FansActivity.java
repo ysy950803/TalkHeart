@@ -1,9 +1,9 @@
 package com.ysy.talkheart.activities;
 
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -11,19 +11,25 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.adapters.MeFansListViewAdapter;
 import com.ysy.talkheart.bases.DayNightActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
-import com.ysy.talkheart.adapters.MeFansListViewAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
+
 public class FansActivity extends DayNightActivity {
 
     private MeFansListViewAdapter listViewAdapter;
-    private SwipeRefreshLayout refreshLayout;
+    @BindView(R.id.me_fans_refresh_layout)
+    SwipeRefreshLayout refreshLayout;
+    @BindView(R.id.me_fans_listView)
+    RecyclerView fansRecyclerView;
+
     private boolean isRefreshing = false;
     private Handler fansHandler;
     private List<Integer> avatarList = new ArrayList<>();
@@ -35,7 +41,6 @@ public class FansActivity extends DayNightActivity {
     private String E_UID = "0";
     public ImageView eachOtherImg;
     private boolean isSelf;
-    private RecyclerView fansRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,9 +67,6 @@ public class FansActivity extends DayNightActivity {
     }
 
     private void initView() {
-        refreshLayout = (SwipeRefreshLayout) findViewById(R.id.me_fans_refresh_layout);
-        fansRecyclerView = (RecyclerView) findViewById(R.id.me_fans_listView);
-
         fansRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         listViewAdapter = new MeFansListViewAdapter(this, fansUIDList, avatarList, nicknameList, introList, relationList, !isSelf);
         fansRecyclerView.setAdapter(listViewAdapter);

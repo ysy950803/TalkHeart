@@ -8,8 +8,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.signature.StringSignature;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.activities.CommentActivity;
 import com.ysy.talkheart.bases.SuperRecyclerViewAdapter;
@@ -71,7 +69,8 @@ public class CommentListViewAdapter extends SuperRecyclerViewAdapter {
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
         RecyclerViewHolder holder = (RecyclerViewHolder) viewHolder;
-        downloadAvatar(holder.avatarImg, uidList.get(position), avatarList.get(position));
+        downloadAvatar(context, AVATAR_UPLOAD_URL + "/" + uidList.get(position) + "_avatar_img_thumb.jpg",
+                holder.avatarImg, avatarList.get(position));
         holder.nicknameTv.setText(nicknameList.get(position));
         holder.contentTv.setText(textList.get(position));
         holder.timeTv.setText(timeList.get(position));
@@ -106,32 +105,5 @@ public class CommentListViewAdapter extends SuperRecyclerViewAdapter {
     @Override
     public int getItemCount() {
         return avatarList.size();
-    }
-
-    private void downloadAvatar(final CircularImageView avatarImg, String uid, final int defaultResId) {
-//        AsyncHttpClient httpClient = new AsyncHttpClient();
-//        httpClient.setTimeout(16 * 1000);
-//        httpClient.get(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg",
-//                new AsyncHttpResponseHandler() {
-//                    @Override
-//                    public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-//                        Bitmap picBmp = BitmapFactory.decodeByteArray(responseBody, 0, responseBody.length);
-//                        if (picBmp != null) {
-//                            avatarImg.setImageBitmap(picBmp);
-//                        } else
-//                            avatarImg.setImageResource(defaultResId);
-//                    }
-//
-//                    @Override
-//                    public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-//                        avatarImg.setImageResource(defaultResId);
-//                    }
-//                });
-        Glide.with(context).load(AVATAR_UPLOAD_URL + "/" + uid + "_avatar_img_thumb.jpg")
-                .asBitmap()
-                .signature(new StringSignature("" + System.currentTimeMillis()))
-                .placeholder(defaultResId)
-                .error(defaultResId)
-                .into(avatarImg);
     }
 }

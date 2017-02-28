@@ -2,8 +2,8 @@ package com.ysy.talkheart.activities;
 
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
-import android.os.Handler;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
@@ -22,17 +22,29 @@ import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 public class PersonModifyActivity extends DayNightFullScreenActivity {
 
-    private ImageView backImg;
-    private ImageView doneImg;
-    private EditText schoolEdt;
-    private EditText oldPwEdt;
-    private EditText newPwEdt;
-    private EditText reNewPwEdt;
-    private EditText nicknameEdt;
-    private TextView setBirthTv;
-    private Switch sexSwitch;
+    @BindView(R.id.modify_back_img)
+    ImageView backImg;
+    @BindView(R.id.modify_done_img)
+    ImageView doneImg;
+    @BindView(R.id.modify_school_edt)
+    EditText schoolEdt;
+    @BindView(R.id.modify_old_pw_edt)
+    EditText oldPwEdt;
+    @BindView(R.id.modify_new_pw_edt)
+    EditText newPwEdt;
+    @BindView(R.id.modify_re_new_pw_edt)
+    EditText reNewPwEdt;
+    @BindView(R.id.modify_nickname_edt)
+    EditText nicknameEdt;
+    @BindView(R.id.modify_birthday_tv)
+    TextView setBirthTv;
+    @BindView(R.id.modify_sex_switch)
+    Switch sexSwitch;
     private String SCHOOL;
     private String NICKNAME;
     private String BIRTHDAY;
@@ -64,16 +76,7 @@ public class PersonModifyActivity extends DayNightFullScreenActivity {
     }
 
     private void initView() {
-        backImg = (ImageView) findViewById(R.id.modify_back_img);
-        doneImg = (ImageView) findViewById(R.id.modify_done_img);
-        schoolEdt = (EditText) findViewById(R.id.modify_school_edt);
-        oldPwEdt = (EditText) findViewById(R.id.modify_old_pw_edt);
-        newPwEdt = (EditText) findViewById(R.id.modify_new_pw_edt);
-        reNewPwEdt = (EditText) findViewById(R.id.modify_re_new_pw_edt);
-        nicknameEdt = (EditText) findViewById(R.id.modify_nickname_edt);
-        setBirthTv = (TextView) findViewById(R.id.modify_birthday_tv);
-        sexSwitch = (Switch) findViewById(R.id.modify_sex_switch);
-
+        ButterKnife.bind(this);
         newPwEdt.addTextChangedListener(tw);
         schoolEdt.setText(SCHOOL);
         nicknameEdt.setText(NICKNAME);

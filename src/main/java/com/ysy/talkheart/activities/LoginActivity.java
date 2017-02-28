@@ -4,8 +4,8 @@ import android.app.ActivityOptions;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Build;
-import android.os.Handler;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.EditText;
@@ -15,18 +15,26 @@ import android.widget.Toast;
 
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.bases.DayNightFullScreenActivity;
+import com.ysy.talkheart.im.activities.HomeActivity;
 import com.ysy.talkheart.utils.ActivitiesDestroyer;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.DataProcessor;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 public class LoginActivity extends DayNightFullScreenActivity {
 
-    private ImageView loginImg;
-    private EditText userEdt;
-    private EditText pwEdt;
-    private RelativeLayout registerLayout;
+    @BindView(R.id.login_logo_img)
+    ImageView loginImg;
+    @BindView(R.id.login_user_edt)
+    EditText userEdt;
+    @BindView(R.id.login_pw_edt)
+    EditText pwEdt;
+    @BindView(R.id.login_register_tip_layout)
+    RelativeLayout registerLayout;
     private View focusView;
     private long exitTime;
     private Handler loginHandler;
@@ -39,16 +47,9 @@ public class LoginActivity extends DayNightFullScreenActivity {
         setContentView(R.layout.activity_login);
         ActivitiesDestroyer.getInstance().addActivity(this);
         opts_t = getIntent().getExtras().getStringArray("opts_t");
-        initView();
+        ButterKnife.bind(this);
         clickListener();
         loginHandler = new Handler();
-    }
-
-    private void initView() {
-        loginImg = (ImageView) findViewById(R.id.login_logo_img);
-        userEdt = (EditText) findViewById(R.id.login_user_edt);
-        pwEdt = (EditText) findViewById(R.id.login_pw_edt);
-        registerLayout = (RelativeLayout) findViewById(R.id.login_register_tip_layout);
     }
 
     private void clickListener() {

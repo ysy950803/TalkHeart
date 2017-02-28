@@ -1,9 +1,9 @@
 package com.ysy.talkheart.activities;
 
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -11,19 +11,23 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.ysy.talkheart.R;
+import com.ysy.talkheart.adapters.MeWatchListViewAdapter;
 import com.ysy.talkheart.bases.DayNightActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.ListOnItemClickListener;
-import com.ysy.talkheart.adapters.MeWatchListViewAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 public class WatchActivity extends DayNightActivity {
 
     private MeWatchListViewAdapter listViewAdapter;
-    private SwipeRefreshLayout refreshLayout;
+    @BindView(R.id.me_watch_refresh_layout)
+    SwipeRefreshLayout refreshLayout;
     private boolean isRefreshing = false;
     private Handler watchHandler;
     private List<Integer> avatarList = new ArrayList<>();
@@ -35,7 +39,8 @@ public class WatchActivity extends DayNightActivity {
     private String E_UID = "0";
     public ImageView eachOtherImg;
     private boolean isSelf;
-    private RecyclerView watchRecyclerView;
+    @BindView(R.id.me_watch_listView)
+    RecyclerView watchRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,9 +67,6 @@ public class WatchActivity extends DayNightActivity {
     }
 
     private void initView() {
-        refreshLayout = (SwipeRefreshLayout) findViewById(R.id.me_watch_refresh_layout);
-        watchRecyclerView = (RecyclerView) findViewById(R.id.me_watch_listView);
-
         watchRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         listViewAdapter = new MeWatchListViewAdapter(this, watchUIDList, avatarList, nicknameList, introList, relationList, !isSelf);
         watchRecyclerView.setAdapter(listViewAdapter);
