@@ -1,4 +1,5 @@
 # TalkHeart
+![Logo](https://github.com/ysy950803/TalkHeart/blob/master/me_avatar_boy.png)
 ——Talking with your heart.
 
 ### A temporary code backup for this project.
