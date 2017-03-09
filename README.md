@@ -5,8 +5,7 @@
 ### A temporary code backup for this project without password code and res files.
 
 ## Download
-### [Version 3.0.2]
-[APK](http://ysy950803.top/talk_heart/update/com.ysy.talkheart_v3.0.2.apk)
+[TalkHeart_v3.0.2.apk](http://ysy950803.top/talk_heart/update/com.ysy.talkheart_v3.0.2.apk)
 
 ## History
 ### [Version 3.0.2]
