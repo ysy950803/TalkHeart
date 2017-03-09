@@ -103,15 +103,15 @@ public class ReplyActivity extends DayNightActivity {
                 @Override
                 public void run() {
                     DBProcessor dbP = new DBProcessor();
-                    if (dbP.getConn(opts_o) == null) {
+                    if (dbP.getConn(opts_o) == null)
                         replyHandler.post(timeOutRunnable);
-                    } else {
-                        int res = dbP.insert(
+                    else {
+                        int res = dbP.doubleUpdate(
                                 "insert into comment(uid, actid, content, sendtime, uid_p) values(" +
-                                        e_uid + ", " + ACT_ID + ", '" + content + "', NOW(), " + uid + ")"
+                                        e_uid + ", " + ACT_ID + ", '" + content + "', NOW(), " + uid + ")",
+                                "update active set cmtnum = (cmtnum + 1) where actid = " + ACT_ID
                         );
-                        if (res == 1) {
-                            dbP.update("update active set cmtnum = (cmtnum + 1) where actid = " + ACT_ID);
+                        if (res == 2) {
                             if (e_uid != uid)
                                 dbP.update("update user set isread = 0 where uid = " + uid);
                             replyHandler.post(sendRunnable);
@@ -127,19 +127,19 @@ public class ReplyActivity extends DayNightActivity {
                 @Override
                 public void run() {
                     DBProcessor dbP = new DBProcessor();
-                    if (dbP.getConn(opts_o) == null) {
+                    if (dbP.getConn(opts_o) == null)
                         replyHandler.post(timeOutRunnable);
-                    } else {
-                        int res = dbP.insert(
+                    else {
+                        int res = dbP.trebleUpdate(
                                 "insert into comment(uid, actid, content, sendtime, uid_p, cmtid_p) values(" +
                                         e_uid + ", " + ACT_ID + ", '" + content + "', NOW(), " +
-                                        uid + ", " + (CMT_ID.equals("") ? "-1" : CMT_ID) + ")"
+                                        uid + ", " + (CMT_ID.equals("") ? "-1" : CMT_ID) + ")",
+                                "update user set isread = 0 where uid = " + uid,
+                                "update active set cmtnum = (cmtnum + 1) where actid = " + ACT_ID
                         );
-                        if (res == 1) {
-                            dbP.doubleUpdate("update user set isread = 0 where uid = " + uid,
-                                    "update active set cmtnum = (cmtnum + 1) where actid = " + ACT_ID);
+                        if (res == 3)
                             replyHandler.post(sendRunnable);
-                        } else
+                        else
                             replyHandler.post(serverErrorRunnable);
                     }
                     dbP.closeConn();
@@ -151,9 +151,9 @@ public class ReplyActivity extends DayNightActivity {
                 @Override
                 public void run() {
                     DBProcessor dbP = new DBProcessor();
-                    if (dbP.getConn(opts_o) == null) {
+                    if (dbP.getConn(opts_o) == null)
                         replyHandler.post(timeOutRunnable);
-                    } else {
+                    else {
                         int res = dbP.update(
                                 "update comment set content = '" + content + "' where cmtid = " + CMT_ID
                         );

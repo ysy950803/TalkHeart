@@ -48,7 +48,6 @@ import java.util.Calendar;
 import java.util.List;
 
 import butterknife.BindView;
-import butterknife.ButterKnife;
 import cz.msebera.android.httpclient.Header;
 import me.shaohui.advancedluban.Luban;
 import me.shaohui.advancedluban.OnMultiCompressListener;
@@ -237,9 +236,9 @@ public class WriteActivity extends DayNightActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     writeHandler.post(timeOutRunnable);
-                } else {
+                else {
                     int res;
                     if (imgInfo == null) {
                         res = dbP.insert(
@@ -274,9 +273,9 @@ public class WriteActivity extends DayNightActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     writeHandler.post(timeOutRunnable);
-                } else {
+                else {
                     int res = dbP.insert(
                             "insert into draft(uid, savetime, content) values(" +
                                     uid + ", NOW(), '" + content + "')"

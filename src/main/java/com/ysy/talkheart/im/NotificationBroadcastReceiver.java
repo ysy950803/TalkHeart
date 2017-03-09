@@ -1,28 +1,37 @@
 package com.ysy.talkheart.im;
 
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.text.TextUtils;
 
-import com.ysy.talkheart.im.activities.HomeActivity;
 import com.ysy.talkheart.activities.WelcomeActivity;
 import com.ysy.talkheart.bases.GlobalApp;
+import com.ysy.talkheart.im.activities.HomeActivity;
 import com.ysy.talkheart.im.activities.SingleChatActivity;
 
 public class NotificationBroadcastReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (ChatClientManager.getInstance().getClient() == null) {
-            gotoInitActivity(context);
-        } else {
-            String conv_id = intent.getStringExtra(ChatConstants.CONV_ID);
+        int id = intent.getIntExtra("id", -1);
+        if (id != -1) {
+            ((NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id);
             ((GlobalApp) context.getApplicationContext()).decNTFCount();
-            if (!TextUtils.isEmpty(conv_id))
-                gotoSingleChatActivity(context, intent);
-            else
-                gotoHomeChatList(context, intent);
+        }
+
+        String action = intent.getAction();
+        if (action.equals("clicked")) {
+            if (ChatClientManager.getInstance().getClient() == null)
+                gotoInitActivity(context);
+            else {
+                String conv_id = intent.getStringExtra(ChatConstants.CONV_ID);
+                if (!TextUtils.isEmpty(conv_id))
+                    gotoSingleChatActivity(context, intent);
+                else
+                    gotoHomeChatList(context, intent);
+            }
         }
     }
 

@@ -119,9 +119,11 @@ public class HomeActivity extends DayNightActivity implements BottomNavigationBa
         GlobalApp app = ((GlobalApp) getApplication());
         if (app.getMeInfoUpdated() && meFragment != null && meFragment.isAdded() && !meFragment.isHidden())
             meFragment.getMeInfo();
-        if (app.getMeMsgSent() && chatListFragment != null && chatListFragment.isAdded()) {
+        if ((app.getMeMsgSent() || app.getNicknamesUpdated())
+                && chatListFragment != null && chatListFragment.isAdded()) {
             chatListFragment.refreshData();
             app.setMeMsgSent(false);
+            app.setNicknamesUpdated(false);
         }
         if (app.getNotificationShown()) {
             NotificationManager manager = (NotificationManager) app.getSystemService(Context.NOTIFICATION_SERVICE);

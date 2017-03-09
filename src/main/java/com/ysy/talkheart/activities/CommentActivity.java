@@ -177,20 +177,20 @@ public class CommentActivity extends DayNightActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     commentHandler.post(timeOutRunnable);
-                } else {
+                else {
                     List<List<String>> resList = dbP.commentSelect(
                             "select u1.sex, u1.nickname, sendtime, content, cmtid, c.uid, u2.nickname, cmtid_p" +
                                     " from user u1, user u2, comment c where actid = " + actid + " and " +
                                     "c.uid = u1.uid and u2.uid = c.uid_p order by cmtid asc"
                     );
                     clearAllLists();
-                    if (resList == null) {
+                    if (resList == null)
                         commentHandler.post(serverErrorRunnable);
-                    } else if (resList.get(0).size() == 0) {
+                    else if (resList.get(0).size() == 0)
                         commentHandler.post(nothingRunnable);
-                    } else if (resList.get(0).size() > 0) {
+                    else if (resList.get(0).size() > 0) {
                         for (int i = 0; i < resList.get(0).size(); i++) {
                             avatarList.add(resList.get(0).get(i).equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
                             nicknameList.add(resList.get(1).get(i));

@@ -2,11 +2,13 @@ package com.ysy.talkheart.im.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 
 import com.avos.avoscloud.im.v2.AVIMClient;
 import com.avos.avoscloud.im.v2.AVIMConversation;
 import com.avos.avoscloud.im.v2.AVIMConversationQuery;
 import com.avos.avoscloud.im.v2.AVIMException;
+import com.avos.avoscloud.im.v2.callback.AVIMConversationCallback;
 import com.avos.avoscloud.im.v2.callback.AVIMConversationCreatedCallback;
 import com.avos.avoscloud.im.v2.callback.AVIMConversationQueryCallback;
 import com.ysy.talkheart.R;
@@ -15,6 +17,7 @@ import com.ysy.talkheart.bases.GlobalApp;
 import com.ysy.talkheart.im.ChatClientManager;
 import com.ysy.talkheart.im.ChatConstants;
 import com.ysy.talkheart.im.fragments.SingleChatFragment;
+import com.ysy.talkheart.utils.DBProcessor;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -47,8 +50,7 @@ public class SingleChatActivity extends DayNightActivity {
     }
 
     private void initData(Intent intent) {
-        GlobalApp app = (GlobalApp) getApplication();
-        opts_o = app.getOpts_o();
+        opts_o = ((GlobalApp) getApplication()).getOpts_o();
         ME_UID = intent.getStringExtra("me_uid");
         OBJ_UID = intent.getStringExtra(ChatConstants.OBJ_ID);
         ME_NICKNAME = intent.getStringExtra("me_nickname");
@@ -90,22 +92,52 @@ public class SingleChatActivity extends DayNightActivity {
             @Override
             public void done(List<AVIMConversation> list, AVIMException e) {
                 if (e == null) {
-                    if (null != list && list.size() > 0)
+                    if (null != list && list.size() > 0) {
                         chatFragment.setConversation(list.get(0));
-                    else {
+                        updateConvNicknames(list.get(0));
+                    } else {
                         HashMap<String, Object> attrs = new HashMap<>();
                         attrs.put("customConversationType", 1);
                         attrs.put(ME_UID, ME_NICKNAME);
                         attrs.put(OBJ_UID, OBJ_NICKNAME);
-                        client.createConversation(Arrays.asList(obj_uid), null, attrs, false, new AVIMConversationCreatedCallback() {
-                            @Override
-                            public void done(AVIMConversation conv, AVIMException e) {
-                                chatFragment.setConversation(conv);
-                            }
-                        });
+                        client.createConversation(Arrays.asList(obj_uid), null, attrs, false, true,
+                                new AVIMConversationCreatedCallback() {
+                                    @Override
+                                    public void done(AVIMConversation conv, AVIMException e) {
+                                        chatFragment.setConversation(conv);
+                                    }
+                                });
                     }
                 }
             }
         });
+    }
+
+    private void updateConvNicknames(final AVIMConversation conv) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                DBProcessor dbP = new DBProcessor();
+                if (dbP.getConn(opts_o) != null) {
+                    String[] nicknames = dbP.nicknamesSelect(
+                            "select u1.nickname, u2.nickname from user u1, user u2 " +
+                                    "where u1.uid = " + ME_UID + " and u2.uid = " + OBJ_UID
+                    );
+                    if (nicknames != null)
+                        if (!ME_NICKNAME.equals(nicknames[0]) || !OBJ_NICKNAME.equals(nicknames[1])) {
+                            conv.setAttribute(ME_UID, nicknames[0]);
+                            conv.setAttribute(OBJ_UID, nicknames[1]);
+                            conv.updateInfoInBackground(new AVIMConversationCallback() {
+                                @Override
+                                public void done(AVIMException e) {
+                                    ((GlobalApp) getApplication()).setNicknamesUpdated(true);
+                                }
+                            });
+                            ME_NICKNAME = nicknames[0];
+                            OBJ_NICKNAME = nicknames[1];
+                        }
+                }
+            }
+        }).start();
     }
 }

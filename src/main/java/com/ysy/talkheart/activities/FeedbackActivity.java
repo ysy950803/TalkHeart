@@ -67,9 +67,9 @@ public class FeedbackActivity extends DayNightActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     feedbackHandler.post(timeOutRunnable);
-                } else {
+                else {
                     int res = dbP.insert(
                             "insert into feedback(uid, sendtime, content) values(" +
                                     uid + ", NOW(), '" + content + "')"

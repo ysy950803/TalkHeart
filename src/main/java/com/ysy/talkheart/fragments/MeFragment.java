@@ -416,15 +416,15 @@ public class MeFragment extends StatedFragment {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     meFragmentHandler.post(timeOutRunnable);
-                } else {
+                else {
                     String[] res = dbP.meInfoSelect(
                             "select sex, nickname, intro, act_num, watch_num, fans_num from user u, user_info_count uic" +
                                     " where u.uid = " + uid + " and u.uid = uic.uid");
-                    if (res[1] == null || res[1].equals("/(ㄒoㄒ)/~~")) {
+                    if (res[1] == null || res[1].equals("/(ㄒoㄒ)/~~"))
                         meFragmentHandler.post(serverErrorRunnable);
-                    } else {
+                    else {
                         SEX = res[0];
                         NICKNAME = res[1];
                         INTRODUCTION = res[2] == null ? "点击设置签名" : res[2];
@@ -444,17 +444,16 @@ public class MeFragment extends StatedFragment {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     meFragmentHandler.post(timeOutRunnable);
-                } else {
+                else {
                     int res = dbP.update(
                             "update user set intro = '" + intro + "' where uid = " + UID
                     );
-                    if (res == 1) {
+                    if (res == 1)
                         meFragmentHandler.post(updateIntroRunnable);
-                    } else {
+                    else
                         meFragmentHandler.post(serverErrorRunnable);
-                    }
                 }
                 dbP.closeConn();
             }
@@ -480,7 +479,7 @@ public class MeFragment extends StatedFragment {
         public void run() {
             if (avatarBytes == null)
                 avatarImg.setImageResource(SEX.equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
-            nicknameTv.setText(new StringUtils().shortNickname(NICKNAME));
+            nicknameTv.setText(NICKNAME);
             introductionTv.setText(INTRODUCTION);
             activeNumTv.setText(ACTIVE_NUM);
             watchNumTv.setText(WATCH_NUM);

@@ -23,7 +23,6 @@ import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 
 import butterknife.BindView;
-import butterknife.ButterKnife;
 
 public class PersonModifyActivity extends DayNightFullScreenActivity {
 
@@ -76,7 +75,6 @@ public class PersonModifyActivity extends DayNightFullScreenActivity {
     }
 
     private void initView() {
-        ButterKnife.bind(this);
         newPwEdt.addTextChangedListener(tw);
         schoolEdt.setText(SCHOOL);
         nicknameEdt.setText(NICKNAME);
@@ -170,9 +168,9 @@ public class PersonModifyActivity extends DayNightFullScreenActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     modifyHandler.post(timeOutRunnable);
-                } else {
+                else {
                     String pw = dbP.pwSelect("select pw from user where uid = " + UID);
                     if (pw != null) {
                         if (pw.equals(oldPw)) {

@@ -190,9 +190,9 @@ public class MessageFragment extends StatedFragment {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     msgHandler.post(timeOutRunnable);
-                } else {
+                else {
                     List<List<String>> cmtList = dbP.msgCmtSelect(
                             "(select flag_cmt, sex, nickname, c.sendtime, c.content, a.content, a.actid, u.uid, cmtid from comment_flag, user u, active a, comment c " +
                                     "where (c.sendtime + 0) < " + timeNode +

@@ -20,9 +20,9 @@ import com.avos.avoscloud.im.v2.messages.AVIMTextMessage;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.ysy.talkheart.R;
-import com.ysy.talkheart.im.activities.HomeActivity;
 import com.ysy.talkheart.bases.SuperRecyclerViewAdapter;
 import com.ysy.talkheart.im.ChatConstants;
+import com.ysy.talkheart.im.activities.HomeActivity;
 import com.ysy.talkheart.im.activities.SingleChatActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
@@ -92,9 +92,12 @@ public class ChatListViewAdapter extends SuperRecyclerViewAdapter {
             @Override
             protected void onNoDoubleClick(View v) {
                 ConnectionDetector cd = new ConnectionDetector(context);
-                if (cd.isConnectingToInternet())
-                    openChat((String) convList.get(pos).getAttribute(UID), holder.nickNameTv.getText().toString(), obj_uid);
-                else
+                if (cd.isConnectingToInternet()) {
+                    if (obj_uid == null || obj_uid.equals(""))
+                        Toast.makeText(context, "请不要急，数据正在准备", Toast.LENGTH_SHORT).show();
+                    else
+                        openChat((String) convList.get(pos).getAttribute(UID), holder.nickNameTv.getText().toString(), obj_uid);
+                } else
                     Toast.makeText(context, "请检查网络连接哦", Toast.LENGTH_SHORT).show();
             }
         });

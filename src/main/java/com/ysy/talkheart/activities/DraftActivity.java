@@ -130,9 +130,9 @@ public class DraftActivity extends DayNightActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     draftHandler.post(timeOutRunnable);
-                } else {
+                else {
                     int res = dbP.delete(
                             "delete from draft where dftid = " + dftid
                     );
@@ -156,18 +156,18 @@ public class DraftActivity extends DayNightActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     draftHandler.post(timeOutRunnable);
-                } else {
+                else {
                     List<List<String>> resList = dbP.draftSelect(
                             "select dftid, savetime, content from draft where uid = " + uid + " order by savetime desc"
                     );
                     clearAllLists();
-                    if (resList == null) {
+                    if (resList == null)
                         draftHandler.post(serverErrorRunnable);
-                    } else if (resList.get(0).size() == 0) {
+                    else if (resList.get(0).size() == 0)
                         draftHandler.post(nothingRunnable);
-                    } else if (resList.get(0).size() > 0) {
+                    else if (resList.get(0).size() > 0) {
                         for (int i = 0; i < resList.get(0).size(); i++) {
                             dftidList.add(resList.get(0).get(i));
                             timeList.add(resList.get(1).get(i).substring(0, 19));

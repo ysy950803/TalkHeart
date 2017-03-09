@@ -33,22 +33,34 @@ public class NotificationUtils {
         return !notificationTagList.contains(tag);
     }
 
-    static void showNotification(Context context, String title, String content, String sound, Intent intent) {
+    static void showNotification(Context context, String title, String content, Intent clickIntent) {
         ((GlobalApp) context).setNotificationShown(true);
         ((GlobalApp) context).addNTFCount();
-        intent.setFlags(0);
         int id = (new Random()).nextInt();
-        PendingIntent contentIntent = PendingIntent.getBroadcast(context, id, intent, 0);
+
+        clickIntent.setAction("clicked");
+        clickIntent.putExtra("id", id);
+        PendingIntent clickPending = PendingIntent.getBroadcast(context, id, clickIntent, PendingIntent.FLAG_ONE_SHOT);
+
+        Intent delIntent = new Intent(context, NotificationBroadcastReceiver.class);
+        delIntent.setAction("deleted");
+        delIntent.putExtra("id", id);
+        PendingIntent delPending = PendingIntent.getBroadcast(context, id, delIntent, PendingIntent.FLAG_ONE_SHOT);
+
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(context)
                         .setSmallIcon(R.mipmap.ic_launcher)
-                        .setContentTitle(title).setAutoCancel(true).setContentIntent(contentIntent)
-                        .setDefaults(Notification.DEFAULT_SOUND)
-                        .setContentText(content);
+                        .setContentTitle(title)
+                        .setContentText(content)
+                        .setAutoCancel(false)
+                        .setDefaults(Notification.DEFAULT_LIGHTS)
+                        .setContentIntent(clickPending)
+                        .setDeleteIntent(delPending);
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         Notification notification = builder.build();
-        if (sound != null && sound.trim().length() > 0)
-            notification.sound = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + sound);
+        notification.vibrate = null;
+        notification.sound = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" +
+                context.getPackageName() + "/" + R.raw.pop);
         manager.notify(id, notification);
     }
 }

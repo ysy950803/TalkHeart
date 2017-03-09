@@ -139,9 +139,9 @@ public class FansActivity extends DayNightActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     fansHandler.post(timeOutRunnable);
-                } else {
+                else {
                     List<List<String>> resList = dbP.fansSelect(
                             "select u.uid, sex, nickname, intro, relation from user u, user_relation ur " +
                                     "where ur.uid_a = " + uid + " and ur.uid_b = u.uid",
@@ -149,11 +149,11 @@ public class FansActivity extends DayNightActivity {
                                     "where ur.uid_b = " + uid + " and ur.uid_a = u.uid"
                     );
                     clearAllLists();
-                    if (resList == null) {
+                    if (resList == null)
                         fansHandler.post(serverErrorRunnable);
-                    } else if (resList.get(0).size() == 0) {
+                    else if (resList.get(0).size() == 0)
                         fansHandler.post(nothingListRunnable);
-                    } else if (resList.get(0).size() > 0) {
+                    else if (resList.get(0).size() > 0) {
                         for (int i = 0; i < resList.get(0).size(); i++) {
                             fansUIDList.add(resList.get(0).get(i));
                             avatarList.add(resList.get(1).get(i).equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
@@ -170,6 +170,14 @@ public class FansActivity extends DayNightActivity {
         }).start();
     }
 
+    private int getResOfExeUpdate(DBProcessor dbP, String relation,
+                                  String u1, String u2, String u3, String u4, String op) {
+        return dbP.trebleUpdate("update user_relation set " +
+                        "relation = " + relation + " where uid_a = " + u1 + " and uid_b = " + u2,
+                "update user_info_count set watch_num = (watch_num " + op + " 1) where uid = " + u3,
+                "update user_info_count set fans_num = (fans_num " + op + " 1) where uid = " + u4);
+    }
+
     private void connectToUpdateRelation(final String uid, final String fans_uid, final String uid_l, final String uid_h) {
         if (eachOtherImg != null)
             eachOtherImg.setClickable(false);
@@ -177,9 +185,9 @@ public class FansActivity extends DayNightActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     fansHandler.post(timeOutRunnable);
-                } else {
+                else {
                     String[] RELATION = dbP.relationSelect(
                             "select uid_a, uid_b, relation from user_relation where uid_a = " + uid_l + " and uid_b = " + uid_h
                     );
@@ -192,86 +200,62 @@ public class FansActivity extends DayNightActivity {
                             if (uid_l.equals(uid)) { // me in low
                                 switch (RELATION[2]) {
                                     case "2": // 2 to -1
-                                        int res = dbP.update("update user_relation set " +
-                                                "relation = -1 where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                        if (res == 1) {
-                                            dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid);
-                                            dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + fans_uid);
+                                        int res = getResOfExeUpdate(dbP, "-1", uid_l, uid_h, uid, fans_uid, "-");
+                                        if (res == 3)
                                             fansHandler.post(unWatchRunnable);
-                                        } else
+                                        else
                                             fansHandler.post(serverErrorRunnable);
                                         break;
                                     case "-1": // -1 to 2
-                                        int res1 = dbP.update("update user_relation set " +
-                                                "relation = 2 where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                        if (res1 == 1) {
-                                            dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid);
-                                            dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + fans_uid);
+                                        int res1 = getResOfExeUpdate(dbP, "2", uid_l, uid_h, uid, fans_uid, "+");
+                                        if (res1 == 3)
                                             fansHandler.post(eachRunnable);
-                                        } else
+                                        else
                                             fansHandler.post(serverErrorRunnable);
                                         break;
                                     case "1": // 1 to 0
-                                        int res2 = dbP.update("update user_relation set " +
-                                                "relation = 0 where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                        if (res2 == 1) {
-                                            dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid);
-                                            dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + fans_uid);
+                                        int res2 = getResOfExeUpdate(dbP, "0", uid_l, uid_h, uid, fans_uid, "-");
+                                        if (res2 == 3)
                                             fansHandler.post(nothingRunnable);
-                                        } else
+                                        else
                                             fansHandler.post(serverErrorRunnable);
                                         break;
                                     case "0": // 0 to 1
-                                        int res3 = dbP.update("update user_relation set " +
-                                                "relation = 1 where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                        if (res3 == 1) {
-                                            dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid);
-                                            dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + fans_uid);
+                                        int res3 = getResOfExeUpdate(dbP, "1", uid_l, uid_h, uid, fans_uid, "+");
+                                        if (res3 == 3)
                                             fansHandler.post(watchRunnable);
-                                        } else
+                                        else
                                             fansHandler.post(serverErrorRunnable);
                                         break;
                                 }
                             } else { // me in high
                                 switch (RELATION[2]) {
                                     case "2": // 2 to 1
-                                        int res = dbP.update("update user_relation set " +
-                                                "relation = 1 where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                        if (res == 1) {
-                                            dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid);
-                                            dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + fans_uid);
+                                        int res = getResOfExeUpdate(dbP, "1", uid_l, uid_h, uid, fans_uid, "-");
+                                        if (res == 3)
                                             fansHandler.post(unWatchRunnable);
-                                        } else
+                                        else
                                             fansHandler.post(serverErrorRunnable);
                                         break;
                                     case "-1": // -1 to 0
-                                        int res1 = dbP.update("update user_relation set " +
-                                                "relation = 0 where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                        if (res1 == 1) {
-                                            dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid);
-                                            dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + fans_uid);
+                                        int res1 = getResOfExeUpdate(dbP, "0", uid_l, uid_h, uid, fans_uid, "-");
+                                        if (res1 == 3)
                                             fansHandler.post(nothingRunnable);
-                                        } else
+                                        else
                                             fansHandler.post(serverErrorRunnable);
                                         break;
                                     case "1": // 1 to 2
-                                        int res2 = dbP.update("update user_relation set " +
-                                                "relation = 2 where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                        if (res2 == 1) {
-                                            dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid);
-                                            dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + fans_uid);
+                                        int res2 = getResOfExeUpdate(dbP, "2", uid_l, uid_h, uid, fans_uid, "+");
+                                        if (res2 == 3)
                                             fansHandler.post(eachRunnable);
-                                        } else
+                                        else
                                             fansHandler.post(serverErrorRunnable);
                                         break;
                                     case "0": // 0 to -1
-                                        int res3 = dbP.update("update user_relation set " +
-                                                "relation = -1 where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                        if (res3 == 1) {
-                                            dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid);
-                                            dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + fans_uid);
+                                        int res3 = getResOfExeUpdate(dbP, "-1", uid_l, uid_h, uid, fans_uid, "+");
+                                        if (res3 == 3)
                                             fansHandler.post(watchRunnable);
-                                        } else
+                                        else
                                             fansHandler.post(serverErrorRunnable);
                                         break;
                                 }

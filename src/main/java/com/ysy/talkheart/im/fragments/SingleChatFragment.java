@@ -20,7 +20,7 @@ import com.avos.avoscloud.im.v2.callback.AVIMMessagesQueryCallback;
 import com.avos.avoscloud.im.v2.messages.AVIMTextMessage;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.bases.GlobalApp;
-import com.ysy.talkheart.im.AVInputBottomBar;
+import com.ysy.talkheart.im.ChatInputBottomBar;
 import com.ysy.talkheart.im.NotificationUtils;
 import com.ysy.talkheart.im.activities.SingleChatActivity;
 import com.ysy.talkheart.im.adapters.MultipleItemAdapter;
@@ -28,6 +28,7 @@ import com.ysy.talkheart.im.events.ChatTypeMsgEvent;
 import com.ysy.talkheart.im.events.ChatTypeMsgResentEvent;
 import com.ysy.talkheart.im.events.InputBottomBarTextEvent;
 import com.ysy.talkheart.utils.ConnectionDetector;
+import com.ysy.talkheart.utils.KeyboardChangeListener;
 
 import java.util.List;
 
@@ -45,7 +46,7 @@ public class SingleChatFragment extends Fragment {
     @BindView(R.id.single_chat_refresh_layout)
     SwipeRefreshLayout refreshLayout;
     @BindView(R.id.single_chat_input_bar)
-    AVInputBottomBar inputBottomBar;
+    ChatInputBottomBar inputBottomBar;
 
     private SingleChatActivity context;
 
@@ -53,6 +54,14 @@ public class SingleChatFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         context = (SingleChatActivity) getActivity();
+        new KeyboardChangeListener(context).setKeyBoardListener(new KeyboardChangeListener.KeyBoardListener() {
+            @Override
+            public void onKeyboardChange(boolean isShow, int keyboardHeight) {
+                if (isShow)
+                    if (layoutManager != null && itemAdapter != null)
+                        scrollToBottom();
+            }
+        });
     }
 
     @Nullable
@@ -90,7 +99,8 @@ public class SingleChatFragment extends Fragment {
                                         itemAdapter.notifyDataSetChanged();
                                         layoutManager.scrollToPositionWithOffset(list.size() - 1, 0);
                                     }
-                                }
+                                } else
+                                    Toast.makeText(context, "未能拉取数据，请刷新重试", Toast.LENGTH_SHORT).show();
                             }
                         });
                     } else {
@@ -142,10 +152,12 @@ public class SingleChatFragment extends Fragment {
                         recyclerView.setAdapter(itemAdapter);
                         itemAdapter.notifyDataSetChanged();
                         scrollToBottom();
-                    }
+                    } else
+                        Toast.makeText(context, "未能拉取数据，请刷新重试", Toast.LENGTH_SHORT).show();
                 }
             });
-        }
+        } else
+            Toast.makeText(context, "出了点小问题，请刷新重试", Toast.LENGTH_SHORT).show();
     }
 
     public void onEvent(InputBottomBarTextEvent event) {

@@ -145,9 +145,9 @@ public class MarkActivity extends DayNightActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     refreshHandler.post(timeOutRunnable);
-                } else {
+                else {
                     int res = dbP.delete(
                             "delete from mark where actid = " + actid + " and uid = " + UID
                     );
@@ -173,20 +173,20 @@ public class MarkActivity extends DayNightActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     refreshHandler.post(timeOutRunnable);
-                } else {
+                else {
                     List<List<String>> resList = dbP.markSelect(
                             "select sex, sendtime, nickname, content, m.actid, a.uid, img_info " +
                                     "from user u, mark m, active a where m.actid = a.actid and m.uid = " + uid + " and a.uid = u.uid " +
                                     "order by sendtime desc"
                     );
                     clearAllLists();
-                    if (resList == null) {
+                    if (resList == null)
                         refreshHandler.post(serverErrorRunnable);
-                    } else if (resList.get(0).size() == 0) {
+                    else if (resList.get(0).size() == 0)
                         refreshHandler.post(nothingRunnable);
-                    } else if (resList.get(0).size() > 0) {
+                    else if (resList.get(0).size() > 0) {
                         for (int i = 0; i < resList.get(0).size(); i++) {
                             avatarList.add(resList.get(0).get(i).equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
                             timeList.add(resList.get(1).get(i).substring(0, 19));

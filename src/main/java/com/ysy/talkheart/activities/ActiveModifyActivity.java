@@ -115,9 +115,9 @@ public class ActiveModifyActivity extends DayNightActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     modifyHandler.post(timeOutRunnable);
-                } else {
+                else {
                     int res = dbP.update(
                             "update active set content = '" + content + "' where actid = " + actid
                     );
@@ -138,9 +138,9 @@ public class ActiveModifyActivity extends DayNightActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     modifyHandler.post(timeOutRunnable);
-                } else {
+                else {
                     int res = dbP.insert(
                             "insert into draft(uid, savetime, content) values(" +
                                     uid + ", NOW(), '" + content + "')"
@@ -202,6 +202,8 @@ public class ActiveModifyActivity extends DayNightActivity {
                     Toast.makeText(ActiveModifyActivity.this, "不能什么都不说哦", Toast.LENGTH_SHORT).show();
             }
         });
+
+        menu.findItem(R.id.action_send).setVisible(false);
 
 //        menu.findItem(R.id.action_save).setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
 //            @Override

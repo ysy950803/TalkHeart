@@ -226,10 +226,18 @@ public class ChatListFragment extends StatedFragment {
         if (!isError) {
             listViewAdapter.notifyDataSetChanged();
             context.getChatUnreadImg().setVisibility(View.INVISIBLE);
-        } else
-            Toast.makeText(context, "网络不太好，请稍后重试", Toast.LENGTH_SHORT).show();
-        refreshLayout.setRefreshing(false);
-        isRefreshing = false;
+            refreshLayout.setRefreshing(false);
+            isRefreshing = false;
+        } else {
+            AVIMClient.getInstance(UID).open(new AVIMClientCallback() {
+                @Override
+                public void done(AVIMClient client, AVIMException e) {
+                    Toast.makeText(context, "网络不太好，请稍后刷新重试", Toast.LENGTH_SHORT).show();
+                    refreshLayout.setRefreshing(false);
+                    isRefreshing = false;
+                }
+            });
+        }
     }
 
     private void clickListener() {
@@ -280,6 +288,9 @@ public class ChatListFragment extends StatedFragment {
                     }
                 }
             });
+        } else {
+            waitDialog.dismiss();
+            Toast.makeText(context, "通讯服务连接失败，请稍后重试", Toast.LENGTH_SHORT).show();
         }
     }
 

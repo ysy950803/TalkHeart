@@ -23,7 +23,6 @@ import com.ysy.talkheart.utils.DataProcessor;
 import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 
 import butterknife.BindView;
-import butterknife.ButterKnife;
 
 public class LoginActivity extends DayNightFullScreenActivity {
 
@@ -40,6 +39,8 @@ public class LoginActivity extends DayNightFullScreenActivity {
     private Handler loginHandler;
     private ProgressDialog waitDialog;
     private String[] opts_t;
+    private DBProcessor dbP;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +48,6 @@ public class LoginActivity extends DayNightFullScreenActivity {
         setContentView(R.layout.activity_login);
         ActivitiesDestroyer.getInstance().addActivity(this);
         opts_t = getIntent().getExtras().getStringArray("opts_t");
-        ButterKnife.bind(this);
         clickListener();
         loginHandler = new Handler();
     }
@@ -102,7 +102,7 @@ public class LoginActivity extends DayNightFullScreenActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                DBProcessor dbP = new DBProcessor();
+                dbP = new DBProcessor();
                 if (dbP.getConn(opts_o) == null)
                     loginHandler.post(timeOutRunnable);
                 else {
@@ -166,8 +166,8 @@ public class LoginActivity extends DayNightFullScreenActivity {
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
         ActivitiesDestroyer.getInstance().killAll();
+        super.onBackPressed();
     }
 
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -181,5 +181,13 @@ public class LoginActivity extends DayNightFullScreenActivity {
             return false; // 此处返回true达到的效果相同，但若不返回值，会出现按一次就显示提示并直接退出
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    protected void onStop() {
+        if (dbP != null)
+            dbP.closeConn();
+        ActivitiesDestroyer.getInstance().killAll();
+        super.onStop();
     }
 }

@@ -21,7 +21,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
 
-public class AVInputBottomBar extends LinearLayout {
+public class ChatInputBottomBar extends LinearLayout {
 
     private final int MIN_INTERVAL_SEND_MESSAGE = 1000;
     private final int WORD_LIMIT = 144;
@@ -31,12 +31,12 @@ public class AVInputBottomBar extends LinearLayout {
     @BindView(R.id.chat_input_edt)
     AppCompatEditText contentEdt;
 
-    public AVInputBottomBar(Context context) {
+    public ChatInputBottomBar(Context context) {
         super(context);
         initView(context);
     }
 
-    public AVInputBottomBar(Context context, AttributeSet attrs) {
+    public ChatInputBottomBar(Context context, AttributeSet attrs) {
         super(context, attrs);
         initView(context);
     }

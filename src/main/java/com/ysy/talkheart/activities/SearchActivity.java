@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
-import butterknife.ButterKnife;
 import cz.msebera.android.httpclient.Header;
 
 public class SearchActivity extends DayNightNoActionBarActivity {
@@ -91,7 +90,6 @@ public class SearchActivity extends DayNightNoActionBarActivity {
     }
 
     private void initView() {
-        ButterKnife.bind(this);
         refreshLayout.setColorSchemeResources(R.color.colorAccent);
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -242,9 +240,9 @@ public class SearchActivity extends DayNightNoActionBarActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     searchHandler.post(timeOutRunnable);
-                } else {
+                else {
                     String sql;
                     if (nicknameLike == null)
                         sql = "select nickname, sex, intro, uid from user, user_relation " +
@@ -254,11 +252,11 @@ public class SearchActivity extends DayNightNoActionBarActivity {
                         sql = "select nickname, sex, intro, uid from user where nickname like '%" + nicknameLike + "%'";
                     List<List<String>> resList = dbP.searchUserSelect(sql);
                     clearAllLists();
-                    if (resList == null) {
+                    if (resList == null)
                         searchHandler.post(serverErrorRunnable);
-                    } else if (resList.get(0).size() == 0) {
+                    else if (resList.get(0).size() == 0)
                         searchHandler.post(nothingRunnable);
-                    } else if (resList.get(0).size() > 0) {
+                    else if (resList.get(0).size() > 0) {
                         for (int i = 0; i < resList.get(0).size(); i++) {
                             nicknameList.add(resList.get(0).get(i));
                             avatarList.add(resList.get(1).get(i).equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);

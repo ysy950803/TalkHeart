@@ -20,7 +20,6 @@ import com.ysy.talkheart.utils.NoDoubleViewClickListener;
 import com.ysy.talkheart.utils.StringUtils;
 
 import butterknife.BindView;
-import butterknife.ButterKnife;
 
 public class RegisterActivity extends DayNightFullScreenActivity {
 
@@ -51,7 +50,6 @@ public class RegisterActivity extends DayNightFullScreenActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
-        ButterKnife.bind(this);
         clickListener();
         registerHandler = new Handler();
     }
@@ -145,9 +143,9 @@ public class RegisterActivity extends DayNightFullScreenActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     registerHandler.post(timeOutRunnable);
-                } else {
+                else {
                     int res = dbP.insert(
                             "insert into user(username, pw, nickname, birthday, SEX) values('"
                                     + username + "', '" + pw + "', '" + nickname +

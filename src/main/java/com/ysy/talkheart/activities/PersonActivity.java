@@ -36,6 +36,8 @@ import com.loopj.android.http.TextHttpResponseHandler;
 import com.ysy.talkheart.R;
 import com.ysy.talkheart.bases.DayNightNoActionBarActivity;
 import com.ysy.talkheart.bases.GlobalApp;
+import com.ysy.talkheart.im.ChatConstants;
+import com.ysy.talkheart.im.activities.SingleChatActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
 import com.ysy.talkheart.utils.NoDoubleDialogClickListener;
@@ -48,7 +50,6 @@ import java.io.File;
 import java.io.IOException;
 
 import butterknife.BindView;
-import butterknife.ButterKnife;
 import cz.msebera.android.httpclient.Header;
 
 public class PersonActivity extends DayNightNoActionBarActivity {
@@ -87,10 +88,10 @@ public class PersonActivity extends DayNightNoActionBarActivity {
     TextView birthdayTv;
     private Handler personHandler;
     private boolean isSelf;
-    private String E_UID = "0";
-    private String UID = "0";
+    private String ME_UID = "0";
+    private String OBJ_UID = "0";
     private String SEX = "1";
-    private String NICKNAME = "加载中…";
+    private String OBJ_NICKNAME = "加载中…";
     private String INTRODUCTION = "加载中…";
     private String ACTIVE_NUM = "0";
     private String WATCH_NUM = "0";
@@ -103,7 +104,8 @@ public class PersonActivity extends DayNightNoActionBarActivity {
     private String UID_H = "0";
     private boolean isCanClick = false;
     private ProgressDialog waitDialog;
-    private byte[] avatarBytes;
+    private byte[] obj_avatar;
+    private String ME_NICKNAME;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,7 +117,7 @@ public class PersonActivity extends DayNightNoActionBarActivity {
         initData();
         initView();
         clickListener();
-        if (avatarBytes == null)
+        if (obj_avatar == null)
             downloadAvatar();
         connectToGetPersonInfo();
     }
@@ -129,21 +131,20 @@ public class PersonActivity extends DayNightNoActionBarActivity {
 
     private void initData() {
         AVATAR_UPLOAD_URL = getResources().getString(R.string.url_avatar_upload);
-        avatarBytes = getIntent().getExtras().getByteArray("avatar");
-        E_UID = getIntent().getExtras().getString("e_uid");
-        UID = getIntent().getExtras().getString("uid");
+        obj_avatar = getIntent().getExtras().getByteArray("avatar");
+        ME_UID = getIntent().getExtras().getString("e_uid");
+        OBJ_UID = getIntent().getExtras().getString("uid");
         SEX = getIntent().getExtras().getString("sex", "1");
-        UID_L = Integer.parseInt(E_UID) < Integer.parseInt(UID) ? E_UID : UID;
-        UID_H = Integer.parseInt(E_UID) > Integer.parseInt(UID) ? E_UID : UID;
-        isSelf = E_UID.equals(UID);
+        UID_L = Integer.parseInt(ME_UID) < Integer.parseInt(OBJ_UID) ? ME_UID : OBJ_UID;
+        UID_H = Integer.parseInt(ME_UID) > Integer.parseInt(OBJ_UID) ? ME_UID : OBJ_UID;
+        isSelf = ME_UID.equals(OBJ_UID);
         isEmptyRelation = true;
     }
 
     private void initView() {
-        ButterKnife.bind(this);
         watchFab.setVisibility(isSelf ? View.GONE : View.VISIBLE);
-        if (avatarBytes != null)
-            avatarImg.setImageBitmap(BitmapFactory.decodeByteArray(avatarBytes, 0, avatarBytes.length));
+        if (obj_avatar != null)
+            avatarImg.setImageBitmap(BitmapFactory.decodeByteArray(obj_avatar, 0, obj_avatar.length));
     }
 
     private void clickListener() {
@@ -168,13 +169,13 @@ public class PersonActivity extends DayNightNoActionBarActivity {
             @Override
             protected void onNoDoubleClick(View v) {
                 Intent intent = new Intent(PersonActivity.this, ActiveActivity.class);
-                if (avatarBytes != null) {
-                    intent.putExtra("avatar", avatarBytes);
+                if (obj_avatar != null) {
+                    intent.putExtra("avatar", obj_avatar);
                 }
-                intent.putExtra("uid", UID);
-                intent.putExtra("e_uid", E_UID);
+                intent.putExtra("uid", OBJ_UID);
+                intent.putExtra("e_uid", ME_UID);
                 intent.putExtra("sex", SEX);
-                intent.putExtra("nickname", NICKNAME);
+                intent.putExtra("nickname", OBJ_NICKNAME);
                 intent.putExtra("opts_o", opts_o);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(PersonActivity.this, activeNumTv, getString(R.string.trans_active));
@@ -188,8 +189,8 @@ public class PersonActivity extends DayNightNoActionBarActivity {
             @Override
             protected void onNoDoubleClick(View v) {
                 Intent intent = new Intent(PersonActivity.this, WatchActivity.class);
-                intent.putExtra("uid", UID);
-                intent.putExtra("e_uid", E_UID);
+                intent.putExtra("uid", OBJ_UID);
+                intent.putExtra("e_uid", ME_UID);
                 intent.putExtra("opts_o", opts_o);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(PersonActivity.this, watchNumTv, getString(R.string.trans_watch));
@@ -204,8 +205,8 @@ public class PersonActivity extends DayNightNoActionBarActivity {
             @Override
             protected void onNoDoubleClick(View v) {
                 Intent intent = new Intent(PersonActivity.this, FansActivity.class);
-                intent.putExtra("uid", UID);
-                intent.putExtra("e_uid", E_UID);
+                intent.putExtra("uid", OBJ_UID);
+                intent.putExtra("e_uid", ME_UID);
                 intent.putExtra("opts_o", opts_o);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     ActivityOptions tAO = ActivityOptions.makeSceneTransitionAnimation(PersonActivity.this, fansNumTv, getString(R.string.trans_fans));
@@ -227,15 +228,22 @@ public class PersonActivity extends DayNightNoActionBarActivity {
         return true;
     }
 
+    private int getResOfExeUpdate(DBProcessor dbP, String u1, String u2, String u3, String u4, String op) {
+        return dbP.trebleUpdate("update user_relation set relation = " + RELATION +
+                        " where uid_a = " + u1 + " and uid_b = " + u2,
+                "update user_info_count set watch_num = (watch_num " + op + " 1) where uid = " + u3,
+                "update user_info_count set fans_num = (fans_num " + op + " 1) where uid = " + u4);
+    }
+
     private void connectToWatch(final String uid_l, final String uid_h) {
         watchFab.setClickable(false);
         new Thread(new Runnable() {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     personHandler.post(timeOutFabRunnable);
-                } else {
+                else {
                     String[] relation = dbP.relationSelect(
                             "select uid_a, uid_b, relation from user_relation where uid_a = " + UID_L + " and uid_b = " + UID_H
                     );
@@ -251,116 +259,92 @@ public class PersonActivity extends DayNightNoActionBarActivity {
                         if (!isEmptyRelation) {
                             switch (RELATION) {
                                 case "1":
-                                    if (uid_l.equals(E_UID)) {
+                                    if (uid_l.equals(ME_UID)) {
                                         RELATION = "0";
-                                        int res = dbP.update("update user_relation set relation = " + RELATION +
-                                                " where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                        if (res == 1) {
-                                            dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid_l);
-                                            dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + uid_h);
+                                        int res = getResOfExeUpdate(dbP, uid_l, uid_h, uid_l, uid_h, "-");
+                                        if (res == 3)
                                             personHandler.post(nothingRunnable);
-                                        } else
+                                        else
                                             personHandler.post(serverErrorFabRunnable);
                                     } else {
                                         RELATION = "2";
-                                        int res = dbP.update("update user_relation set relation = " + RELATION +
-                                                " where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                        if (res == 1) {
-                                            dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_h);
-                                            dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_l);
+                                        int res = getResOfExeUpdate(dbP, uid_l, uid_h, uid_h, uid_l, "+");
+                                        if (res == 3)
                                             personHandler.post(eachRunnable);
-                                        } else
+                                        else
                                             personHandler.post(serverErrorFabRunnable);
                                     }
                                     break;
                                 case "-1":
-                                    if (uid_l.equals(E_UID)) {
+                                    if (uid_l.equals(ME_UID)) {
                                         RELATION = "2";
-                                        int res1 = dbP.update("update user_relation set relation = " + RELATION +
-                                                " where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                        if (res1 == 1) {
-                                            dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_l);
-                                            dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_h);
+                                        int res1 = getResOfExeUpdate(dbP, uid_l, uid_h, uid_l, uid_h, "+");
+                                        if (res1 == 3)
                                             personHandler.post(eachRunnable);
-                                        } else
+                                        else
                                             personHandler.post(serverErrorFabRunnable);
                                     } else {
                                         RELATION = "0";
-                                        int res1 = dbP.update("update user_relation set relation = " + RELATION +
-                                                " where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                        if (res1 == 1) {
-                                            dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid_h);
-                                            dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + uid_l);
+                                        int res1 = getResOfExeUpdate(dbP, uid_l, uid_h, uid_h, uid_l, "-");
+                                        if (res1 == 3)
                                             personHandler.post(nothingRunnable);
-                                        } else
+                                        else
                                             personHandler.post(serverErrorFabRunnable);
                                     }
                                     break;
                                 case "2":
-                                    if (uid_l.equals(E_UID)) {
+                                    if (uid_l.equals(ME_UID)) {
                                         RELATION = "-1";
-                                        int res2 = dbP.update("update user_relation set relation = " + RELATION +
-                                                " where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                        if (res2 == 1) {
-                                            dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid_l);
-                                            dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + uid_h);
+                                        int res2 = getResOfExeUpdate(dbP, uid_l, uid_h, uid_l, uid_h, "-");
+                                        if (res2 == 3)
                                             personHandler.post(unWatchRunnable);
-                                        } else
+                                        else
                                             personHandler.post(serverErrorFabRunnable);
                                     } else {
                                         RELATION = "1";
-                                        int res2 = dbP.update("update user_relation set relation = " + RELATION +
-                                                " where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                        if (res2 == 1) {
-                                            dbP.update("update user_info_count set watch_num = (watch_num - 1) where uid = " + uid_h);
-                                            dbP.update("update user_info_count set fans_num = (fans_num - 1) where uid = " + uid_l);
+                                        int res2 = getResOfExeUpdate(dbP, uid_l, uid_h, uid_h, uid_l, "-");
+                                        if (res2 == 3)
                                             personHandler.post(unWatchRunnable);
-                                        } else
+                                        else
                                             personHandler.post(serverErrorRunnable);
                                     }
                                     break;
                                 case "0":
-                                    if (uid_l.equals(E_UID)) {
+                                    if (uid_l.equals(ME_UID)) {
                                         RELATION = "1";
-                                        int res3 = dbP.update("update user_relation set relation = " + RELATION +
-                                                " where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                        if (res3 == 1) {
-                                            dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_l);
-                                            dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_h);
+                                        int res3 = getResOfExeUpdate(dbP, uid_l, uid_h, uid_l, uid_h, "+");
+                                        if (res3 == 3)
                                             personHandler.post(watchRunnable);
-                                        } else
+                                        else
                                             personHandler.post(serverErrorFabRunnable);
                                     } else {
                                         RELATION = "-1";
-                                        int res3 = dbP.update("update user_relation set relation = " + RELATION +
-                                                " where uid_a = " + uid_l + " and uid_b = " + uid_h);
-                                        if (res3 == 1) {
-                                            dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_h);
-                                            dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_l);
+                                        int res3 = getResOfExeUpdate(dbP, uid_l, uid_h, uid_h, uid_l, "+");
+                                        if (res3 == 3)
                                             personHandler.post(watchRunnable);
-                                        } else
+                                        else
                                             personHandler.post(serverErrorFabRunnable);
                                     }
                                     break;
                             }
                         } else {
-                            if (uid_l.equals(E_UID)) {
-                                int res = dbP.insert("insert into user_relation values(" + uid_l + ", " + uid_h + ", 1)");
+                            if (uid_l.equals(ME_UID)) {
+                                int res = dbP.trebleUpdate("insert into user_relation values(" + uid_l + ", " + uid_h + ", 1)",
+                                        "update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_l,
+                                        "update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_h);
                                 if (res == 1) {
                                     isEmptyRelation = false;
                                     RELATION = "1";
-                                    dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_l);
-                                    dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_h);
                                     personHandler.post(watchRunnable);
                                 } else
                                     personHandler.post(serverErrorFabRunnable);
                             } else {
-                                int res = dbP.insert("insert into user_relation values(" + uid_l + ", " + uid_h + ", -1)");
-                                if (res == 1) {
+                                int res = dbP.trebleUpdate("insert into user_relation values(" + uid_l + ", " + uid_h + ", -1)",
+                                        "update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_h,
+                                        "update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_l);
+                                if (res == 3) {
                                     isEmptyRelation = false;
                                     RELATION = "-1";
-                                    dbP.update("update user_info_count set watch_num = (watch_num + 1) where uid = " + uid_h);
-                                    dbP.update("update user_info_count set fans_num = (fans_num + 1) where uid = " + uid_l);
                                     personHandler.post(watchRunnable);
                                 } else
                                     personHandler.post(serverErrorFabRunnable);
@@ -379,18 +363,18 @@ public class PersonActivity extends DayNightNoActionBarActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     personHandler.post(timeOutRunnable);
-                } else {
+                else {
                     String[] res = dbP.personInfoSelect(
                             "select sex, nickname, school, birthday, intro, act_num, watch_num, fans_num " +
-                                    "from user u, user_info_count uic where u.uid = " + UID + " and u.uid = uic.uid"
+                                    "from user u, user_info_count uic where u.uid = " + OBJ_UID + " and u.uid = uic.uid"
                     );
-                    if (res[1].equals("/(ㄒoㄒ)/~~")) {
+                    if (res[1].equals("/(ㄒoㄒ)/~~"))
                         personHandler.post(serverErrorRunnable);
-                    } else {
+                    else {
                         SEX = res[0];
-                        NICKNAME = res[1];
+                        OBJ_NICKNAME = res[1];
                         SCHOOL = res[2] == null ? "未设置院校" : res[2];
                         BIRTHDAY = res[3] == null ? "未设置生日" : res[3];
                         INTRODUCTION = res[4] == null ? "未设置签名" : res[4];
@@ -414,10 +398,10 @@ public class PersonActivity extends DayNightNoActionBarActivity {
                                 RELATION = relation[2];
                                 switch (RELATION) {
                                     case "1":
-                                        personHandler.post(UID_L.equals(E_UID) ? watchShowRunnable : unWatchShowRunnable);
+                                        personHandler.post(UID_L.equals(ME_UID) ? watchShowRunnable : unWatchShowRunnable);
                                         break;
                                     case "-1":
-                                        personHandler.post(UID_L.equals(E_UID) ? unWatchShowRunnable : watchShowRunnable);
+                                        personHandler.post(UID_L.equals(ME_UID) ? unWatchShowRunnable : watchShowRunnable);
                                         break;
                                     case "2":
                                         personHandler.post(eachShowRunnable);
@@ -542,9 +526,9 @@ public class PersonActivity extends DayNightNoActionBarActivity {
     };
 
     private void refreshView() {
-        if (avatarBytes == null)
+        if (obj_avatar == null)
             avatarImg.setImageResource(SEX.equals("1") ? R.drawable.me_avatar_boy : R.drawable.me_avatar_girl);
-        toolbarLayout.setTitle(NICKNAME);
+        toolbarLayout.setTitle(OBJ_NICKNAME);
         schoolTv.setText(SCHOOL);
         birthdayTv.setText(BIRTHDAY);
         introTv.setText(INTRODUCTION);
@@ -570,15 +554,15 @@ public class PersonActivity extends DayNightNoActionBarActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_person, menu);
-        MenuItem modifyMenuItem = menu.findItem(R.id.action_modify);
-        modifyMenuItem.setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
+        MenuItem menuItem = menu.findItem(R.id.action_modify);
+        menuItem.setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
             @Override
             protected void onNoDoubleClick(MenuItem item) {
                 if (isCanClick) {
                     Intent intent = new Intent(PersonActivity.this, PersonModifyActivity.class);
-                    intent.putExtra("uid", E_UID);
+                    intent.putExtra("uid", ME_UID);
                     intent.putExtra("school", SCHOOL.equals("未设置院校") ? "" : SCHOOL);
-                    intent.putExtra("nickname", NICKNAME);
+                    intent.putExtra("nickname", OBJ_NICKNAME);
                     intent.putExtra("sex", Integer.parseInt(SEX));
                     intent.putExtra("birthday", BIRTHDAY);
                     intent.putExtra("opts_o", opts_o);
@@ -587,30 +571,100 @@ public class PersonActivity extends DayNightNoActionBarActivity {
                     Toast.makeText(PersonActivity.this, "请稍等，正在加载哦", Toast.LENGTH_SHORT).show();
             }
         });
-        modifyMenuItem.setVisible(isSelf);
+        menuItem.setVisible(isSelf);
+
+        MenuItem chatItem = menu.findItem(R.id.action_chat);
+        chatItem.setOnMenuItemClickListener(new NoDoubleMenuItemClickListener() {
+            @Override
+            protected void onNoDoubleClick(MenuItem item) {
+                if (isCanClick)
+                    openChat();
+                else
+                    Toast.makeText(PersonActivity.this, "请稍等，正在加载哦", Toast.LENGTH_SHORT).show();
+            }
+        });
+        chatItem.setVisible(!isSelf);
         return true;
+    }
+
+    private void openChat() {
+        final AsyncHttpClient httpClient = new AsyncHttpClient();
+        httpClient.setTimeout(16 * 1000);
+        httpClient.get(AVATAR_UPLOAD_URL + "/" + ME_UID + "_avatar_img_thumb.jpg",
+                new AsyncHttpResponseHandler() {
+                    @Override
+                    public void onStart() {
+                        waitDialog = ProgressDialog.show(PersonActivity.this, "请稍后", "正在连接服务……");
+                        super.onStart();
+                    }
+
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                        getNickname(responseBody);
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                        getNickname(responseBody);
+                    }
+                }
+        );
+    }
+
+    private void getNickname(final byte[] responseBody) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                DBProcessor dbP = new DBProcessor();
+                if (dbP.getConn(opts_o) != null) {
+                    ME_NICKNAME = dbP.pwSelect("select nickname from user where uid = " + ME_UID);
+                    if (ME_NICKNAME != null) {
+                        waitDialog.dismiss();
+                        gotoSingleChat(ME_NICKNAME, responseBody);
+                    } else {
+                        waitDialog.dismiss();
+                        personHandler.post(serverErrorRunnable);
+                    }
+                } else {
+                    waitDialog.dismiss();
+                    personHandler.post(timeOutRunnable);
+                }
+                dbP.closeConn();
+            }
+        }).start();
+    }
+
+    private void gotoSingleChat(String meNickname, byte[] responseBody) {
+        Intent intent = new Intent(PersonActivity.this, SingleChatActivity.class);
+        intent.putExtra("me_uid", ME_UID);
+        intent.putExtra("me_nickname", meNickname);
+        intent.putExtra("me_avatar", responseBody);
+        intent.putExtra(ChatConstants.OBJ_ID, OBJ_UID);
+        intent.putExtra("obj_nickname", OBJ_NICKNAME);
+        intent.putExtra("obj_avatar", obj_avatar);
+        startActivity(intent);
     }
 
     private void downloadAvatar() {
         setAvatarClickable(false);
         AsyncHttpClient httpClient = new AsyncHttpClient();
         httpClient.setTimeout(16 * 1000);
-        httpClient.get(AVATAR_UPLOAD_URL + "/" + UID + "_avatar_img.jpg",
+        httpClient.get(AVATAR_UPLOAD_URL + "/" + OBJ_UID + "_avatar_img.jpg",
                 new AsyncHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                         Bitmap picBmp = BitmapFactory.decodeByteArray(responseBody, 0, responseBody.length);
                         if (picBmp != null) {
-                            avatarBytes = responseBody;
+                            obj_avatar = responseBody;
                             avatarImg.setImageBitmap(picBmp);
                         } else
-                            avatarBytes = null;
+                            obj_avatar = null;
                         setAvatarClickable(true);
                     }
 
                     @Override
                     public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                        avatarBytes = null;
+                        obj_avatar = null;
                         setAvatarClickable(true);
                     }
                 });
@@ -621,8 +675,8 @@ public class PersonActivity extends DayNightNoActionBarActivity {
             Toast.makeText(this, "头像未更改哦", Toast.LENGTH_SHORT).show();
         else {
             RequestParams params = new RequestParams();
-            params.put("avatar_img", new ByteArrayInputStream(avatarBytes), UID + "_avatar_img.jpg", "multipart/form-data");
-            params.put("avatar_img_thumb", new ByteArrayInputStream(avatarBytesThumb), UID + "_avatar_img_thumb.jpg", "multipart/form-data");
+            params.put("avatar_img", new ByteArrayInputStream(avatarBytes), OBJ_UID + "_avatar_img.jpg", "multipart/form-data");
+            params.put("avatar_img_thumb", new ByteArrayInputStream(avatarBytesThumb), OBJ_UID + "_avatar_img_thumb.jpg", "multipart/form-data");
             AsyncHttpClient httpClient = new AsyncHttpClient();
             httpClient.setTimeout(16 * 1000);
             httpClient.post(AVATAR_UPLOAD_URL, params, new TextHttpResponseHandler() {

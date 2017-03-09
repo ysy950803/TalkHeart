@@ -87,17 +87,14 @@ public class ChatMsgHandler extends AVIMTypedMessageHandler<AVIMTypedMessage> {
                                                         ME_NICKNAME = nicknames[0];
                                                         OBJ_NICKNAME = nicknames[1];
                                                         Intent intent = getNTFCIntent(true, msg, conversation);
-                                                        NotificationUtils.showNotification(context, OBJ_NICKNAME, content,
-                                                                null, intent);
+                                                        NotificationUtils.showNotification(context, OBJ_NICKNAME, content, intent);
                                                     } else {
                                                         Intent intent = getNTFCIntent(false, msg, conversation);
-                                                        NotificationUtils.showNotification(context, "有朋友找你哦", "[新消息]",
-                                                                null, intent);
+                                                        NotificationUtils.showNotification(context, "有朋友找你哦", "[新消息]", intent);
                                                     }
                                                 } else {
                                                     Intent intent = getNTFCIntent(false, msg, conversation);
-                                                    NotificationUtils.showNotification(context, "有朋友找你哦", "[新消息]",
-                                                            null, intent);
+                                                    NotificationUtils.showNotification(context, "有朋友找你哦", "[新消息]", intent);
                                                 }
                                                 dbP.closeConn();
                                             }
@@ -107,7 +104,7 @@ public class ChatMsgHandler extends AVIMTypedMessageHandler<AVIMTypedMessage> {
                                     @Override
                                     public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
                                         Intent intent = getNTFCIntent(false, msg, conversation);
-                                        NotificationUtils.showNotification(context, "有朋友找你哦", "[新消息]", null, intent);
+                                        NotificationUtils.showNotification(context, "有朋友找你哦", "[新消息]", intent);
                                     }
                                 });
                     }
@@ -115,7 +112,7 @@ public class ChatMsgHandler extends AVIMTypedMessageHandler<AVIMTypedMessage> {
                     @Override
                     public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
                         Intent intent = getNTFCIntent(false, msg, conversation);
-                        NotificationUtils.showNotification(context, "有朋友找你哦", "[新消息]", null, intent);
+                        NotificationUtils.showNotification(context, "有朋友找你哦", "[新消息]", intent);
                     }
                 });
     }

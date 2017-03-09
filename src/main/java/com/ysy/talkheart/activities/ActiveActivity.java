@@ -2,10 +2,10 @@ package com.ysy.talkheart.activities;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -17,13 +17,13 @@ import com.loopj.android.http.RequestParams;
 import com.loopj.android.http.TextHttpResponseHandler;
 import com.lzy.ninegrid.NineGridView;
 import com.ysy.talkheart.R;
-import com.ysy.talkheart.bases.DayNightActivity;
 import com.ysy.talkheart.adapters.MeActiveListViewAdapter;
-import com.ysy.talkheart.utils.SuperImageLoader;
-import com.ysy.talkheart.utils.ListOnItemClickListener;
+import com.ysy.talkheart.bases.DayNightActivity;
 import com.ysy.talkheart.utils.ConnectionDetector;
 import com.ysy.talkheart.utils.DBProcessor;
+import com.ysy.talkheart.utils.ListOnItemClickListener;
 import com.ysy.talkheart.utils.NoDoubleDialogClickListener;
+import com.ysy.talkheart.utils.SuperImageLoader;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -207,16 +207,16 @@ public class ActiveActivity extends DayNightActivity {
                             @Override
                             public void run() {
                                 DBProcessor dbP = new DBProcessor();
-                                if (dbP.getConn(opts_o) == null) {
+                                if (dbP.getConn(opts_o) == null)
                                     activeHandler.post(timeOutRunnable);
-                                } else {
-                                    int res = dbP.delete(
-                                            "delete from active where actid = " + actid
+                                else {
+                                    int res = dbP.doubleUpdate(
+                                            "delete from active where actid = " + actid,
+                                            "update user_info_count set act_num = (act_num - 1) where uid = " + e_uid
                                     );
-                                    if (res == 1) {
-                                        dbP.update("update user_info_count set act_num = (act_num - 1) where uid = " + e_uid);
+                                    if (res == 2)
                                         activeHandler.post(deleteRunnable);
-                                    } else
+                                    else
                                         activeHandler.post(serverErrorRunnable);
                                 }
                             }
@@ -236,9 +236,9 @@ public class ActiveActivity extends DayNightActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     activeHandler.post(timeOutRunnable);
-                } else {
+                else {
                     int res = dbP.insert(
                             "insert into mark(uid, actid) values(" + e_uid + ", " + actid + ")"
                     );
@@ -259,9 +259,9 @@ public class ActiveActivity extends DayNightActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     activeHandler.post(timeOutRunnable);
-                } else {
+                else {
                     List<List<String>> resList = dbP.activeSelect(
                             "select a.actid, sendtime, goodnum, content, ifnull(isfav, -1) as isfav, img_info, cmtnum from " +
                                     "active a left join favorite f on f.actid = a.actid and f.uid = " + e_uid + " where " +
@@ -271,9 +271,9 @@ public class ActiveActivity extends DayNightActivity {
                     );
                     if (loadPosition == 0)
                         clearAllLists();
-                    if (resList == null) {
+                    if (resList == null)
                         activeHandler.post(serverErrorRunnable);
-                    } else if (resList.get(0).size() == 0) {
+                    else if (resList.get(0).size() == 0) {
                         if (loadPosition == 0)
                             activeHandler.post(headNothingRunnable);
                         else
@@ -323,9 +323,9 @@ public class ActiveActivity extends DayNightActivity {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     activeHandler.post(timeOutRunnable);
-                } else {
+                else {
                     String actid = actidList.get(position);
                     if (goodStatusList.get(position) == 1) {
                         int res = dbP.doubleUpdate(

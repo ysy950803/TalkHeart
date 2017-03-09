@@ -264,16 +264,16 @@ public class HomeFragment extends StatedFragment {
                             @Override
                             public void run() {
                                 DBProcessor dbP = new DBProcessor();
-                                if (dbP.getConn(opts_o) == null) {
+                                if (dbP.getConn(opts_o) == null)
                                     homeActiveHandler.post(timeOutRunnable);
-                                } else {
-                                    int res = dbP.delete(
-                                            "delete from active where actid = " + actid
+                                else {
+                                    int res = dbP.doubleUpdate(
+                                            "delete from active where actid = " + actid,
+                                            "update user_info_count set act_num = (act_num - 1) where uid = " + uid
                                     );
-                                    if (res == 1) {
-                                        dbP.update("update user_info_count set act_num = (act_num - 1) where uid = " + uid);
+                                    if (res == 2)
                                         homeActiveHandler.post(deleteRunnable);
-                                    } else
+                                    else
                                         homeActiveHandler.post(serverErrorRunnable);
                                 }
                             }
@@ -293,9 +293,9 @@ public class HomeFragment extends StatedFragment {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     homeActiveHandler.post(timeOutRunnable);
-                } else {
+                else {
                     int res = dbP.insert(
                             "insert into mark(uid, actid) values(" + uid + ", " + actid + ")"
                     );
@@ -315,9 +315,9 @@ public class HomeFragment extends StatedFragment {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     homeActiveHandler.post(timeOutRunnable);
-                } else {
+                else {
                     List<List<String>> resList = dbP.homeActiveSelect(
                             "select a.actid, sex, nickname, sendtime, content, goodnum, u.uid, ifnull(isfav, -1) as isfav, img_info, cmtnum from " +
                                     "user u, active a left join favorite f on a.actid = f.actid and f.uid = " + uid +
@@ -363,9 +363,9 @@ public class HomeFragment extends StatedFragment {
             @Override
             public void run() {
                 DBProcessor dbP = new DBProcessor();
-                if (dbP.getConn(opts_o) == null) {
+                if (dbP.getConn(opts_o) == null)
                     homeActiveHandler.post(timeOutRunnable);
-                } else {
+                else {
                     String actid = actidList.get(position);
                     if (goodStatusList.get(position) == 1) {
                         int res = dbP.doubleUpdate(
