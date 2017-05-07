@@ -5,9 +5,13 @@
 ### A temporary backup for this project without password code and res files.
 
 ## Download
-[TalkHeart_v3.0.2.apk](http://ysy950803.top/talk_heart/update/com.ysy.talkheart_v3.0.2.apk)
+[TalkHeart_v4.0.1.apk](http://ysy950803.top/talk_heart/update/com.ysy.talkheart_v4.0.1.apk)
 
 ## History
+### [Version 4.0.1]
+* 1.新增匿名匹配聊天，按地理位置就近搜索；
+* 2.修复部分BUG。
+
 ### [Version 3.0.2]
 * 1.优化大量数据库查询逻辑；
 * 2.他人详情页面可直接开启即时对话；
