@@ -5,9 +5,12 @@
 ### A temporary backup for this project without password code and res files.
 
 ## Download
-[TalkHeart_v4.1.1.apk](http://www.jingxuehang.cn/talk_heart/update/com.ysy.talkheart_v4.1.1.apk)
+[TalkHeart_v4.2.0.apk](http://ysy950803.cn/talk_heart/update/com.ysy.talkheart_v4.2.0.apk)
 
 ## History
+### [Version 4.2.0]
+* 1.数据全部迁移至洛杉矶服务器。
+
 ### [Version 4.1.1]
 * 1.换了一下接口的URL。
 
